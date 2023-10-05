@@ -14,7 +14,7 @@ from importlib.metadata import version
 project = "parental_care"
 project_slug = "parental_care"
 author = "Sebastian Gsell"
-copyright = f"2022, {author}"  # noqa: A001
+copyright = f"2023, {author}"  # noqa: A001
 
 # The version, including alpha/beta/rc tags, but not commit hash and datestamps
 release = version(project_slug)

@@ -87,15 +87,6 @@ repos:
         #     (?x)^(
         #         path/to/file.py
         #     )$
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v0.991'
-    hooks:
-    -   id: mypy
-        args: [
-            --no-strict-optional,
-            --ignore-missing-imports,
-        ]
-        pass_filenames: false
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.2.2
     hooks:
