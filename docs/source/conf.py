@@ -4,6 +4,8 @@ This file only contains a selection of the most common options. For a full list 
 documentation: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 """
+from __future__ import annotations
+
 from importlib.metadata import version
 
 
@@ -12,7 +14,7 @@ from importlib.metadata import version
 project = "parental_care"
 project_slug = "parental_care"
 author = "Sebastian Gsell"
-copyright = f"2022, {author}"  # noqa: A001
+copyright = f"2023, {author}"  # noqa: A001
 
 # The version, including alpha/beta/rc tags, but not commit hash and datestamps
 release = version(project_slug)
