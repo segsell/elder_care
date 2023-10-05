@@ -1,0 +1,39 @@
+name: parental_care
+
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+  - python ==3.11
+  - pip >=21.1
+  - setuptools_scm
+  - toml
+
+  # Reproducibility
+  - conda-lock
+
+  # Package dependencies
+  - pytask >=0.2
+
+  # Misc
+  - black
+  - ipython
+  - pre-commit
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - tox-conda
+
+  # Documentation
+  - furo
+  - myst-parser
+  - nbsphinx
+  - sphinx
+  - sphinx-autoapi
+  - sphinx-copybutton
+  - sphinx-panels
+
+  - pip:
+    - -e .
+    - sphinxext-opengraph

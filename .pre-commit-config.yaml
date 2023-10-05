@@ -1,0 +1,107 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    -   id: check-added-large-files
+        args: ['--maxkb=25']
+    -   id: check-case-conflict
+    -   id: check-merge-conflict
+    -   id: check-vcs-permalinks
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: end-of-file-fixer
+    -   id: fix-byte-order-marker
+    -   id: mixed-line-ending
+    -   id: no-commit-to-branch
+        args: [--branch, main]
+    -   id: trailing-whitespace
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+    -   id: python-check-blanket-noqa
+    -   id: python-check-mock-methods
+    -   id: python-no-eval
+    -   id: python-no-log-warn
+    -   id: python-use-type-annotations
+    -   id: text-unicode-replacement-char
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+    -   id: pyupgrade
+        args: [--py37-plus]
+-   repo: https://github.com/asottile/reorder_python_imports
+    rev: v3.9.0
+    hooks:
+    -   id: reorder-python-imports
+        args: [--py37-plus, --add-import, 'from __future__ import annotations']
+-   repo: https://github.com/asottile/setup-cfg-fmt
+    rev: v2.2.0
+    hooks:
+    -   id: setup-cfg-fmt
+-   repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+    -   id: black
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.5.1
+    hooks:
+    -   id: docformatter
+        args: [--in-place, --wrap-summaries, "88", --wrap-descriptions, "88", --blank]
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.241
+    hooks:
+      - id: ruff
+-   repo: https://github.com/dosisod/refurb
+    rev: v1.10.0
+    hooks:
+    -   id: refurb
+        args: [--ignore, FURB126]
+
+-   repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
+    hooks:
+    -   id: interrogate
+        args: [-v, --fail-under=40]
+-   repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+    -   id: mdformat
+        additional_dependencies: [
+            mdformat-gfm,
+            mdformat-black,
+        ]
+        args: [--wrap, "88"]
+        files: (README\.md)
+-   repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+    -   id: mdformat
+        additional_dependencies: [
+            mdformat-myst,
+            mdformat-black,
+        ]
+        args: [--wrap, "88"]
+        files: (docs/.)
+        # Exclude files with admonitions.
+        # exclude: |
+        #     (?x)^(
+        #         path/to/file.py
+        #     )$
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v0.991'
+    hooks:
+    -   id: mypy
+        args: [
+            --no-strict-optional,
+            --ignore-missing-imports,
+        ]
+        pass_filenames: false
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.2.2
+    hooks:
+    -   id: codespell
+-   repo: meta
+    hooks:
+    -   id: check-hooks-apply
+    -   id: check-useless-excludes
+    # -   id: identity  # Prints all files passed to pre-commits. Debugging.
