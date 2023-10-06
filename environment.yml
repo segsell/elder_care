@@ -2,7 +2,7 @@ name: parental_care
 
 channels:
   - conda-forge
-  - nodefaults
+  - defaults
 
 dependencies:
   - python ==3.11
@@ -15,11 +15,13 @@ dependencies:
 
   # Package dependencies
   - pandas
+  - plotly
   - pytask >=0.2.3
 
   # Misc
   - black
   - ipython
+  - jupyterlab
   - pre-commit
   - pytest
   - pytest-cov
@@ -31,10 +33,12 @@ dependencies:
   - myst-parser
   - nbsphinx
   - sphinx
-  - sphinx-autoapi
-  - sphinx-copybutton
   - sphinx-panels
+  - sphinxcontrib-bibtex
 
   - pip:
+    - kaleido
+    - blackcellmagic
+
+    # local installation
     - -e .
-    - sphinxext-opengraph
