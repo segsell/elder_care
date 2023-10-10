@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
     -   id: check-added-large-files
         args: ['--maxkb=25']
@@ -16,7 +16,7 @@ repos:
         args: [--branch, main]
     -   id: trailing-whitespace
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
     -   id: python-check-blanket-noqa
     -   id: python-check-mock-methods
@@ -25,33 +25,33 @@ repos:
     -   id: python-use-type-annotations
     -   id: text-unicode-replacement-char
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.15.0
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.9.0
+-   repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.12.0
     hooks:
     -   id: reorder-python-imports
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.2.0
+    rev: v2.5.0
     hooks:
     -   id: setup-cfg-fmt
 -   repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.9.1
     hooks:
     -   id: black
 -   repo: https://github.com/PyCQA/docformatter
-    rev: v1.5.1
+    rev: v1.7.5
     hooks:
     -   id: docformatter
         args: [--in-place, --wrap-summaries, "88", --wrap-descriptions, "88", --blank]
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.241
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.292
     hooks:
       - id: ruff
 -   repo: https://github.com/dosisod/refurb
-    rev: v1.10.0
+    rev: v1.21.0
     hooks:
     -   id: refurb
         args: [--ignore, FURB126]
@@ -62,7 +62,7 @@ repos:
     -   id: interrogate
         args: [-v, --fail-under=40]
 -   repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
+    rev: 0.7.17
     hooks:
     -   id: mdformat
         additional_dependencies: [
@@ -72,7 +72,7 @@ repos:
         args: [--wrap, "88"]
         files: (README\.md)
 -   repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
+    rev: 0.7.17
     hooks:
     -   id: mdformat
         additional_dependencies: [
@@ -87,7 +87,7 @@ repos:
         #         path/to/file.py
         #     )$
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
+    rev: v2.2.6
     hooks:
     -   id: codespell
 -   repo: meta
