@@ -880,7 +880,6 @@ def task_create_estimation_data(data):
 
 
 def calculate_retired(row):
-
     if row["ep005_"] == 1 or (not pd.isna(row["ep329_"])):
         out = 1
     elif pd.isna(row["ep005_"]) and pd.isna(row["ep329_"]):
@@ -892,7 +891,6 @@ def calculate_retired(row):
 
 
 def calculate_years_since_retirement(row):
-
     if row["retired"] == 1 or (not pd.isna(row["ep329_"])):
         out = row["int_year"] - row["ep329_"]
     elif row["retired"] == 0:
