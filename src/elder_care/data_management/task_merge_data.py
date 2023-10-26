@@ -1,8 +1,8 @@
 """Tasks for merging the data."""
 import pandas as pd
 import pytask
-from parental_care.config import BLD
-from parental_care.config import SRC
+from elder_care.config import BLD
+from elder_care.config import SRC
 
 
 @pytask.mark.depends_on(

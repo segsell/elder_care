@@ -3,10 +3,10 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.0"]
 
 
 [tool.setuptools_scm]
-write_to = "src/parental_care/_version.py"
+write_to = "src/elder_care/_version.py"
 
 [tool.pytask.ini_options]
-paths = "./src/parental_care"
+paths = "./src/elder_care"
 
 
 [tool.interrogate]

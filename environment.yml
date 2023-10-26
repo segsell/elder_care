@@ -1,5 +1,5 @@
 ---
-name: parental_care
+name: elder_care
 
 channels:
   - conda-forge

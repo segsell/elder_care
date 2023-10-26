@@ -1,6 +1,6 @@
 """Merge all SHARE waves and modules."""
 import pandas as pd
-from parental_care.config import SRC
+from elder_care.config import SRC
 
 ALL_VARIABLES = {
     "cv_r": [
