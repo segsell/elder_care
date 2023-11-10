@@ -1,4 +1,5 @@
 """Create the estimation data set of females between 50 and 68."""
+import re
 from pathlib import Path
 from typing import Annotated
 
@@ -8,6 +9,15 @@ from elder_care.config import BLD
 from pytask import Product
 
 FEMALE = 2
+
+MIN_AGE = 55
+MAX_AGE = 68
+
+MIN_YEARS_SCHOOLING = 0
+MAX_YEARS_SCHOOLING = 25
+HIGH_EDUC_YEARS_SCHOOLING = 15
+HIGH_EDUC_INDICATOR_WAVE_FOUR = 3
+HIGH_EDUC_INDICATOR_WAVE_FIVE = 10
 
 FURTHER_EDUC = [
     "dn012d1",
@@ -33,21 +43,142 @@ FURTHER_EDUC = [
     #'dn012d95' # currently in education --> not needed
 ]
 
+HOCHSCHUL_DEGREE = 5
+
 
 def task_create_estimation_data(
     path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
 ) -> None:
     """Create the estimation data set."""
+    # nurs#Out-of-pocket payment for nursing home / home care
+
     # Load the data
     dat = pd.read_csv(BLD / "data" / "data_merged.csv")
 
     # Filter for females
     dat = dat[dat["gender"] == FEMALE]
 
+    # number of siblings alive
+
+    # Set negative values to missing
+    dat["dn036_"] = np.where(dat["dn036_"] < 0, np.nan, dat["dn036_"])
+    dat["dn037_"] = np.where(dat["dn037_"] < 0, np.nan, dat["dn037_"])
+
+    dat["siblings"] = np.select(
+        [
+            (~dat["dn036_"].isna())
+            & (~dat["dn037_"].isna()),  # Both columns are not NaN
+            (~dat["dn036_"].isna()) & dat["dn037_"].isna(),  # Only dn036_ is not NaN
+            dat["dn036_"].isna() & (~dat["dn037_"].isna()),  # Only dn037_ is not NaN
+            (dat["dn036_"].isna()) & (dat["dn037_"].isna()),  # Both columns are NaN
+        ],
+        [
+            dat["dn036_"] + dat["dn037_"],  # Addition when both columns are not NaN
+            dat["dn036_"],  # Value from dn036_ when only dn036_ is not NaN
+            dat["dn037_"],  # Value from dn037_ when only dn037_ is not NaN
+            np.nan,  # Result is NaN when both columns are NaN
+        ],
+        default=np.nan,
+    )
+
+    # Age calculation
+    dat["age"] = dat.apply(
+        lambda row: row["int_year"] - row["yrbirth"]
+        if row["int_month"] >= row["mobirth"]
+        else row["int_year"] - row["yrbirth"] - 1,
+        axis=1,
+    )
+
+    # Keep only those aged 55 to 68
+    dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
+
+    # !!! Still not 0.35 share high educ... rahter 0.25
+    dat = create_high_educ(dat)
+
+    # !!! Replace mother_alive = 1 if health status >= 0
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
+def table(df_col):
+    return pd.crosstab(df_col, columns="Count")["Count"]
+
+
+def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
+    dat["years_educ"] = dat["yedu"].copy()
+
+    conditions = [
+        (dat["years_educ"] < MIN_YEARS_SCHOOLING),
+        (dat["years_educ"] > MAX_YEARS_SCHOOLING),
+    ]
+    values = [np.nan, np.nan]
+
+    # Use numpy.select to set values in the 'years_educ' column based on conditions
+    dat["years_educ"] = np.select(conditions, values, dat["years_educ"])
+
+    # Create 'high_educ' column, setting NaN when 'years_educ' is NaN
+    dat["high_educ"] = np.where(
+        dat["years_educ"].isna(),
+        np.nan,
+        (dat["years_educ"] >= HIGH_EDUC_YEARS_SCHOOLING).astype(int),
+    )
+
+    for educ in FURTHER_EDUC:
+        number = int(re.search(r"\d+", educ).group())
+        conditions = [dat[educ] < 0, dat[educ] == number]
+        values = [np.nan, 1]
+
+        dat[educ] = np.select(conditions, values, dat[educ])
+
+    dat["dn012dno"] = np.where(dat["dn012dno"] < 0, np.nan, dat["dn012dno"])
+    dat["dn012dot"] = np.where(dat["dn012dot"] < 0, np.nan, dat["dn012dot"])
+    dat["dn012dno"] = np.where(dat["dn012dno"] == 1, 0, dat["dn012dno"])
+    dat["further_educ_max"] = dat.apply(find_max_suffix, axis=1)
+
+    dat["high_educ_012"] = (
+        (
+            dat["wave"].isin([1, 2, 4])
+            & (dat["further_educ_max"] >= HIGH_EDUC_INDICATOR_WAVE_FOUR)
+        )
+        | (
+            dat["wave"].between(5, 8)
+            & (dat["further_educ_max"] >= HIGH_EDUC_INDICATOR_WAVE_FIVE)
+        )
+    ).astype(int)
+
+    # Stufe 0: Kindergarten
+    # Stufe 1: Grundschule
+    # Stufe 2A: Realschule, Mittlere Reife und Polytechnische Oberschule (DDR)
+    # Stufe 2B: Volks- und Hauptschule und Anlernausbildung
+    # Stufe 3A: Fachhochschulreife und Abitur
+    # Stufe 3B: Berufsausbildung im dualen System, mittlere Verwaltungsausbildung,
+    # Berufsfach-/Kollegschulabschluss und einjährige Schulen des Gesundheitswesens
+    # Stufe 4A: Abschluss von 3A UND 3B
+    # Stufe 5A: Fachhochschulabschluss
+    # Stufe 5A: Universitätsabschluss
+    # Stufe 5B: Meister/Techniker, 2- bis 3-jährige Schule des Gesundheitswesens,
+    # Fach-/Berufsakademie, Fachschulabschluss (DDR) und Verwaltungsfachschule
+    # Stufe 6: Promotion
+
+    dat["high_educ_comb"] = (
+        (dat["high_educ"] == 1)
+        # | (dat["high_educ_012"] == 1)
+        | (dat["isced"] >= HOCHSCHUL_DEGREE)
+    ).astype(int)
+
+    conditions = [(dat["isced"] >= HOCHSCHUL_DEGREE), (dat["isced"] < HOCHSCHUL_DEGREE)]
+    values = [1, 0]
+    dat["high_isced"] = np.select(conditions, values, default=np.nan)
+
+    return dat
+
+
+def find_max_suffix(row):
+    active_cols = [
+        int(col.split("dn012d")[-1]) for col in FURTHER_EDUC if row[col] == 1
+    ]
+    max_suffix = max(active_cols) if active_cols else 0
+    return max_suffix if max_suffix >= 0 else np.nan
 
 
 def calculate_retired(row):
@@ -74,7 +205,7 @@ def calculate_years_since_retirement(row):
     return out
 
 
-def find_max_suffix(row):
+def _find_max_suffix(row):
     max_suffix = 0
     for col in FURTHER_EDUC:
         if row[col] == 1:
