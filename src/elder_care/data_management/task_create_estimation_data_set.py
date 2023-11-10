@@ -1,6 +1,11 @@
 """Create the estimation data set of females between 50 and 68."""
+from pathlib import Path
+from typing import Annotated
+
 import numpy as np
 import pandas as pd
+from elder_care.config import BLD
+from pytask import Product
 
 FEMALE = 2
 
@@ -29,14 +34,17 @@ FURTHER_EDUC = [
 ]
 
 
-# def task_create_estimation_data(data):
-def create_estimation_data(data):
+def task_create_estimation_data(
+    path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
+) -> None:
     """Create the estimation data set."""
-    # only females
-    dat = data.copy()
+    # Load the data
+    dat = pd.read_csv(BLD / "data" / "data_merged.csv")
 
     # Filter for females
     dat = dat[dat["gender"] == FEMALE]
+
+    dat.to_csv(path, index=False)
 
 
 # =====================================================================================
