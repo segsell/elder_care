@@ -45,6 +45,17 @@ FURTHER_EDUC = [
 
 HOCHSCHUL_DEGREE = 5
 
+GIVEN_HELP = 1
+GIVEN_NO_HELP = 5
+MOTHER = 2
+FATHER = 3
+GIVEN_HELP_LESS_THAN_DAILY = 2
+GIVEN_HELP_DAILY = 1
+
+
+def table(df_col):
+    return pd.crosstab(df_col, columns="Count")["Count"]
+
 
 def task_create_estimation_data(
     path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
@@ -81,7 +92,7 @@ def task_create_estimation_data(
         default=np.nan,
     )
 
-    # Age calculation
+    # Make prettier
     dat["age"] = dat.apply(
         lambda row: row["int_year"] - row["yrbirth"]
         if row["int_month"] >= row["mobirth"]
@@ -95,13 +106,236 @@ def task_create_estimation_data(
     # !!! Still not 0.35 share high educ... rahter 0.25
     dat = create_high_educ(dat)
 
+    # number of children
+    dat = create_number_of_children(dat)
+
+    # current job situation
+
+    # retired
+
+    # married
+    dat = create_married(dat)
+
+    dat = create_caregving(dat)
+
     # !!! Replace mother_alive = 1 if health status >= 0
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
-def table(df_col):
-    return pd.crosstab(df_col, columns="Count")["Count"]
+
+
+def create_caregving(dat):
+    """Create caregiving variables and care experience."""
+    cols = ["sp008_", "sp009_1", "sp009_2", "sp009_3"]
+    dat[cols] = np.where(dat[cols] >= 0, dat[cols], np.nan)
+
+    conditions_care = [
+        (dat["sp008_"] == GIVEN_HELP) | (dat["sp018_"] == GIVEN_HELP),
+        ((dat["sp008_"] == GIVEN_NO_HELP) & (dat["sp018_"] == GIVEN_NO_HELP))
+        | ((dat["sp008_"] == GIVEN_NO_HELP) & dat["sp018_"].isna())
+        | (dat["sp008_"].isna() & (dat["sp018_"] == GIVEN_NO_HELP)),
+    ]
+    choices_care = [1, 0]
+
+    dat["care"] = np.select(conditions_care, choices_care, default=np.nan)
+
+    conditions_parents_outside = [
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"].isin([2, 3]))  # to whom
+            | (dat["sp009_2"].isin([2, 3]))  # to whom
+            | (dat["sp009_3"].isin([2, 3]))  # to whom
+        ),
+        dat["sp008_"].isna(),
+    ]
+    choices_parents_outside = [1, np.nan]
+
+    dat["care_parents_outside"] = np.select(
+        conditions_parents_outside,
+        choices_parents_outside,
+        default=0,
+    )
+
+    conditions_parents_within = [
+        (dat["sp018_"] == 1) & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1)),
+        dat["sp018_"].isna(),
+    ]
+    choices_parents_within = [1, np.nan]
+
+    dat["care_parents_within"] = np.select(
+        conditions_parents_within,
+        choices_parents_within,
+        default=0,
+    )
+
+    # Create the 'ever_cared_parents' column
+    conditions_parents = [
+        (dat["care_parents_outside"] == 1) | (dat["care_parents_within"] == 1),
+        (dat["care_parents_within"].isna()) & (dat["care_parents_outside"].isna()),
+    ]
+    choices_parents = [1, np.nan]
+
+    dat["care_parents"] = np.select(conditions_parents, choices_parents, default=0)
+
+    conditions = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1)),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == MOTHER)
+            | (dat["sp009_2"] == MOTHER)
+            | (dat["sp009_3"] == MOTHER)
+        ),
+        # care outside hh to father
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == FATHER)
+            | (dat["sp009_2"] == FATHER)
+            | (dat["sp009_3"] == FATHER)
+        ),
+    ]
+
+    choices = [1, 1, 1]  # Assign 1 if the conditions are met
+
+    # Use np.select to create the 'care_in_year' column
+    dat["care_in_year"] = np.select(conditions, choices, default=0)
+
+    # care_parents and care_in_year identical except more zeros in care_in_year
+    # because default is 0, not nan
+    # --> take care parents?
+
+    # sp011_1: how often inside
+    condition = [
+        (
+            (
+                (dat["sp011_1"] >= GIVEN_HELP_LESS_THAN_DAILY)
+                & (dat["sp009_1"].isin([2, 3]))
+            )
+            | (
+                (dat["sp011_2"] >= GIVEN_HELP_LESS_THAN_DAILY)
+                & (dat["sp009_2"].isin([2, 3]))
+            )
+            | (
+                (dat["sp011_3"] >= GIVEN_HELP_LESS_THAN_DAILY)
+                & (dat["sp009_3"].isin([2, 3]))
+            )
+        )
+        & (dat["sp018_"] != 1)
+        & ((dat["sp019d2"] != 1) & (dat["sp019d3"] != 1)),  # to whom in hh
+        # no personal care in hh (e.g. to partner, want those excluded)
+    ]
+    choice = [1]  # Assign 1 if the conditions are met
+
+    dat["light_care"] = np.select(condition, choice, default=0)
+
+    conditions = [
+        (
+            (
+                (dat["sp011_1"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))
+        ),  # include mother and father in law?
+        # & (dat["sp018_"].isna()),
+    ]
+    choices = [1]
+    dat["intensive_care"] = np.select(conditions, choices, default=0)
+
+    dat["light_care"] = np.where(
+        (dat["intensive_care"] == 1) & (dat["light_care"] == 1),
+        0,
+        dat["light_care"],
+    )
+
+    dat["care"] = np.where(
+        (dat["intensive_care"] == 1) | (dat["light_care"] == 1),
+        1,
+        0,
+    )
+
+    dat["care"] = np.where(
+        (dat["care_parents"] == 1)
+        & (dat["intensive_care"] == 0)
+        & (dat["light_care"] == 0),
+        np.nan,
+        dat["care"],
+    )
+
+    # care experience
+    # Calculate cumulative sum for 'care_in_year' within each 'mergeid' group
+    dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
+    # dat["care_experience"] = (
+    #     .cumsum()
+    #     .where(dat["care_parents"] >= 0, np.nan)
+    dat["care_experience"] = (
+        dat.groupby(["mergeid", "int_year"])["care"]
+        .cumsum()
+        .where(dat["care"] >= 0, np.nan)
+    )
+
+    # dat["care_experience"] = (
+    #     .apply(lambda group: group.interpolate(method="linear",
+    # limit_direction="both"))
+    #     .fillna(0)
+    #     .astype(int)
+
+    return dat
+
+
+def create_married(dat):
+    """Create married variable."""
+    # Partner We use marriage information in SHARE to construct an indicator on the
+    # existence of a partner living in the same household.
+    # We do not distinguish between marriage and registered partnership.
+
+    conditions_married_or_partner = [
+        dat["mstat"].isin([1, 2]),
+        dat["mstat"].isin([3, 4, 5, 6]),
+    ]
+    values_married_or_partner = [1, 0]
+    # replace with zeros or nans
+    dat["married"] = np.select(
+        conditions_married_or_partner,
+        values_married_or_partner,
+        np.nan,
+    )
+
+    return dat
+
+
+def create_number_of_children(dat):
+    """Create number of children variable."""
+    dat = dat.rename(columns={"ch001_": "nchild"})
+    dat["nchild"] = np.where(dat["nchild"] >= 0, dat["nchild"], np.nan)
+    return dat
+
+
+def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
+    """Define retirement status."""
+    # Current job situation
+    # -2 Refusal
+    # -1 Don't know
+    # 1 Retired
+    # 2 Employed or self-employed (including working for family business)
+    # 3 Unemployed
+    # 4 Permanently sick or disabled
+    # 5 Homemaker
+    # 97 Other
+
+    return dat
 
 
 def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
