@@ -10,6 +10,9 @@ from pytask import Product
 
 FEMALE = 2
 
+ANSWER_YES = 1
+ANSWER_NO = 5
+
 MIN_AGE = 55
 MAX_AGE = 68
 
@@ -118,11 +121,237 @@ def task_create_estimation_data(
 
     dat = create_caregving(dat)
 
+    dat = create_age_parent_and_parent_alive(dat, parent="mother")
+
     # !!! Replace mother_alive = 1 if health status >= 0
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
+
+
+def create_age_parent_and_parent_alive(dat, parent="mother"):
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    if parent == "mother":
+        parent_indicator = 1
+    elif parent == "father":
+        parent_indicator = 2
+
+    dat[f"age_{parent}"] = dat[f"dn028_{parent_indicator}"].copy()
+
+    _cond = [
+        (dat[f"dn026_{parent_indicator}"] == ANSWER_YES),
+        (dat[f"dn026_{parent_indicator}"] == ANSWER_NO),
+    ]
+    _choices = [1, 0]
+    dat[f"{parent}_alive"] = np.select(_cond, _choices, default=np.nan)
+
+    # Create 'lagged_age_mother' using 'shift' to represent the previous period's values
+    dat["lagged_age_mother"] = dat.groupby("mergeid")["age_mother"].shift(1)
+
+    # Create 'mother_dead' based on the specified conditions
+    dat["mother_dead"] = np.where(
+        dat["age_mother"].isna() & (dat["lagged_age_mother"] > 0),
+        1,
+        np.nan,
+    )
+
+    dat["lagged_mother_alive"] = dat.groupby("mergeid")["mother_alive"].shift(1)
+
+    # Create 'mother_dead' based on conditions using np.select
+    _cond = [(dat["lagged_mother_alive"] == 0), (dat["lagged_mother_alive"] == 1)]
+    _choices = [1, 0]
+    dat["mother_dead_since_last"] = np.select(_cond, _choices, np.nan)
+
+    #
+
+    # Group the data by 'mergeid' and transform to get the first non-NaN
+    # value of 'age_mother'
+    dat["age_mother_first"] = dat.groupby("mergeid")["age_mother"].transform("first")
+    dat["int_year_mother_first"] = dat.groupby("mergeid")["int_year"].transform("first")
+
+    # Calculate the first non-NaN value in 'age_mother_first' within each group
+    first_age_mother = dat.groupby("mergeid")["age_mother_first"].transform("first")
+
+    # Create 'birth_year_mother' based on the calculation
+    dat["age_year_mother_new"] = (
+        dat["int_year"] - dat["int_year_mother_first"] + first_age_mother
+    )
+
+    # Group the data by 'mergeid'
+    grouped = dat.groupby("mergeid")
+
+    # dn027_1: age of death of parent
+    # Determine the most common non-empty value in 'dn027_1' for each 'mergeid'
+    most_common_value = grouped["dn027_1"].apply(
+        lambda x: x.dropna().mode().iloc[0] if not x.dropna().empty else np.nan,
+    )
+
+    # Assign the most common value to all rows within the 'mergeid' group
+    dat["age_mother_death"] = dat["mergeid"].map(most_common_value)
+
+    # Fill any remaining NaN values with np.nan
+    dat["age_mother_death"] = dat["age_mother_death"].fillna(np.nan)
+
+    # Initialize an auxiliary variable 'death_transition' to track the transition
+    # from 1 to 0
+    dat["death_transition"] = (dat["mother_alive"] == 0) & (
+        dat.groupby("mergeid")["mother_alive"].shift(1) == 1
+    )
+
+    # Calculate 'year_mother_death' based on the first transition from 1 to 0
+    # within each 'mergeid'
+    dat["year_mother_death"] = dat.groupby("mergeid")["int_year"].transform(
+        lambda x: x.where(dat["death_transition"]).min(),
+    )
+
+    # Sort the DataFrame by 'mergeid' and 'int_year'
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+    # Identify the first observation in the panel for each 'mergeid'
+    first_observation_mask = (
+        dat.groupby("mergeid")["int_year"].transform("first") == dat["int_year"]
+    )
+
+    # Identify the next observation in the panel for each 'mergeid'
+    next_observation_mask = (
+        dat.groupby("mergeid")["int_year"].transform("first") == dat["int_year"] + 1
+    )
+
+    # Filter for rows where 'mother_alive' is NaN and the conditions are met
+    nan_mother_alive_mask = (
+        dat["mother_alive"].isna() & first_observation_mask & next_observation_mask
+    )
+
+    # Replace 'mother_alive' with 1 for the specified rows
+    dat.loc[
+        nan_mother_alive_mask & (dat["mother_alive"].shift(1) == 1),
+        "mother_alive",
+    ] = 1
+
+    # Replace 'mother_alive' with 0 for the specified rows
+    dat.loc[
+        nan_mother_alive_mask & (dat["mother_alive"].shift(1) == 0),
+        "mother_alive",
+    ] = 0
+
+    first_occurrence_condition = (
+        (
+            (dat["age_year_mother_new"].notna() & dat["age_mother_death"].notna())
+            & (dat["age_year_mother_new"] > dat["age_mother_death"])
+        )
+        .groupby(dat["mergeid"])
+        .idxmax()
+    )
+    # Identify the next occurrence of "mother_alive == 1" per "mergeid"
+    next_occurrence_condition = (
+        (dat["mother_alive"] != 1).groupby(dat["mergeid"]).shift(-1)
+    )
+    # Replace 'mother_alive' with 0 for rows where it is NaN and the conditions are met
+    dat.loc[
+        (dat["mother_alive"].isna())
+        & (dat.index.isin(first_occurrence_condition))
+        & (next_occurrence_condition),
+        "mother_alive",
+    ] = 0
+
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Define a custom function to handle grouping within 'mergeid'
+    def custom_condition(group):
+        return group["mother_alive"].isna() & (group["mother_alive"].shift(1) == 0)
+
+    # Apply the custom function within each 'mergeid'
+    nan_mother_alive_mask = dat.groupby("mergeid").apply(custom_condition)
+
+    # Flatten the result to a boolean array
+    nan_mother_alive_mask = nan_mother_alive_mask.to_numpy()
+
+    # Set 'mother_alive' to 0 for the identified rows
+    dat.loc[nan_mother_alive_mask, "mother_alive"] = 0
+
+    # Sort the DataFrame by 'mergeid' and 'int_year'
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Identify the next occurrence of "mother_alive == 1" per "mergeid"
+    next_occurrence_condition = dat.groupby("mergeid")["mother_alive"].shift(-1) == 1
+
+    # Replace 'mother_alive' with 1 for rows where it is NaN and the next occurrence
+    # condition is met
+    dat.loc[
+        (dat["mother_alive"].isna()) & next_occurrence_condition,
+        "mother_alive",
+    ] = 1
+
+    # Sort the DataFrame by 'mergeid' and 'int_year'
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Identify the rows where 'mother_alive' switches from 1 to 0
+    # within each 'mergeid'
+    switch_condition = (dat["mother_alive"] == 1) & (dat["mother_alive"].shift(-1) == 0)
+
+    # Calculate 'birth_year_mother' based on 'int_year' and 'age_mother_death'
+    # for the switching year
+    dat.loc[switch_condition, "birth_year_mother"] = (
+        dat["int_year"] - dat["age_mother_death"]
+    )
+
+    # Forward-fill the values within each 'mergeid' group
+    dat["birth_year_mother"] = dat.groupby("mergeid")["birth_year_mother"].ffill()
+    dat["birth_year_mother"] = dat.groupby("mergeid")["birth_year_mother"].bfill()
+
+    dat["age_year_mother_new"] = dat.apply(
+        lambda row: row["int_year"] - row["birth_year_mother"]
+        if row["mother_alive"] == 1
+        else np.nan,
+        axis=1,
+    )
+
+    dat["age_mother"] = dat["age_mother"].fillna(dat["age_year_mother_new"])
+
+    # Sort the DataFrame by 'mergeid' and 'int_year'
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Group by 'mergeid' and use transform to create 'first_mother_death'
+    dat["first_mother_death"] = dat.groupby("mergeid")["age_mother_death"].transform(
+        lambda x: x.first_valid_index(),
+    )
+
+    # Sort the DataFrame by 'mergeid' and 'int_year'
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Identify the rows where 'mother_alive' switches from 1 to 0
+    # within each 'mergeid'
+    switch_condition = (dat["mother_alive"] == 1) & (dat["mother_alive"].shift(-1) == 0)
+
+    # Calculate 'birth_year_mother' based on 'int_year' and 'age_mother_death'
+    # for the switching year
+    dat.loc[switch_condition, "first_age_mother_death"] = (
+        dat["int_year"] - dat["age_mother_death"]
+    )
+
+    # Forward-fill the values within each 'mergeid' group
+    dat["birth_year_mother"] = dat.groupby("mergeid")["birth_year_mother"].ffill()
+    dat["birth_year_mother"] = dat.groupby("mergeid")["birth_year_mother"].bfill()
+
+    # does not change anything :)
+
+    dat["birth_year_mother_new_2"] = dat.apply(
+        lambda row: row["int_year_mother_first"] - row["age_mother_first"]
+        if (row["mother_alive"] == 1)
+        # if ((row["mother_alive"] == 1) | np.isnan(row["mother_alive"]))
+        else np.nan,
+        axis=1,
+    )
+
+    dat["age_mother_new_2"] = dat["int_year"] - dat["birth_year_mother_new_2"]
+
+    dat["age_mother"] = dat["age_mother"].fillna(dat["age_mother_new_2"])
+
+    return dat
+
+
+# def create_parental_health_status(dat, parent="mother"):
 
 
 def create_caregving(dat):
