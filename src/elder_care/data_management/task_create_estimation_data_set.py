@@ -187,11 +187,6 @@ def create_age_parent_and_parent_alive(dat, parent):
         dat[f"{parent}_age_at_death"],
     )
 
-    # Initialize an auxiliary variable '{parent}_transition' to track the transition
-    # from 1 to 0
-    # dat[f"{parent}_death_transition"] = (dat[f"{parent}_alive"] == 0) & (
-    # dat[f"{parent}_death_year"] = dat.groupby("mergeid")["int_year"].transform(
-
     dat = _impute_missing_values_parent_alive(dat, parent)
     return _impute_missing_values_parent_age(dat, parent)
 
