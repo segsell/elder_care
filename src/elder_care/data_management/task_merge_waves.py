@@ -73,9 +73,10 @@ ALL_VARIABLES = {
         "dn012dot",
     ],
     "ep": [
-        "ep005_",
-        "ep013_",
         "ep002_",
+        "ep005_",
+        # "ep009_",
+        "ep013_",
         "ep071d1",  # income sources, pension payments
         "ep071d2",  # income sources, pension payments
         "ep071d3",  # income sources, pension payments

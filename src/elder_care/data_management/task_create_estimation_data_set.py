@@ -34,6 +34,10 @@ HEALTH_GOOD = 3
 HEALTH_FAIR = 4
 HEALTH_POOR = 5
 
+WORKING_PART_TIME_THRESH = 10
+WORKING_FULL_TIME_THRESH = 32
+EMPLOYED_OR_SELF_EMPLOYED = 2
+
 FURTHER_EDUC = [
     "dn012d1",
     "dn012d2",
@@ -128,8 +132,10 @@ def task_create_estimation_data(
 
     dat = create_age_parent_and_parent_alive(dat, parent="mother")
     dat = create_age_parent_and_parent_alive(dat, parent="father")
-
     # !!! Replace mother_alive = 1 if health status >= 0
+
+    dat = create_working(dat)
+
     dat.to_csv(path, index=False)
 
 
@@ -545,6 +551,70 @@ def create_number_of_children(dat):
     """Create number of children variable."""
     dat = dat.rename(columns={"ch001_": "nchild"})
     dat["nchild"] = np.where(dat["nchild"] >= 0, dat["nchild"], np.nan)
+    return dat
+
+
+def create_working(dat):
+    """Create full and part time work."""
+    # Current job situation
+    # -2 Refusal
+    # -1 Don't know
+    # 1 Retired
+    # 2 Employed or self-employed (including working for family business)
+    # 3 Unemployed
+    # 4 Permanently sick or disabled
+    # 5 Homemaker
+    # 97 Other
+
+    _cond = [
+        (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
+        (dat["cjs"] < 0),
+        (dat["cjs"] < 0) & (dat["empstat"] >= 1),
+    ]
+    _val = [1, np.nan, 1]
+    dat["working"] = np.select(_cond, _val, default=0)
+
+    _cond = [
+        (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
+        (dat["pwork"] == 1),
+        (dat["cjs"] < 0) & (dat["pwork"] != 1),
+    ]
+    _val = [1, 1, np.nan]
+    dat["working_new"] = np.select(_cond, _val, default=0)
+
+    dat["_full_time"] = np.where(dat["ep013_"] > WORKING_FULL_TIME_THRESH, 1, 0)
+    dat["full_time"] = np.where(
+        (dat["working"] == 1) & (dat["ep013_"] > WORKING_FULL_TIME_THRESH),
+        1,
+        0,
+    )
+    dat["full_time_new"] = np.where(
+        (dat["working_new"] == 1) & (dat["ep013_"] > WORKING_FULL_TIME_THRESH),
+        1,
+        0,
+    )
+
+    dat["_part_time"] = np.where(
+        (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
+        & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+        1,
+        0,
+    )
+    dat["part_time"] = np.where(
+        (dat["working"] == 1)
+        & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
+        & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+        1,
+        0,
+    )
+    dat["part_time_new"] = np.where(
+        (dat["working_new"] == 1)
+        & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
+        & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+        1,
+        0,
+    )
+
     return dat
 
 
