@@ -3,10 +3,10 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.0"]
 
 
 [tool.setuptools_scm]
-write_to = "src/parental_care/_version.py"
+write_to = "src/elder_care/_version.py"
 
 [tool.pytask.ini_options]
-paths = "./src/parental_care"
+paths = "./src/elder_care"
 
 
 [tool.interrogate]
@@ -18,34 +18,54 @@ ignore-regex = ["task_*"]
 
 [tool.ruff]
 target-version = "py311"
-select = ["ALL"]
 fix = true
+select = ["ALL"]
 extend-ignore = [
-    # Numpy docstyle
-    "D107",
-    "D203",
-    "D212",
-    "D213",
-    "D402",
-    "D413",
-    "D415",
-    "D416",
-    "D417",
-    # Others.
-    "D404",  # Do not start module docstring with "This".
-    "RET504",  # unnecessary variable assignment before return.
-    "S101",  # raise errors for asserts.
-    "B905",  # strict parameter for zip that was implemented in py310.
-    "I",  # ignore isort
-    "ANN101",  # type annotating self
-    "ANN102",  # type annotating cls
-    "FBT",  # flake8-boolean-trap
-    "EM",  # flake8-errmsg
-    "ANN401",  # flake8-annotate typing.Any
-    "PD",  # pandas-vet
-    "COM812",  # trailing comma missing, but black takes care of that
-]
+    # missing type annotation
+    "ANN001",
 
+    # missing type annotation for `*args`
+    "ANN002",
+
+    # missing type annotation for `**kwargs`
+    "ANN003",
+
+    # missing return type annotation for public function
+    "ANN201",
+
+    # missing return type annotation for private function
+    "ANN202",
+
+    # Missing docstring in public module
+    "D100",
+
+    # missing docstring in public function
+    "D103",
+
+    # missing docstring in public package
+    "D104",
+
+    # exception must not use a string literal
+    "EM101",
+
+    # exception must not use an f-string literal
+    "EM102",
+
+    # ignore isort
+    "I",
+
+    # Too many arguments to function call
+    "PLR0913",
+
+    # use of `assert` detected
+    "S101",
+
+    # Private member accessed: `_stochastic_info`
+    "SLF001",
+
+    # long messages outside the exception class
+    "TRY003",
+]
 
 [tool.ruff.per-file-ignores]
 "tests/*" = ["D", "ANN"]
