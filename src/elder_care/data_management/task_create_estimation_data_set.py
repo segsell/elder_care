@@ -28,6 +28,12 @@ FATHER = 3
 GIVEN_HELP_LESS_THAN_DAILY = 2
 GIVEN_HELP_DAILY = 1
 
+HEALTH_EXCELLENT = 1
+HEALTH_VERY_GOOD = 2
+HEALTH_GOOD = 3
+HEALTH_FAIR = 4
+HEALTH_POOR = 5
+
 FURTHER_EDUC = [
     "dn012d1",
     "dn012d2",
@@ -117,6 +123,9 @@ def task_create_estimation_data(
 
     dat = create_caregving(dat)
 
+    dat = create_parental_health_status(dat, parent="mother")
+    dat = create_parental_health_status(dat, parent="father")
+
     dat = create_age_parent_and_parent_alive(dat, parent="mother")
     dat = create_age_parent_and_parent_alive(dat, parent="father")
 
@@ -126,7 +135,25 @@ def task_create_estimation_data(
 
 # =====================================================================================
 
-# def create_parental_health_status(dat, parent="mother"):
+
+def create_parental_health_status(dat, parent):
+    """Aggregate health status of parents from 5 into 3 levels."""
+    if parent == "mother":
+        parent_indicator = 1
+    elif parent == "father":
+        parent_indicator = 2
+    _cond = [
+        (dat[f"dn033_{parent_indicator}"] == HEALTH_EXCELLENT)
+        | (dat[f"dn033_{parent_indicator}"] == HEALTH_VERY_GOOD),
+        (dat[f"dn033_{parent_indicator}"] == HEALTH_GOOD)
+        | (dat[f"dn033_{parent_indicator}"] == HEALTH_FAIR),
+        (dat[f"dn033_{parent_indicator}"] == HEALTH_POOR),
+    ]
+    _val = [0, 1, 2]
+
+    dat[f"{parent}_health"] = np.select(_cond, _val, default=np.nan)
+
+    return dat
 
 
 def create_age_parent_and_parent_alive(dat, parent):
@@ -188,7 +215,28 @@ def create_age_parent_and_parent_alive(dat, parent):
     )
 
     dat = _impute_missing_values_parent_alive(dat, parent)
-    return _impute_missing_values_parent_age(dat, parent)
+    dat = _impute_missing_values_parent_age(dat, parent)
+
+    # If health status is not missing, impute missing values for age and alive
+    dat[f"{parent}_alive"] = np.where(
+        dat[f"{parent}_health"].notna() & dat[f"{parent}_alive"].isna(),
+        1,
+        dat[f"{parent}_alive"],
+    )
+
+    _cond = [
+        (dat[f"{parent}_health"].notna() & dat[f"{parent}_age"].isna()),
+        (dat[f"{parent}_health"].notna() & dat[f"{parent}_age"].isna()),
+        (dat[f"{parent}_health"].notna() & dat[f"{parent}_age"].isna()),
+    ]
+    _val = [
+        dat[f"{parent}_age_imputed_raw"],
+        dat[f"{parent}_age_imputed"],
+        dat[f"{parent}_age_imputed_two"],
+    ]
+    dat[f"{parent}_age"] = np.select(_cond, _val, default=dat[f"{parent}_age"])
+
+    return dat
 
 
 def _impute_missing_values_parent_age(dat, parent):
@@ -227,8 +275,6 @@ def _impute_missing_values_parent_age(dat, parent):
 
     dat[f"{parent}_age"] = dat[f"{parent}_age"].fillna(dat[f"{parent}_age_imputed_two"])
     # does not change anything
-
-    # dat[f"{parent}_age_imputed_raw"] = (
 
     # # Careful: Parent might be dead!
     # dat[f"{parent}_age"] = np.where(
