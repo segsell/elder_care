@@ -138,6 +138,7 @@ def task_create_estimation_data(
 
 def create_parental_health_status(dat, parent):
     """Aggregate health status of parents from 5 into 3 levels."""
+    # this is just a dummy comment
     if parent == "mother":
         parent_indicator = 1
     elif parent == "father":
