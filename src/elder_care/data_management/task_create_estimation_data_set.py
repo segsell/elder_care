@@ -183,8 +183,17 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_parents_live_close(dat):
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
     dat["dist_mother"] = np.where(dat["dn030_1"] >= 0, dat["dn030_1"], np.nan)
     dat["dist_father"] = np.where(dat["dn030_2"] >= 0, dat["dn030_2"], np.nan)
+
+    dat["dist_mother"] = dat.groupby("mergeid")["dist_mother"].transform(
+        lambda x: x.ffill().bfill(),
+    )
+    dat["dist_father"] = dat.groupby("mergeid")["dist_father"].transform(
+        lambda x: x.ffill().bfill(),
+    )
 
     conditions_distance = [
         (dat["dist_father"] <= BETWEEN_5_AND_25_KM_AWAY)
@@ -641,21 +650,21 @@ def create_working(dat):
         (dat["cjs"] < 0) & (dat["pwork"] != 1),
     ]
     _val = [1, 1, np.nan]
-    dat["working_new"] = np.select(_cond, _val, default=0)
+    dat["working_general"] = np.select(_cond, _val, default=0)
 
-    dat["_full_time"] = np.where(dat["ep013_"] > WORKING_FULL_TIME_THRESH, 1, 0)
+    dat["full_time_raw"] = np.where(dat["ep013_"] > WORKING_FULL_TIME_THRESH, 1, 0)
     dat["full_time"] = np.where(
         (dat["working"] == 1) & (dat["ep013_"] > WORKING_FULL_TIME_THRESH),
         1,
         0,
     )
-    dat["full_time_new"] = np.where(
-        (dat["working_new"] == 1) & (dat["ep013_"] > WORKING_FULL_TIME_THRESH),
+    dat["full_time_general"] = np.where(
+        (dat["working_general"] == 1) & (dat["ep013_"] > WORKING_FULL_TIME_THRESH),
         1,
         0,
     )
 
-    dat["_part_time"] = np.where(
+    dat["part_time_raw"] = np.where(
         (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
         & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
         1,
@@ -668,8 +677,8 @@ def create_working(dat):
         1,
         0,
     )
-    dat["part_time_new"] = np.where(
-        (dat["working_new"] == 1)
+    dat["part_time_general"] = np.where(
+        (dat["working_general"] == 1)
         & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
         & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
         1,
