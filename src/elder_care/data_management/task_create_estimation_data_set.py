@@ -8,8 +8,11 @@ import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
 
+
 FEMALE = 2
 
+REFUSAL = -2
+DONT_KNOW = -1
 ANSWER_YES = 1
 ANSWER_NO = 5
 
@@ -37,6 +40,17 @@ HEALTH_POOR = 5
 WORKING_PART_TIME_THRESH = 10
 WORKING_FULL_TIME_THRESH = 32
 EMPLOYED_OR_SELF_EMPLOYED = 2
+
+# Distance to parents
+SAME_HOUSEHOLD = 1
+SAME_BUILDING = 2
+LESS_THAN_1_KM_AWAY = 3
+BETWEEN_1_AND_5_KM_AWAY = 4
+BETWEEN_5_AND_25_KM_AWAY = 5
+BETWEEN_25_AND_100_KM_AWAY = 6
+BETWEEN_100_AND_500_KM_AWAY = 7
+MORE_THAN_500_KM_AWAY = 8
+MORE_THAN_500_KM_AWAY_IN_ANOTHER_COUNTRY = 9
 
 FURTHER_EDUC = [
     "dn012d1",
@@ -134,12 +148,59 @@ def task_create_estimation_data(
     dat = create_age_parent_and_parent_alive(dat, parent="father")
     # !!! Replace mother_alive = 1 if health status >= 0
 
+    dat = create_parents_live_close(dat)
+
     dat = create_working(dat)
+
+    dat = create_retired(dat)
+
+    dat = create_years_since_retirement(dat)
 
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
+
+
+def create_years_since_retirement(dat):
+    dat["_years_since_retirement"] = dat["int_year"] - dat["ep329_"]
+
+    return dat
+
+
+def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
+    _cond = [
+        (dat["ep005_"] == 1)
+        | (~dat["ep329_"].isna() & (dat["ep329_"] <= dat["int_year"]))
+        | (dat["ypen1"] > 0),  # or >= 200??
+        dat["ep005_"].isna() & dat["ep329_"].isna(),
+    ]
+    _val = [1, np.nan]
+
+    dat["retired"] = np.select(_cond, _val, 0)
+
+    return dat
+
+
+def create_parents_live_close(dat):
+    dat["dist_mother"] = np.where(dat["dn030_1"] >= 0, dat["dn030_1"], np.nan)
+    dat["dist_father"] = np.where(dat["dn030_2"] >= 0, dat["dn030_2"], np.nan)
+
+    conditions_distance = [
+        (dat["dist_father"] <= BETWEEN_5_AND_25_KM_AWAY)
+        | (dat["dist_mother"] <= BETWEEN_5_AND_25_KM_AWAY),
+        (dat["dist_father"] > BETWEEN_5_AND_25_KM_AWAY)
+        | (dat["dist_mother"] > BETWEEN_5_AND_25_KM_AWAY),
+    ]
+    choices_distance = [1, 0]
+
+    dat["parents_live_close"] = np.select(
+        conditions_distance,
+        choices_distance,
+        default=np.nan,
+    )
+
+    return dat
 
 
 def create_parental_health_status(dat, parent):
@@ -614,21 +675,6 @@ def create_working(dat):
         1,
         0,
     )
-
-    return dat
-
-
-def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
-    """Define retirement status."""
-    # Current job situation
-    # -2 Refusal
-    # -1 Don't know
-    # 1 Retired
-    # 2 Employed or self-employed (including working for family business)
-    # 3 Unemployed
-    # 4 Permanently sick or disabled
-    # 5 Homemaker
-    # 97 Other
 
     return dat
 
