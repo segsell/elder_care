@@ -152,14 +152,62 @@ def task_create_estimation_data(
 
     dat = create_working(dat)
 
-    dat = create_retired(dat)
+    dat = create_most_recent_job_started(dat)
+    dat = create_most_recent_job_ended(dat)
+    #
 
+    dat = create_retired(dat)
     dat = create_years_since_retirement(dat)
 
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
+
+
+def create_most_recent_job_ended(dat):
+    # Identify columns that start with "sl_re026"
+    job_end = [col for col in dat.columns if col.startswith("sl_re026")]
+
+    # Iterate through columns and set values < 0 to NA, and values == 9997 to int_year
+    # 9997: Still in this job
+    for job in job_end:
+        # dat[job] = np.where(
+        #     dat[job] < 0, np.nan, np.where(dat[job] == 9997, dat["int_year"], dat[job])
+        # )
+        dat[job] = np.where(dat[job] < 0, np.nan, dat[job])
+
+    dat["most_recent_job_ended"] = dat.apply(_find_most_recent, axis=1)
+
+    dat["most_recent_job_ended"] = dat.groupby("mergeid")[
+        "most_recent_job_ended"
+    ].transform(lambda x: x.ffill().bfill())
+
+    return dat
+
+
+def create_most_recent_job_started(dat):
+    # Identify columns that start with "sl_re011"
+    job_start = [col for col in dat.columns if col.startswith("sl_re011")]
+
+    # Iterate through columns and set values < 0 to NA
+    for job in job_start:
+        dat[job] = np.where(dat[job] < 0, np.nan, dat[job])
+
+    dat["most_recent_job_started"] = dat.apply(_find_most_recent, axis=1)
+
+    dat["most_recent_job_started"] = dat.groupby("mergeid")[
+        "most_recent_job_started"
+    ].transform(lambda x: x.ffill().bfill())
+
+    return dat
+
+
+def _find_most_recent(row, cols):
+    for col in reversed(cols):
+        if not pd.isna(row[col]):
+            return row[col]
+    return np.nan
 
 
 def create_years_since_retirement(dat):
