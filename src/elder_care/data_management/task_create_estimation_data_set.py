@@ -191,9 +191,12 @@ def create_parents_live_close(dat):
     dat["dist_mother"] = dat.groupby("mergeid")["dist_mother"].transform(
         lambda x: x.ffill().bfill(),
     )
+    dat["dist_mother"] = np.where(dat["mother_alive"] == 0, np.nan, dat["dist_mother"])
+
     dat["dist_father"] = dat.groupby("mergeid")["dist_father"].transform(
         lambda x: x.ffill().bfill(),
     )
+    dat["dist_father"] = np.where(dat["father_alive"] == 0, np.nan, dat["dist_father"])
 
     conditions_distance = [
         (dat["dist_father"] <= BETWEEN_5_AND_25_KM_AWAY)
