@@ -52,6 +52,14 @@ BETWEEN_100_AND_500_KM_AWAY = 7
 MORE_THAN_500_KM_AWAY = 8
 MORE_THAN_500_KM_AWAY_IN_ANOTHER_COUNTRY = 9
 
+STILL_IN_THIS_JOB = 9997
+
+ALWAYS_FULL_TIME = 1.0
+ALWAYS_PART_TIME = 2.0
+CHANGED_ONCE_FULL_TO_PART = 3.0
+CHANGED_ONCE_PART_TO_FULL = 4.0
+CHANGED_MULTIPLE_TIMES = 5.0
+
 FURTHER_EDUC = [
     "dn012d1",
     "dn012d2",
@@ -89,13 +97,14 @@ def task_create_estimation_data(
 
     # Load the data
     dat = pd.read_csv(BLD / "data" / "data_merged.csv")
-
     # Filter for females
     dat = dat[dat["gender"] == FEMALE]
 
-    # number of siblings alive
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+    dat["first_int_year"] = dat.groupby("mergeid")["int_year"].transform("first")
+    dat["lagged_int_year"] = dat.groupby("mergeid")["int_year"].shift(1)
 
-    # Set negative values to missing
+    # Number of siblings alive. Set negative values to missing
     dat["dn036_"] = np.where(dat["dn036_"] < 0, np.nan, dat["dn036_"])
     dat["dn037_"] = np.where(dat["dn037_"] < 0, np.nan, dat["dn037_"])
 
@@ -135,8 +144,6 @@ def task_create_estimation_data(
 
     # current job situation
 
-    # retired
-
     dat = create_married(dat)
 
     dat = create_caregving(dat)
@@ -154,8 +161,17 @@ def task_create_estimation_data(
 
     dat = create_most_recent_job_started(dat)
     dat = create_most_recent_job_ended(dat)
-    #
 
+    dat = create_retrospective_work_experience(dat)
+    dat = create_work_experience_since_first_interview(
+        dat,
+        working="working",
+        part_time="part_time",
+        full_time="full_time",
+    )
+    dat["work_exp"] = dat["retro_work_exp"] + dat["work_exp_cum"]
+
+    # retired
     dat = create_retired(dat)
     dat = create_years_since_retirement(dat)
 
@@ -165,6 +181,120 @@ def task_create_estimation_data(
 # =====================================================================================
 
 
+def create_retrospective_work_experience(dat):
+    """Create weight experience weighted by part- and full time."""
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+    dat["first_int_year"] = dat.groupby("mergeid")["int_year"].transform("first")
+    dat["lagged_int_year"] = dat.groupby("mergeid")["int_year"].shift(1)
+
+    prefixes = ("sl_re011_", "sl_re026_")
+    retro_cols = [col for col in dat.columns if col.startswith(prefixes)]
+
+    # Iterate over the prefixes and apply forward and backward fill
+    for prefix in prefixes:
+        relevant_cols = [col for col in dat.columns if col.startswith(prefix)]
+        dat[relevant_cols] = dat.groupby("mergeid")[relevant_cols].transform(
+            lambda x: x.ffill().bfill(),
+        )
+
+    # Use map with a lambda function to replace negative values
+    dat[retro_cols] = dat[retro_cols].apply(
+        lambda x: x.map(lambda val: np.nan if val < 0 else val),
+    )
+
+    suffixes = range(1, 17)
+
+    # no caregivers, unreasonably high values in in work experience (typo?)
+    individuals_to_drop = ["DE-125018-01", "DE-561847-02", "DE-811637-01"]
+    dat = dat[~dat["mergeid"].isin(individuals_to_drop)]
+
+    count_changed_multiple_times = 0
+    for suffix in suffixes:
+        dat[f"weight_exper_{suffix}"] = np.nan
+
+        job_ended = np.where(
+            dat[f"sl_re026_{suffix}"] >= dat["first_int_year"],
+            dat["first_int_year"],
+            dat[f"sl_re026_{suffix}"],
+        )
+
+        always_full_time = dat[f"sl_re016_{suffix}"] == ALWAYS_FULL_TIME
+        dat.loc[always_full_time, f"weight_exper_{suffix}"] = 1.0 * np.abs(
+            job_ended - dat[f"sl_re011_{suffix}"],
+        )
+
+        always_part_time = dat[f"sl_re016_{suffix}"] == ALWAYS_PART_TIME
+        dat.loc[always_part_time, f"weight_exper_{suffix}"] = 0.5 * np.abs(
+            job_ended - dat[f"sl_re011_{suffix}"],
+        )
+
+        switched_from_full_to_part_time = (
+            dat[f"sl_re016_{suffix}"] == CHANGED_ONCE_FULL_TO_PART
+        )
+        dat.loc[switched_from_full_to_part_time, f"weight_exper_{suffix}"] = 1 * np.abs(
+            dat[f"sl_re018_{suffix}"] - dat[f"sl_re011_{suffix}"],
+        ) + 0.5 * np.abs(job_ended - dat[f"sl_re018_{suffix}"])
+
+        switched_from_part_to_full_time = (
+            dat[f"sl_re016_{suffix}"] == CHANGED_ONCE_PART_TO_FULL
+        )
+        dat.loc[
+            switched_from_part_to_full_time,
+            f"weight_exper_{suffix}",
+        ] = 0.5 * np.abs(
+            dat[f"sl_re018_{suffix}"] - dat[f"sl_re011_{suffix}"],
+        ) + 1 * np.abs(
+            job_ended - dat[f"sl_re020_{suffix}"],
+        )
+
+        # What about changed multiple times?
+        changed_multiple_times = dat[f"sl_re016_{suffix}"] == CHANGED_MULTIPLE_TIMES
+        dat.loc[changed_multiple_times, f"weight_exper_{suffix}"] = 0.75 * np.abs(
+            dat[f"sl_re018_{suffix}"] - dat[f"sl_re011_{suffix}"],
+        ) + 0.75 * np.abs(job_ended - dat[f"sl_re020_{suffix}"])
+
+        count_changed_multiple_times += changed_multiple_times.sum()
+
+    # Create a list of column names for 'weight_exper_' columns
+    weight_columns = [f"weight_exper_{i}" for i in suffixes]
+
+    # Calculate work_experience row-wise and store the result in a new column
+    dat["_retro_work_exp"] = dat[weight_columns].sum(axis=1)
+
+    # Calculate the maximum work_experience value within each 'mergeid' group
+    dat["retro_work_exp"] = dat.groupby("mergeid")["_retro_work_exp"].transform("max")
+    # 109890.5
+    # 137317.25
+
+    return dat
+
+
+def create_work_experience_since_first_interview(dat, working, full_time, part_time):
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    dat["lagged_working"] = dat.groupby("mergeid")[working].shift(1)
+
+    _cond = [(dat[full_time] == 1), (dat[part_time] == 1)]
+    _val = [1, 0.5]
+    dat["exp_weight"] = np.select(_cond, _val, default=0)
+    dat["lagged_exp_weight"] = dat.groupby("mergeid")["exp_weight"].shift(1)
+
+    dat["recent_job_ended_gt_first_int_year"] = (
+        dat["most_recent_job_ended"] > dat["first_int_year"]
+    )
+
+    dat["work_exp_cum"] = np.where(
+        dat["lagged_working"] == 1,
+        (dat["int_year"] - dat["lagged_int_year"]) * dat["lagged_exp_weight"],
+        0,
+    )
+
+    # Calculate the cumulative sum of work_exp_cum by mergeid
+    dat["work_exp_cum"] = dat.groupby("mergeid")["work_exp_cum"].cumsum()
+
+    return dat
+
+
 def create_most_recent_job_ended(dat):
     # Identify columns that start with "sl_re026"
     job_end = [col for col in dat.columns if col.startswith("sl_re026")]
@@ -172,12 +302,13 @@ def create_most_recent_job_ended(dat):
     # Iterate through columns and set values < 0 to NA, and values == 9997 to int_year
     # 9997: Still in this job
     for job in job_end:
-        # dat[job] = np.where(
-        #     dat[job] < 0, np.nan, np.where(dat[job] == 9997, dat["int_year"], dat[job])
-        # )
-        dat[job] = np.where(dat[job] < 0, np.nan, dat[job])
+        dat[job] = np.where(
+            dat[job] < 0,
+            np.nan,
+            np.where(dat[job] == STILL_IN_THIS_JOB, dat["int_year"], dat[job]),
+        )
 
-    dat["most_recent_job_ended"] = dat.apply(_find_most_recent, axis=1)
+    dat["most_recent_job_ended"] = dat.apply(_find_most_recent, axis=1, cols=job_end)
 
     dat["most_recent_job_ended"] = dat.groupby("mergeid")[
         "most_recent_job_ended"
@@ -194,7 +325,11 @@ def create_most_recent_job_started(dat):
     for job in job_start:
         dat[job] = np.where(dat[job] < 0, np.nan, dat[job])
 
-    dat["most_recent_job_started"] = dat.apply(_find_most_recent, axis=1)
+    dat["most_recent_job_started"] = dat.apply(
+        _find_most_recent,
+        axis=1,
+        cols=job_start,
+    )
 
     dat["most_recent_job_started"] = dat.groupby("mergeid")[
         "most_recent_job_started"
