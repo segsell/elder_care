@@ -47,11 +47,11 @@ repos:
     -   id: docformatter
         args: [--in-place, --wrap-summaries, "88", --wrap-descriptions, "88", --blank]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.5
+    rev: v0.1.6
     hooks:
       - id: ruff
 -   repo: https://github.com/dosisod/refurb
-    rev: v1.22.2
+    rev: v1.24.0
     hooks:
     -   id: refurb
         args: [--ignore, FURB126]
