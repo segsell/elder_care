@@ -1,6 +1,6 @@
-# parental_care
+# elder_care
 
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/segsell/parental_care/main.svg)](https://results.pre-commit.ci/latest/github/segsell/parental_care/main)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/segsell/elder_care/main.svg)](https://results.pre-commit.ci/latest/github/segsell/elder_care/main)
 [![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## Usage
