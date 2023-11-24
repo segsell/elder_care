@@ -383,7 +383,7 @@ def create_years_since_retirement(dat):
     # Fill missing values in 'years_since_retirement' with 0 only if 'retired' is equal to 0 or 1
 
     dat.loc[dat["years_since_retirement"] > 0, "retired"] = dat["retired"].fillna(
-        value=1
+        value=1,
     )
 
     mask = (dat["retired"] == 0) | (dat["retired"] == 1)
