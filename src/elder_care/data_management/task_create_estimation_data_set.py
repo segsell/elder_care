@@ -18,6 +18,7 @@ ANSWER_NO = 5
 
 MIN_AGE = 55
 MAX_AGE = 68
+MIN_WORKING_AGE = 14
 
 MIN_YEARS_SCHOOLING = 0
 MAX_YEARS_SCHOOLING = 25
@@ -174,6 +175,7 @@ def task_create_estimation_data(
     # retired
     dat = create_retired(dat)
     dat = create_years_since_retirement(dat)
+    # consider retired if most recent job ended before first interview
 
     dat.to_csv(path, index=False)
 
@@ -205,8 +207,7 @@ def create_retrospective_work_experience(dat):
     suffixes = range(1, 17)
 
     # no caregivers, unreasonably high values in in work experience (typo?)
-    individuals_to_drop = ["DE-125018-01", "DE-561847-02", "DE-811637-01"]
-    dat = dat[~dat["mergeid"].isin(individuals_to_drop)]
+    # "DE-125018-01", "DE-561847-02", "DE-811637-01", "DE-300087-02"
 
     count_changed_multiple_times = 0
     for suffix in suffixes:
@@ -215,7 +216,11 @@ def create_retrospective_work_experience(dat):
         job_ended = np.where(
             dat[f"sl_re026_{suffix}"] >= dat["first_int_year"],
             dat["first_int_year"],
-            dat[f"sl_re026_{suffix}"],
+            np.where(
+                dat[f"sl_re026_{suffix}"] == STILL_IN_THIS_JOB,
+                dat["first_int_year"],
+                dat[f"sl_re026_{suffix}"],
+            ),
         )
 
         always_full_time = dat[f"sl_re016_{suffix}"] == ALWAYS_FULL_TIME
@@ -265,8 +270,18 @@ def create_retrospective_work_experience(dat):
     dat["retro_work_exp"] = dat.groupby("mergeid")["_retro_work_exp"].transform("max")
     # 109890.5
     # 137317.25
+    # 110447.5 # after drop
+    # 110355.5 # < 14
+    # # < 15
 
-    return dat
+    _average_diff = dat.groupby("mergeid")[["age", "retro_work_exp"]].mean()
+    _average_diff["age_diff"] = _average_diff["age"] - _average_diff["retro_work_exp"]
+
+    mergeids_to_drop = _average_diff[
+        _average_diff["age_diff"] < MIN_WORKING_AGE
+    ].index  # < 15?
+
+    return dat[~dat["mergeid"].isin(mergeids_to_drop)]
 
 
 def create_work_experience_since_first_interview(dat, working, full_time, part_time):
@@ -305,7 +320,7 @@ def create_most_recent_job_ended(dat):
         dat[job] = np.where(
             dat[job] < 0,
             np.nan,
-            np.where(dat[job] == STILL_IN_THIS_JOB, dat["int_year"], dat[job]),
+            dat[job],
         )
 
     dat["most_recent_job_ended"] = dat.apply(_find_most_recent, axis=1, cols=job_end)
@@ -362,6 +377,8 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
 
     dat["retired"] = np.select(_cond, _val, 0)
 
+    # first retirement year
+
     return dat
 
 
@@ -400,7 +417,6 @@ def create_parents_live_close(dat):
 
 def create_parental_health_status(dat, parent):
     """Aggregate health status of parents from 5 into 3 levels."""
-    # this is just a dummy comment
     if parent == "mother":
         parent_indicator = 1
     elif parent == "father":
