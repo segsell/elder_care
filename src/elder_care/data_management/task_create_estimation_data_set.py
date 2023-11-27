@@ -1010,6 +1010,8 @@ def create_working(dat):
 def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
     """Create high education indicator.
 
+    ISCED
+
     Stufe 0: Kindergarten
     Stufe 1: Grundschule
     Stufe 2A: Realschule, Mittlere Reife und Polytechnische Oberschule (DDR)
@@ -1037,7 +1039,7 @@ def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
     dat["years_educ"] = np.select(conditions, values, dat["years_educ"])
 
     # Create 'high_educ' column, setting NaN when 'years_educ' is NaN
-    dat["high_educ"] = np.where(
+    dat["high_educ_years"] = np.where(
         dat["years_educ"].isna(),
         np.nan,
         (dat["years_educ"] >= HIGH_EDUC_YEARS_SCHOOLING).astype(int),
@@ -1055,7 +1057,7 @@ def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
     dat["dn012dno"] = np.where(dat["dn012dno"] == 1, 0, dat["dn012dno"])
     dat["further_educ_max"] = dat.apply(find_max_suffix, axis=1)
 
-    dat["high_educ_012"] = (
+    dat["_high_educ_012"] = (
         (
             dat["wave"].isin([1, 2, 4])
             & (dat["further_educ_max"] >= HIGH_EDUC_INDICATOR_WAVE_FOUR)
@@ -1066,10 +1068,8 @@ def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
         )
     ).astype(int)
 
-    dat["high_educ_comb"] = (
-        (dat["high_educ"] == 1)
-        # | (dat["high_educ_012"] == 1)
-        | (dat["isced"] >= HOCHSCHUL_DEGREE)
+    dat["high_educ"] = (
+        (dat["high_educ_years"] == 1) | (dat["isced"] >= HOCHSCHUL_DEGREE)
     ).astype(int)
 
     conditions = [(dat["isced"] >= HOCHSCHUL_DEGREE), (dat["isced"] < HOCHSCHUL_DEGREE)]
