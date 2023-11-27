@@ -1,6 +1,6 @@
-@Unpublished{parental_care2023,
+@Unpublished{elder_care2023,
     Title  = {A project for ...},
     Author = {Sebastian Gsell},
     Year   = {2023},
-    Url    = {https://github.com/segsell/parental_care}
+    Url    = {https://github.com/segsell/elder_care}
 }

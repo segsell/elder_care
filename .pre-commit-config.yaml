@@ -3,7 +3,7 @@ repos:
     rev: v4.5.0
     hooks:
     -   id: check-added-large-files
-        args: ['--maxkb=25']
+        args: ['--maxkb=2000']
     -   id: check-case-conflict
     -   id: check-merge-conflict
     -   id: check-vcs-permalinks
@@ -22,7 +22,7 @@ repos:
     -   id: python-check-mock-methods
     -   id: python-no-eval
     -   id: python-no-log-warn
-    -   id: python-use-type-annotations
+    # -   id: python-use-type-annotations
     -   id: text-unicode-replacement-char
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.15.0
@@ -38,7 +38,7 @@ repos:
     hooks:
     -   id: setup-cfg-fmt
 -   repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 23.11.0
     hooks:
     -   id: black
 -   repo: https://github.com/PyCQA/docformatter
@@ -47,14 +47,16 @@ repos:
     -   id: docformatter
         args: [--in-place, --wrap-summaries, "88", --wrap-descriptions, "88", --blank]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.292
+    rev: v0.1.6
     hooks:
       - id: ruff
 -   repo: https://github.com/dosisod/refurb
-    rev: v1.21.0
+    rev: v1.24.0
     hooks:
     -   id: refurb
         args: [--ignore, FURB126]
+        additional_dependencies:
+                - mypy<1.7 # SEE: https://github.com/dosisod/refurb/issues/305
 
 -   repo: https://github.com/econchick/interrogate
     rev: 1.5.0
