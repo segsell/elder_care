@@ -92,13 +92,16 @@ def table(df_col):
 
 
 def task_create_estimation_data(
+    path_to_raw_data: Path = BLD / "data" / "data_merged.csv",
     path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
 ) -> None:
     """Create the estimation data set."""
-    # nurs#Out-of-pocket payment for nursing home / home care
+    # nurs
+    # Out-of-pocket payment for nursing home / home care
 
     # Load the data
-    dat = pd.read_csv(BLD / "data" / "data_merged.csv")
+    dat = pd.read_csv(path_to_raw_data)
+
     # Filter for females
     dat = dat[dat["gender"] == FEMALE]
 
@@ -184,7 +187,7 @@ def task_create_estimation_data(
 
 
 def create_retrospective_work_experience(dat):
-    """Create weight experience weighted by part- and full time."""
+    """Create retrospective work experience weighted by part and full time spells."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
     dat["first_int_year"] = dat.groupby("mergeid")["int_year"].transform("first")
     dat["lagged_int_year"] = dat.groupby("mergeid")["int_year"].shift(1)
@@ -285,6 +288,7 @@ def create_retrospective_work_experience(dat):
 
 
 def create_work_experience_since_first_interview(dat, working, full_time, part_time):
+    """Create cumulative, weighted work experience since first interview."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
     dat["lagged_working"] = dat.groupby("mergeid")[working].shift(1)
@@ -311,6 +315,7 @@ def create_work_experience_since_first_interview(dat, working, full_time, part_t
 
 
 def create_most_recent_job_ended(dat):
+    """Create a variable indicating the year where the most recent job ended."""
     # Identify columns that start with "sl_re026"
     job_end = [col for col in dat.columns if col.startswith("sl_re026")]
 
@@ -333,6 +338,7 @@ def create_most_recent_job_ended(dat):
 
 
 def create_most_recent_job_started(dat):
+    """Create a variable indicating the year where the most recent job started."""
     # Identify columns that start with "sl_re011"
     job_start = [col for col in dat.columns if col.startswith("sl_re011")]
 
@@ -354,6 +360,7 @@ def create_most_recent_job_started(dat):
 
 
 def _find_most_recent(row, cols):
+    """Find the most recent value in a row."""
     for col in reversed(cols):
         if not pd.isna(row[col]):
             return row[col]
@@ -361,6 +368,7 @@ def _find_most_recent(row, cols):
 
 
 def create_years_since_retirement(dat):
+    """Create years since retirement."""
     # ep329_: retirement year
     dat["ep329_"] = np.where(
         (dat["ep329_"] == REFUSAL) | (dat["ep329_"] == DONT_KNOW),
@@ -380,10 +388,11 @@ def create_years_since_retirement(dat):
         dat["years_since_retirement"],
     )
 
-    # Fill missing values in 'years_since_retirement' with 0 only if 'retired' is equal to 0 or 1
+    # Fill missing values in 'years_since_retirement' with 0
+    # only if 'retired' is equal to 0 or 1
 
     dat.loc[dat["years_since_retirement"] > 0, "retired"] = dat["retired"].fillna(
-        value=1
+        value=1,
     )
 
     mask = (dat["retired"] == 0) | (dat["retired"] == 1)
@@ -391,42 +400,42 @@ def create_years_since_retirement(dat):
     # missing retired in one year -->
 
     # Step 1: Sort the DataFrame by 'mergeid' and 'int_year' (if not sorted already)
-    dat.sort_values(by=["mergeid", "int_year"], inplace=True)
+    dat = dat.sort_values(by=["mergeid", "int_year"])
 
     # Step 2: Identify individuals with at least one missing 'retired'
-    missing_retired_individuals = dat[dat["retired"].isnull()]
+    missing_retired_individuals = dat[dat["retired"].isna()]
 
     # Step 3: Extract unique 'mergeids' from individuals with missing 'retired'
     unique_mergeids_missing_retired = missing_retired_individuals["mergeid"].unique()
 
-    # Step 4: Display the entire DataFrame for individuals with missing 'retired' and all 'int_years'
+    # Step 4: Display the entire DataFrame for individuals with missing '
+    # retired' and all 'int_years'
     data_for_missing_retired_individuals = dat[
         dat["mergeid"].isin(unique_mergeids_missing_retired)
     ]
-
-    breakpoint()
 
     # Display all rows where 'working' is 1 and 'retired' is 1
     rows_working_retired = dat[(dat["working"] == 1) & (dat["retired"] == 1)]
 
     # Identify 'mergeids' with at least one missing value in 'retired'
-    mergeids_with_missing_retired = dat[dat["retired"].isnull()][
+    mergeids_with_missing_retired = dat[dat["retired"].isna()][
         "mergeid"
     ].unique()  # (209,)
-    mergeids_with_missing_working = dat[dat["working"].isnull()]["mergeid"].unique()
+    mergeids_with_missing_working = dat[dat["working"].isna()]["mergeid"].unique()
 
     return dat
 
 
 def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
+    """Create retired indicator and retirement year."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
     _cond = [
         (dat["cjs"] == RETIRED)
         | ((dat["ep329_"] > 0) & (dat["ep329_"] <= dat["int_year"]))
         | (dat["ypen1"] > 0),
-        # | (dat["yreg1"] > 0)
-        # | (dat["ypen2"] > 0),  # or >= 200??
+        # | (dat["yreg1"] > 0),
+        # | (dat["ypen2"] > 0),
         dat["cjs"].isna() & dat["ep329_"].isna(),
         (dat["cjs"] != RETIRED) & (dat["cjs"] > 0),
     ]
@@ -440,35 +449,32 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
     # dat = _replace_missing_working(dat)
 
     # Replace 'working' with 0 where 'working' is NaN, 'cjs' is NaN, and 'retired' is 1
-    mask = (dat["working"].isnull()) & (dat["cjs"].isnull()) & (dat["retired"] == 1)
+    mask = (dat["working"].isna()) & (dat["cjs"].isna()) & (dat["retired"] == 1)
     dat.loc[mask, "working"] = 0
 
-    mask = (dat["working"].isnull()) & ((dat["ep013_"] >= 0) | (dat["pwork"] == 0))
+    mask = (dat["working"].isna()) & ((dat["ep013_"] >= 0) | (dat["pwork"] == 0))
     dat.loc[mask, "working"] = 0
 
-    mask = (dat["working"].isnull()) & (dat["retired"] == 1)
+    mask = (dat["working"].isna()) & (dat["retired"] == 1)
     dat.loc[mask, "working"] = 0
 
     # Replace 'working' with 0 where 'working' is NaN and 'retired' is 0 or 1
-    # mask = (dat["working"].isnull()) & (dat["retired"].isin([0, 1]))
+    # mask = (dat["working"].isna()) & (dat["retired"].isin([0, 1]))
     # dat.loc[mask, "working"] = 0
 
     # Display all rows where 'working' is NaN but 'retired' is not NaN
     rows_working_nan_retired_not_nan = dat[
-        dat["working"].isnull() & dat["retired"].notnull()
+        dat["working"].isna() & dat["retired"].notna()
     ]
-    # rows_working_nan_retired_not_nan[["mergeid", "int_year", "cjs", "working", "retired"]]
-    unique_mergeids_working_nan = dat[dat["working"].isnull()]["mergeid"].unique()
+    unique_mergeids_working_nan = dat[dat["working"].isna()]["mergeid"].unique()
 
     # dat[~dat['mergeid'].isin(unique_mergeids_working_nan)]["mergeid"].unique().shape
-
-    breakpoint()
 
     # Drop unreasonably individuals that violate absorbing retirement?
     # selected_mergeids = ['DE-735215-01', 'DE-521189-01']
 
     # Step 1: Sort the DataFrame by 'mergeid' and 'int_year' (if not sorted already)
-    dat.sort_values(by=["mergeid", "int_year"], inplace=True)
+    dat = dat.sort_values(by=["mergeid", "int_year"])
 
     # Step 2: Identify individuals violating the rule
     violating_individuals = dat[(dat["retired"] == 1) & (dat["retired"].shift(-1) == 0)]
@@ -476,24 +482,15 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
     # Step 3: Extract unique 'mergeids' from violating individuals
     unique_mergeids_violating = violating_individuals["mergeid"].unique()
 
-    # Step 4: Display the entire DataFrame for the violating individuals and all 'int_years'
+    # Step 4: Display the entire DataFrame for the violating individuals and
+    # all 'int_years'
     data_for_violating_individuals = dat[dat["mergeid"].isin(unique_mergeids_violating)]
 
-    # Check if they have crucial missings elsewhere
-    # individuals_with_non_empty_hnetw = dat[dat["hnetw"].notnull()]
-    # unique_mergeids_with_hnetw = individuals_with_non_empty_hnetw["mergeid"].unique()
-
-    # individuals_with_missing_hnetw = dat[dat["hnetw"].isnull()]
-
-    # # Extract unique mergeids from the filtered individuals
-    # unique_mergeids_missing_hnetw = individuals_with_missing_hnetw["mergeid"].unique()
-
-    # # Display all rows for the extracted mergeids with missing 'hnetw'
-    # rows_for_missing_mergeids = dat[dat["mergeid"].isin(unique_mergeids_missing_hnetw)]
-
+    # lagged retired
     dat["lagged_retired"] = dat.groupby("mergeid")["retired"].shift(1)
 
-    # Identify the first occurrence where 'lagged_retired' switches from 0 to 1 by 'mergeid'
+    # Identify the first occurrence where 'lagged_retired' switches from 0 to 1
+    # by 'mergeid'
     dat["chose_retirement"] = (
         (dat["lagged_retired"] == 0)
         & (dat["retired"] == 1)
@@ -507,23 +504,23 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
     ].transform(
         lambda x: x.ffill().bfill(),
     )
-    t = table(dat["retirement_year_imputed"])
-    n = dat["retirement_year_imputed"].isna().sum()
 
     return dat
 
 
 def _replace_missing_working(dat):
+    """Replace missing values for working based on retired."""
     return dat
 
 
 def _make_retirement_absorbing(dat):
-    dat.sort_values(by=["mergeid", "int_year"], inplace=True)
+    """Enforce absorbing retirement."""
+    dat = dat.sort_values(by=["mergeid", "int_year"])
 
     replace_with_zero = (
         # (dat["retired"].shift(1) == 0) &
         (dat["retired"].shift(-1) == 0)
-        # & (dat["retired"].shift(1).notnull())
+        # & (dat["retired"].shift(1).notna())
         # & (dat["mergeid"].shift(-1) == dat["mergeid"])
         & (dat["mergeid"] == dat["mergeid"].shift(-1))
     )
@@ -542,14 +539,15 @@ def _make_retirement_absorbing(dat):
 
 
 def _replace_missing_retirement(dat):
-    dat.sort_values(by=["mergeid", "int_year"], inplace=True)
+    """Impute missing values for retired."""
+    dat = dat.sort_values(by=["mergeid", "int_year"])
 
-    missing_entries = dat["retired"].isnull()
+    missing_entries = dat["retired"].isna()
 
     replace_with_zero = (
         # (dat["retired"].shift(1) == 0) &
         (dat["retired"].shift(-1) == 0)
-        # & (dat["retired"].shift(1).notnull())
+        # & (dat["retired"].shift(1).notna())
         # & (dat["mergeid"].shift(-1) == dat["mergeid"])
         & (dat["mergeid"] == dat["mergeid"].shift(-1))
     )
@@ -564,6 +562,7 @@ def _replace_missing_retirement(dat):
 
 
 def create_parents_live_close(dat):
+    """Create a variable indicating whether parents live close."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
     dat["dist_mother"] = np.where(dat["dn030_1"] >= 0, dat["dn030_1"], np.nan)
@@ -699,16 +698,15 @@ def create_age_parent_and_parent_alive(dat, parent):
 
 
 def _impute_missing_values_parent_age(dat, parent):
+    """Impute missing values for parent_age."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
     # Identify the rows where '{parent}_alive' switches from 1 to 0
     # within each 'mergeid'
     parent_passes_away = (dat[f"{parent}_alive"] == 1) & (
         dat[f"{parent}_alive"].shift(-1)
-        == 0
-        # & (dat["mergeid"] == dat["mergeid"].shift(-1))
+        == 0 & (dat["mergeid"] == dat["mergeid"].shift(-1))
     )
-    # breakpoint()
 
     # Calculate '{parent}_birth_year' based on 'int_year' and f"{parent}_age_at_death"
     # for the switching year
@@ -747,6 +745,7 @@ def _impute_missing_values_parent_age(dat, parent):
 
 
 def _impute_missing_values_parent_alive(dat, parent):
+    """Impute missing values for parent_alive."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
     dat[f"{parent}_age_imputed_raw"] = (
@@ -1079,6 +1078,23 @@ def create_working(dat):
 
 
 def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
+    """Create high education indicator.
+
+    Stufe 0: Kindergarten
+    Stufe 1: Grundschule
+    Stufe 2A: Realschule, Mittlere Reife und Polytechnische Oberschule (DDR)
+    Stufe 2B: Volks- und Hauptschule und Anlernausbildung
+    Stufe 3A: Fachhochschulreife und Abitur
+    Stufe 3B: Berufsausbildung im dualen System, mittlere Verwaltungsausbildung,
+    Berufsfach-/Kollegschulabschluss und einjährige Schulen des Gesundheitswesens
+    Stufe 4A: Abschluss von 3A UND 3B
+    Stufe 5A: Fachhochschulabschluss
+    Stufe 5A: Universitätsabschluss
+    Stufe 5B: Meister/Techniker, 2- bis 3-jährige Schule des Gesundheitswesens,
+    Fach-/Berufsakademie, Fachschulabschluss (DDR) und Verwaltungsfachschule
+    Stufe 6: Promotion
+
+    """
     dat["years_educ"] = dat["yedu"].copy()
 
     conditions = [
@@ -1119,20 +1135,6 @@ def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
             & (dat["further_educ_max"] >= HIGH_EDUC_INDICATOR_WAVE_FIVE)
         )
     ).astype(int)
-
-    # Stufe 0: Kindergarten
-    # Stufe 1: Grundschule
-    # Stufe 2A: Realschule, Mittlere Reife und Polytechnische Oberschule (DDR)
-    # Stufe 2B: Volks- und Hauptschule und Anlernausbildung
-    # Stufe 3A: Fachhochschulreife und Abitur
-    # Stufe 3B: Berufsausbildung im dualen System, mittlere Verwaltungsausbildung,
-    # Berufsfach-/Kollegschulabschluss und einjährige Schulen des Gesundheitswesens
-    # Stufe 4A: Abschluss von 3A UND 3B
-    # Stufe 5A: Fachhochschulabschluss
-    # Stufe 5A: Universitätsabschluss
-    # Stufe 5B: Meister/Techniker, 2- bis 3-jährige Schule des Gesundheitswesens,
-    # Fach-/Berufsakademie, Fachschulabschluss (DDR) und Verwaltungsfachschule
-    # Stufe 6: Promotion
 
     dat["high_educ_comb"] = (
         (dat["high_educ"] == 1)
