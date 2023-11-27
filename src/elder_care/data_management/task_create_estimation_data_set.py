@@ -399,30 +399,6 @@ def create_years_since_retirement(dat):
     dat["years_since_retirement"] = dat["years_since_retirement"].where(~mask, 0)
     # missing retired in one year -->
 
-    # Step 1: Sort the DataFrame by 'mergeid' and 'int_year' (if not sorted already)
-    dat = dat.sort_values(by=["mergeid", "int_year"])
-
-    # Step 2: Identify individuals with at least one missing 'retired'
-    missing_retired_individuals = dat[dat["retired"].isna()]
-
-    # Step 3: Extract unique 'mergeids' from individuals with missing 'retired'
-    unique_mergeids_missing_retired = missing_retired_individuals["mergeid"].unique()
-
-    # Step 4: Display the entire DataFrame for individuals with missing '
-    # retired' and all 'int_years'
-    data_for_missing_retired_individuals = dat[
-        dat["mergeid"].isin(unique_mergeids_missing_retired)
-    ]
-
-    # Display all rows where 'working' is 1 and 'retired' is 1
-    rows_working_retired = dat[(dat["working"] == 1) & (dat["retired"] == 1)]
-
-    # Identify 'mergeids' with at least one missing value in 'retired'
-    mergeids_with_missing_retired = dat[dat["retired"].isna()][
-        "mergeid"
-    ].unique()  # (209,)
-    mergeids_with_missing_working = dat[dat["working"].isna()]["mergeid"].unique()
-
     return dat
 
 
@@ -442,49 +418,8 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
     _val = [1, np.nan, 0]
     dat["retired"] = np.select(_cond, _val, 0)
 
-    # check
-
     dat = _replace_missing_retirement(dat)
-    # dat = _make_retirement_absorbing(dat)
-    # dat = _replace_missing_working(dat)
-
-    # Replace 'working' with 0 where 'working' is NaN, 'cjs' is NaN, and 'retired' is 1
-    mask = (dat["working"].isna()) & (dat["cjs"].isna()) & (dat["retired"] == 1)
-    dat.loc[mask, "working"] = 0
-
-    mask = (dat["working"].isna()) & ((dat["ep013_"] >= 0) | (dat["pwork"] == 0))
-    dat.loc[mask, "working"] = 0
-
-    mask = (dat["working"].isna()) & (dat["retired"] == 1)
-    dat.loc[mask, "working"] = 0
-
-    # Replace 'working' with 0 where 'working' is NaN and 'retired' is 0 or 1
-    # mask = (dat["working"].isna()) & (dat["retired"].isin([0, 1]))
-    # dat.loc[mask, "working"] = 0
-
-    # Display all rows where 'working' is NaN but 'retired' is not NaN
-    rows_working_nan_retired_not_nan = dat[
-        dat["working"].isna() & dat["retired"].notna()
-    ]
-    unique_mergeids_working_nan = dat[dat["working"].isna()]["mergeid"].unique()
-
-    # dat[~dat['mergeid'].isin(unique_mergeids_working_nan)]["mergeid"].unique().shape
-
-    # Drop unreasonably individuals that violate absorbing retirement?
-    # selected_mergeids = ['DE-735215-01', 'DE-521189-01']
-
-    # Step 1: Sort the DataFrame by 'mergeid' and 'int_year' (if not sorted already)
-    dat = dat.sort_values(by=["mergeid", "int_year"])
-
-    # Step 2: Identify individuals violating the rule
-    violating_individuals = dat[(dat["retired"] == 1) & (dat["retired"].shift(-1) == 0)]
-
-    # Step 3: Extract unique 'mergeids' from violating individuals
-    unique_mergeids_violating = violating_individuals["mergeid"].unique()
-
-    # Step 4: Display the entire DataFrame for the violating individuals and
-    # all 'int_years'
-    data_for_violating_individuals = dat[dat["mergeid"].isin(unique_mergeids_violating)]
+    dat = _replace_missing_working(dat)
 
     # lagged retired
     dat["lagged_retired"] = dat.groupby("mergeid")["retired"].shift(1)
@@ -510,6 +445,28 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
 
 def _replace_missing_working(dat):
     """Replace missing values for working based on retired."""
+    # Replace 'working' with 0 where 'working' is NaN, 'cjs' is NaN, and 'retired' is 1
+    mask = (dat["working"].isna()) & (dat["cjs"].isna()) & (dat["retired"] == 1)
+    dat.loc[mask, "working"] = 0
+
+    mask = (dat["working"].isna()) & ((dat["ep013_"] >= 0) | (dat["pwork"] == 0))
+    dat.loc[mask, "working"] = 0
+
+    mask = (dat["working"].isna()) & (dat["retired"] == 1)
+    dat.loc[mask, "working"] = 0
+
+    # ?! Replace 'working' with 0 where 'working' is NaN and 'retired' is 0 or 1
+    mask = (dat["working"].isna()) & (dat["retired"].isin([0, 1]))
+    dat.loc[mask, "working"] = 0
+
+    # working
+    # 0.0    4044
+    # 1.0    2372
+
+    # working
+    # 0.0    4229
+    # 1.0    2372
+
     return dat
 
 
@@ -527,7 +484,7 @@ def _make_retirement_absorbing(dat):
     replace_with_one = (
         (dat["retired"].shift(1) == 1)
         # & (dat["working"] == 0)
-        & ((dat["cjs"] != 2) & dat["cjs"].notna())
+        & ((dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED) & dat["cjs"].notna())
         & (dat["pwork"] == 0)
         & (dat["mergeid"] == dat["mergeid"].shift(1))
     )
@@ -865,7 +822,7 @@ def create_caregving(dat):
 
     dat["care_parents"] = np.select(conditions_parents, choices_parents, default=0)
 
-    conditions = [
+    _cond = [
         # personal care in hh
         (dat["sp018_"] == 1) & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1)),
         # care outside hh to mother
@@ -883,18 +840,16 @@ def create_caregving(dat):
             | (dat["sp009_3"] == FATHER)
         ),
     ]
-
-    choices = [1, 1, 1]  # Assign 1 if the conditions are met
-
-    # Use np.select to create the 'care_in_year' column
-    dat["care_in_year"] = np.select(conditions, choices, default=0)
+    _choice = [1, 1, 1]
+    dat["care_in_year"] = np.select(_cond, _choice, default=0)
 
     # care_parents and care_in_year identical except more zeros in care_in_year
     # because default is 0, not nan
     # --> take care parents?
 
+    # Create light and intensive care
     # sp011_1: how often inside
-    condition = [
+    _cond = [
         (
             (
                 (dat["sp011_1"] >= GIVEN_HELP_LESS_THAN_DAILY)
@@ -913,11 +868,10 @@ def create_caregving(dat):
         & ((dat["sp019d2"] != 1) & (dat["sp019d3"] != 1)),  # to whom in hh
         # no personal care in hh (e.g. to partner, want those excluded)
     ]
-    choice = [1]  # Assign 1 if the conditions are met
+    _choice = [1]
+    dat["light_care"] = np.select(_cond, _choice, default=0)
 
-    dat["light_care"] = np.select(condition, choice, default=0)
-
-    conditions = [
+    _cond = [
         (
             (
                 (dat["sp011_1"] == GIVEN_HELP_DAILY)
@@ -934,53 +888,30 @@ def create_caregving(dat):
         )
         | (
             (dat["sp018_"] == 1)  # or personal care in hh
-            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))
+            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
         ),  # include mother and father in law?
-        # & (dat["sp018_"].isna()),
     ]
-    choices = [1]
-    dat["intensive_care"] = np.select(conditions, choices, default=0)
+    _choice = [1]
+    dat["intensive_care"] = np.select(_cond, _choice, default=0)
 
+    # intensive care dominates light care
     dat["light_care"] = np.where(
         (dat["intensive_care"] == 1) & (dat["light_care"] == 1),
         0,
         dat["light_care"],
     )
 
+    # any care in a given year is either light or intensive
     dat["care"] = np.where(
         (dat["intensive_care"] == 1) | (dat["light_care"] == 1),
         1,
         0,
     )
 
-    # from 0 to nan, 1s unchanged
-    dat["care"] = np.where(
-        (dat["care_parents"] == 1)
-        & (dat["intensive_care"] == 0)
-        & (dat["light_care"] == 0),
-        np.nan,
-        dat["care"],
-    )
-
     # care experience
-    # Calculate cumulative sum for 'care_in_year' within each 'mergeid' group
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
     dat["lagged_care"] = dat.groupby("mergeid")["care"].shift(1)
     dat["care_experience"] = dat.groupby("mergeid")["lagged_care"].cumsum()
-    # dat["care_experience"] = (
-    #     .cumsum()
-    #     .where(dat["care_parents"] >= 0, np.nan)
-    # dat["care_experience"] = (
-    #     dat.groupby(["mergeid", "int_year"])["care"]
-    #     .cumsum()
-    #     .where(dat["care"] >= 0, np.nan)
-    # )
-
-    # dat["care_experience"] = (
-    #     .apply(lambda group: group.interpolate(method="linear",
-    # limit_direction="both"))
-    #     .fillna(0)
-    #     .astype(int)
 
     return dat
 
@@ -1028,7 +959,6 @@ def create_working(dat):
     _cond = [
         (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
         ((dat["cjs"] < 0) | (dat["cjs"].isna())),
-        # (dat["cjs"] < 0) & (dat["empstat"] >= 1),
     ]
     _val = [1, np.nan]
     dat["working"] = np.select(_cond, _val, default=0)
@@ -1165,3 +1095,55 @@ def _find_max_suffix(row):
             max_suffix = max(max_suffix, suffix)
 
     return max_suffix if max_suffix >= 0 else np.nan
+
+
+def _get_missing_values_retired_and_working(dat):
+    # Step 1: Sort the DataFrame by 'mergeid' and 'int_year' (if not sorted already)
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Step 2: Identify individuals with at least one missing 'retired'
+    missing_retired_individuals = dat[dat["retired"].isna()]
+
+    # Step 3: Extract unique 'mergeids' from individuals with missing 'retired'
+    unique_mergeids_missing_retired = missing_retired_individuals["mergeid"].unique()
+
+    # Step 4: Display the entire DataFrame for individuals with missing '
+    # retired' and all 'int_years'
+    data_for_missing_retired_individuals = dat[
+        dat["mergeid"].isin(unique_mergeids_missing_retired)
+    ]
+
+    # Identify 'mergeids' with at least one missing value in 'retired'
+    mergeids_with_missing_retired = dat[dat["retired"].isna()][
+        "mergeid"
+    ].unique()  # (209,)
+    mergeids_with_missing_working = dat[dat["working"].isna()]["mergeid"].unique()
+
+    return (
+        data_for_missing_retired_individuals,
+        mergeids_with_missing_retired,
+        mergeids_with_missing_working,
+    )
+
+
+def _get_mergeids_violating_absorbing_retirement(dat):
+    # Drop unreasonably individuals that violate absorbing retirement?
+    # 'DE-735215-01', 'DE-521189-01'
+
+    # Display all rows where 'working' is 1 and 'retired' is 1
+    rows_working_retired = dat[(dat["working"] == 1) & (dat["retired"] == 1)]
+
+    # Step 1: Sort the DataFrame by 'mergeid' and 'int_year' (if not sorted already)
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    # Step 2: Identify individuals violating the rule
+    violating_individuals = dat[(dat["retired"] == 1) & (dat["retired"].shift(-1) == 0)]
+
+    # Step 3: Extract unique 'mergeids' from violating individuals
+    unique_mergeids_violating = violating_individuals["mergeid"].unique()
+
+    # Step 4: Display the entire DataFrame for the violating individuals and
+    # all 'int_years'
+    data_for_violating_individuals = dat[dat["mergeid"].isin(unique_mergeids_violating)]
+
+    return rows_working_retired, violating_individuals, data_for_violating_individuals
