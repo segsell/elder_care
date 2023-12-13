@@ -179,7 +179,7 @@ def task_merge_parent_child_waves_and_modules(
     combined_children_health_data = pd.concat([children_data, health_data], axis=1)
 
     data_merged = pd.merge(
-        combined_children_health_data, gv_data, on=["mergeid", "wave"], how="left"
+        combined_children_health_data, gv_data, on=["mergeid", "wave"], how="left",
     )
 
     breakpoint()
