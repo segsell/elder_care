@@ -13,4 +13,6 @@ from elder_care.config import BLD
 def test_data_merged():
     data = pd.read_csv(BLD / "data" / "data_merged.csv")
 
-    assert data.shape == (26593, 291)
+    n_cols = 302
+
+    assert data.shape == (26593, n_cols)

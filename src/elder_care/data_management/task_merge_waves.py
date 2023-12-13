@@ -168,7 +168,26 @@ ALL_VARIABLES = {
     # ],
     #  household net worth =
     # total gross financial assets + total real assets - total libailities
+    # children
     "ch": ["ch001_"],
+    # health care
+    "hc": [
+        "hc029_",  # in nursing home during last 12 months
+        # 1 = yes, temporarily
+        # 3 = yes, permanently
+        # 5 = no
+        "hc031_",  # Weeks stayed in a nursing home or residential care facility
+        "hc035_",  # How many weeks did you receive professional help for domestic tasks
+        "hc036_",  # How many hours per week did you receive such professional help?
+        "hc037_",  # How many weeks did you receive meals-on-wheel
+        # since wave 5
+        "hc696_",  # Payed anything yourself stay in nursing home
+        "hc127d1",  # help with personal care
+        "hc127d2",  # help with domestic tasks in own home
+        "hc127d3",  # meals on wheels
+        "hc127d4",  # helpt with other activities
+        "hc127dno",  # none of these
+    ],
 }
 
 KEYS_TO_REMOVE_WAVE1 = {
@@ -193,6 +212,14 @@ KEYS_TO_REMOVE_WAVE1 = {
         "ep213_15",
         "ep213_16",
     ],
+    "hc": [
+        "hc696_",  # Payed anything yourself stay in nursing home
+        "hc127d1",  # help with personal care
+        "hc127d2",  # help with domestic tasks in own home
+        "hc127d3",  # meals on wheels
+        "hc127d4",  # helpt with other activities
+        "hc127dno",  # none of these
+    ],
 }
 
 KEYS_TO_REMOVE_WAVE2 = {
@@ -205,6 +232,14 @@ KEYS_TO_REMOVE_WAVE2 = {
         "dn012d18",
         "dn012d19",
         "dn012d20",
+    ],
+    "hc": [
+        "hc696_",  # Payed anything yourself stay in nursing home
+        "hc127d1",  # help with personal care
+        "hc127d2",  # help with domestic tasks in own home
+        "hc127d3",  # meals on wheels
+        "hc127d4",  # helpt with other activities
+        "hc127dno",  # none of these
     ],
 }
 
@@ -256,6 +291,17 @@ KEYS_TO_REMOVE_WAVE4 = {
         "sp021d20",
         "sp021d21",
     ],
+    "hc": [
+        "hc035_",  # How many weeks did you receive professional help for domestic tasks
+        "hc036_",  # How many hours per week did you receive such professional help?
+        "hc037_",  # How many weeks did you receive meals-on-wheel
+        "hc696_",  # Payed anything yourself stay in nursing home
+        "hc127d1",  # help with personal care
+        "hc127d2",  # help with domestic tasks in own home
+        "hc127d3",  # meals on wheels
+        "hc127d4",  # helpt with other activities
+        "hc127dno",  # none of these
+    ],
 }
 
 
@@ -271,6 +317,12 @@ KEYS_TO_REMOVE_WAVE5 = {
         "sp010d1_1",  # help given person 1: personal care
         "sp010d1_2",  # help given person 2: personal care
         "sp010d1_3",  # help given person 3: personal care
+    ],
+    "hc": [
+        "hc035_",  # How many weeks did you receive professional help for domestic tasks
+        "hc036_",  # How many hours per week did you receive such professional help?
+        "hc037_",  # How many weeks did you receive meals-on-wheel
+        "hc696_",  # Payed anything yourself stay in nursing home
     ],
 }
 
@@ -314,6 +366,11 @@ KEYS_TO_REMOVE_WAVE6 = {
         "sp021d17",
         "sp021d18",
         "sp021d19",
+    ],
+    "hc": [
+        "hc035_",  # How many weeks did you receive professional help for domestic tasks
+        "hc036_",  # How many hours per week did you receive such professional help?
+        "hc037_",  # How many weeks did you receive meals-on-wheel
     ],
 }
 
@@ -561,7 +618,7 @@ def task_merge_waves_and_modules(
 
     data = merge_wave_datasets(waves_list)
 
-    # GV
+    # GV_IMPUTATIONS
     gv_wave1 = process_gv_imputations(wave=1, args=GV_VARS)
     gv_wave2 = process_gv_imputations(wave=2, args=GV_VARS)
     gv_wave4 = process_gv_imputations(wave=4, args=GV_VARS)
@@ -588,13 +645,39 @@ def task_merge_waves_and_modules(
 
     # Reset the index after sorting
     stacked_gv_data = stacked_gv_data.reset_index(drop=True)
+    stacked_gv_data = stacked_gv_data.drop("gender", axis=1)
 
+    # # GV_CHILDREN
+    # children_wave1 = process_gv_imputations(wave=1, args=GV_VARS)
+    # children_wave2 = process_gv_imputations(wave=2, args=GV_VARS)
+    # children_wave4 = process_gv_imputations(wave=4, args=GV_VARS)
+    # children_wave5 = process_gv_imputations(wave=5, args=GV_VARS)
+    # children_wave6 = process_gv_imputations(wave=6, args=GV_VARS)
+    # children_wave7 = process_gv_imputations(wave=7, args=GV_VARS)
+    # children_wave8 = process_gv_imputations(wave=8, args=GV_VARS)
+
+    # gv_wave_list = [
+    #     children_wave1,
+    #     children_wave2,
+    #     children_wave4,
+    #     children_wave5,
+    #     children_wave6,
+    #     children_wave7,
+    #     children_wave8,
+    # ]
+
+    # Concatenate the DataFrames vertically
+    stacked_gv_data = pd.concat(gv_wave_list, axis=0, ignore_index=True)
+
+    # Sort the DataFrame by 'mergeid' and 'wave'
+    stacked_gv_data = stacked_gv_data.sort_values(by=["mergeid", "wave"])
+
+    # Reset the index after sorting
+    stacked_gv_data = stacked_gv_data.reset_index(drop=True)
     stacked_gv_data = stacked_gv_data.drop("gender", axis=1)
 
     # Merge 'data' and 'stacked_gv_data' on 'mergeid' and 'wave' with a left join
     data_merged = data.merge(stacked_gv_data, on=["mergeid", "wave"], how="left")
-
-    #     },
 
     # save data
     data_merged.to_csv(path, index=False)
@@ -722,6 +805,32 @@ def process_wave(wave_number, data_modules):
     return merged_data
 
 
+def process_gv_children(wave, args):
+    module = "gv_children"
+    module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
+    data = pd.read_stata(module_file, convert_categoricals=False)
+
+    # Filter the data based on the "country" column
+    data = data[data["country"] == GERMANY]
+
+    # Select columns 'mergeid' and the specified args (create missing columns with NaN)
+    selected_columns = ["mergeid"] + [col for col in args if col in data.columns]
+    columns = ["mergeid", *args]
+
+    # Create missing columns and fill with NaN
+    for col in args:
+        if col not in selected_columns:
+            data[col] = np.nan
+
+    data = data[columns]
+
+    # Replace negative values with NaN using NumPy
+
+    data["wave"] = wave
+
+    return data
+
+
 def process_gv_imputations(wave, args):
     module = "gv_imputations"
     module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
@@ -730,10 +839,7 @@ def process_gv_imputations(wave, args):
     # Filter the data based on the "country" column
     data = data[data["country"] == GERMANY]
 
-    # # Select columns 'mergeid' and the specified args
-
     # Select columns 'mergeid' and the specified args (create missing columns with NaN)
-    # Filter existing columns
     selected_columns = ["mergeid"] + [col for col in args if col in data.columns]
     columns = ["mergeid", *args]
 

@@ -96,8 +96,6 @@ def task_create_estimation_data(
     path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
 ) -> None:
     """Create the estimation data set."""
-    # nurs
-    # Out-of-pocket payment for nursing home / home care
 
     # Load the data
     dat = pd.read_csv(path_to_raw_data)
