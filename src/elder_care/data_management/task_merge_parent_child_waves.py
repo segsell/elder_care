@@ -10,8 +10,12 @@ from pytask import Product
 
 GERMANY = 12
 MISSING_VALUE = -9
+WAVE_1 = 1
+WAVE_2 = 2
+WAVE_3 = 3
 WAVE_4 = 4
 WAVE_5 = 5
+WAVE_6 = 6
 WAVE_7 = 7
 
 CV_R = [
@@ -44,7 +48,7 @@ HEALTH = [
     "hc036_",  # How many hours per week did you receive such professional help?
     "hc037_",  # How many weeks did you receive meals-on-wheel
     # since wave 5
-    "hc696_",  # Payed anything yourself stay in nursing home
+    "hc696_",  # Paid anything yourself stay in nursing home
     "hc127d1",  # help with personal care
     "hc127d2",  # help with domestic tasks in own home
     "hc127d3",  # meals on wheels
@@ -105,68 +109,29 @@ GV_CHILDREN = [
 def task_merge_parent_child_waves_and_modules(
     path: Annotated[Path, Product] = BLD / "data" / "data_parent_child_merged.csv",
 ) -> None:
-    child_suffixes = [str(i) for i in range(1, 5)]
+    """Merge raw parent information."""
+    child_suffixes = [str(i) for i in range(1, 21)]
 
     vars_children = [var + child for var in CHILDREN for child in child_suffixes]
-    children_1 = process_module(module="ch", wave=1, args=vars_children)
-    children_2 = process_module(module="ch", wave=2, args=vars_children)
-    # children_3 = process_module(module="ch", wave=3, args=vars_children)
-    children_4 = process_module(module="ch", wave=4, args=vars_children)
-    children_5 = process_module(module="ch", wave=5, args=vars_children)
-    children_6 = process_module(module="ch", wave=6, args=vars_children)
-    children_7 = process_module(module="ch", wave=7, args=vars_children)
-    children_8 = process_module(module="ch", wave=8, args=vars_children)
 
-    children_datasets = [
-        children_1,
-        children_2,
-        children_4,
-        children_5,
-        children_6,
-        children_7,
-        children_8,
-    ]
-    # children_data = merge_wave_datasets(children_datasets)
+    data_modules = {
+        "cv_r": CV_R,
+        "ch": vars_children,
+        "sp": SOCIAL_SUPPORT,
+        "hc": HEALTH,
+    }
 
-    social_support_1 = process_module(module="sp", wave=1, args=SOCIAL_SUPPORT)
-    social_support_2 = process_module(module="sp", wave=2, args=SOCIAL_SUPPORT)
-    social_support_4 = process_module(module="sp", wave=4, args=SOCIAL_SUPPORT)
-    social_support_5 = process_module(module="sp", wave=5, args=SOCIAL_SUPPORT)
-    social_support_6 = process_module(module="sp", wave=6, args=SOCIAL_SUPPORT)
-    social_support_7 = process_module(module="sp", wave=7, args=SOCIAL_SUPPORT)
-    social_support_8 = process_module(module="sp", wave=8, args=SOCIAL_SUPPORT)
+    wave1 = process_wave(wave=1, data_modules=data_modules)
+    wave2 = process_wave(wave=2, data_modules=data_modules)
+    wave4 = process_wave(wave=4, data_modules=data_modules)
+    wave5 = process_wave(wave=5, data_modules=data_modules)
+    wave6 = process_wave(wave=6, data_modules=data_modules)
+    wave7 = process_wave(wave=7, data_modules=data_modules)
+    wave8 = process_wave(wave=8, data_modules=data_modules)
 
-    social_support_datasets = [
-        social_support_1,
-        social_support_2,
-        social_support_4,
-        social_support_5,
-        social_support_6,
-        social_support_7,
-        social_support_8,
-    ]
-    social_support_data = pd.concat(social_support_datasets, axis=0, ignore_index=True)
+    waves_list = [wave1, wave2, wave4, wave5, wave6, wave7, wave8]
 
-    health_1 = process_module(module="hc", wave=1, args=HEALTH)
-    health_2 = process_module(module="hc", wave=2, args=HEALTH)
-    health_3 = process_module(module="hc", wave=3, args=HEALTH)
-    health_4 = process_module(module="hc", wave=4, args=HEALTH)
-    health_5 = process_module(module="hc", wave=5, args=HEALTH)
-    health_6 = process_module(module="hc", wave=6, args=HEALTH)
-    health_7 = process_module(module="hc", wave=7, args=HEALTH)
-    health_8 = process_module(module="hc", wave=8, args=HEALTH)
-
-    health_datasets = [
-        health_1,
-        health_2,
-        health_3,
-        health_4,
-        health_5,
-        health_6,
-        health_7,
-        health_8,
-    ]
-    health_data = pd.concat(health_datasets, axis=0, ignore_index=True)
+    data = merge_wave_datasets(waves_list)
 
     vars_gv_children = [var + child for var in GV_CHILDREN for child in child_suffixes]
     gv_6 = process_gv_children(wave=6, args=vars_gv_children)
@@ -175,15 +140,9 @@ def task_merge_parent_child_waves_and_modules(
 
     gv_datasets = [gv_6, gv_7, gv_8]
     gv_data = pd.concat(gv_datasets, axis=0, ignore_index=True)
+    gv_data = gv_data.sort_values(by=["mergeid", "wave"])
 
-    combined_children_health_data = pd.concat([children_data, health_data], axis=1)
-
-    data_merged = pd.merge(
-        combined_children_health_data, gv_data, on=["mergeid", "wave"], how="left"
-    )
-
-    breakpoint()
-
+    data_merged = data.merge(gv_data, on=["mergeid", "wave"], how="left")
     # save data
     data_merged.to_csv(path, index=False)
 
@@ -194,7 +153,31 @@ def task_merge_parent_child_waves_and_modules(
     # later maybe also education type of children
 
 
+def process_wave(wave, data_modules):
+    """Process wave of the standard SHARE modules."""
+    wave_data = {}
+
+    for module in data_modules:
+        _wave_module = process_module(module, wave, data_modules[module])
+        wave_data[module] = _wave_module
+
+    merged_data = wave_data["cv_r"]
+
+    for module_key in ("ch", "sp", "hc"):
+        merged_data = merged_data.merge(
+            wave_data[module_key],
+            on="mergeid",
+            how="outer",
+        )
+
+    merged_data = merged_data.copy()
+    merged_data["wave"] = wave
+
+    return merged_data
+
+
 def process_module(module, wave, args):
+    """Process a single wave module."""
     module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
     data = pd.read_stata(module_file, convert_categoricals=False)
 
@@ -203,7 +186,6 @@ def process_module(module, wave, args):
     # Filter the data based on the "country" column
     data = data[data["country"] == GERMANY]
 
-    # Select columns 'mergeid' and the specified args (create missing columns with NaN)
     selected_columns = ["mergeid"] + [col for col in args if col in data.columns]
     columns = ["mergeid", *args]
 
@@ -221,6 +203,18 @@ def process_module(module, wave, args):
 
         filtered_args = [arg for arg in args if arg not in not_included]
         columns = ["mergeid", *filtered_args]
+    elif wave in (WAVE_1, WAVE_2):
+        not_included = [
+            "hc696_",  # Paid anything yourself stay in nursing home
+            "hc127d1",  # help with personal care
+            "hc127d2",  # help with domestic tasks in own home
+            "hc127d3",  # meals on wheels
+            "hc127d4",  # helpt with other activities
+            "hc127dno",
+        ]
+
+        filtered_args = [arg for arg in args if arg not in not_included]
+        columns = ["mergeid", *filtered_args]
     elif wave == WAVE_4:
         not_included = [
             "sp021d10",
@@ -231,6 +225,16 @@ def process_module(module, wave, args):
             "sp004d2_1",
             "sp004d2_2",
             "sp004d2_3",
+            "hc035_",  # How many weeks did you receive paid help for domestic tasks
+            "hc036_",  # How many hours per week did you receive such professional help?
+            "hc037_",  # How many weeks did you receive meals-on-wheel
+            "hc696_",  # Paid anything yourself stay in nursing home
+            "hc696_",  # Paid anything yourself stay in nursing home
+            "hc127d1",  # help with personal care
+            "hc127d2",  # help with domestic tasks in own home
+            "hc127d3",  # meals on wheels
+            "hc127d4",  # helpt with other activities
+            "hc127dno",
         ]
 
         filtered_args = [arg for arg in args if arg not in not_included]
@@ -243,6 +247,19 @@ def process_module(module, wave, args):
             "sp004d2_1",
             "sp004d2_2",
             "sp004d2_3",
+            "hc035_",  # How many weeks did you receive paid help for domestic tasks
+            "hc036_",  # How many hours per week did you receive such professional help?
+            "hc037_",  # How many weeks did you receive meals-on-wheel
+            "hc696_",  # Paid anything yourself stay in nursing home
+        ]
+
+        filtered_args = [arg for arg in args if arg not in not_included]
+        columns = ["mergeid", *filtered_args]
+    elif wave == WAVE_6:
+        not_included = [
+            "hc035_",  # How many weeks did you receive paid help for domestic tasks
+            "hc036_",  # How many hours per week did you receive such professional help?
+            "hc037_",  # How many weeks did you receive meals-on-wheel
         ]
 
         filtered_args = [arg for arg in args if arg not in not_included]
@@ -250,21 +267,18 @@ def process_module(module, wave, args):
     else:
         columns = ["mergeid", *args]
 
-    # Create missing columns and fill with NaN
-    # for col in args:
-    #     if col not in selected_columns:
-    #         data[col] = np.nan
-
-    data = data[columns]
-
     # Replace negative values with NaN using NumPy
+    # Create missing columns and fill with NaN
+    data = data.copy()
+    for col in args:
+        if col not in selected_columns:
+            data[col] = np.nan
 
-    data["wave"] = wave
-
-    return data
+    return data[columns]
 
 
 def process_gv_children(wave, args):
+    """Process single wave of the gv_children module."""
     module = "gv_children"
     module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
     data = pd.read_stata(module_file, convert_categoricals=False)
@@ -276,26 +290,24 @@ def process_gv_children(wave, args):
     selected_columns = ["mergeid"] + [col for col in args if col in data.columns]
     columns = ["mergeid", *args]
 
+    # Replace negative values with NaN using NumPy
     # Create missing columns and fill with NaN
+    data = data.copy()
     for col in args:
         if col not in selected_columns:
             data[col] = np.nan
 
     data = data[columns]
-
-    # Replace negative values with NaN using NumPy
-
     data["wave"] = wave
 
     return data
 
 
 def merge_wave_datasets(wave_datasets):
-    # Combine the data frames in wave_datasets into one data frame
+    """Combine data frames in the wave_datasets into one data frame."""
     combined_data = pd.concat(wave_datasets, axis=0, ignore_index=True)
 
     # Filter out rows where the 'int_year' column is not equal to -9
     combined_data = combined_data[combined_data["int_year"] != MISSING_VALUE]
 
-    # Sort the data frame by 'mergeid' and 'int_year'
     return combined_data.sort_values(by=["mergeid", "int_year"])

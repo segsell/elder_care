@@ -197,7 +197,7 @@ KEYS_TO_REMOVE_WAVE1 = {
         "ep213_16",
     ],
     # "hc": [
-    #     "hc696_",  # Payed anything yourself stay in nursing home
+    #     "hc696_",  # Paid anything yourself stay in nursing home
     #     "hc127d1",  # help with personal care
     #     "hc127d2",  # help with domestic tasks in own home
     #     "hc127d3",  # meals on wheels
@@ -218,7 +218,7 @@ KEYS_TO_REMOVE_WAVE2 = {
         "dn012d20",
     ],
     # "hc": [
-    #     "hc696_",  # Payed anything yourself stay in nursing home
+    #     "hc696_",  # Paid anything yourself stay in nursing home
     #     "hc127d1",  # help with personal care
     #     "hc127d2",  # help with domestic tasks in own home
     #     "hc127d3",  # meals on wheels
@@ -276,10 +276,10 @@ KEYS_TO_REMOVE_WAVE4 = {
         "sp021d21",
     ],
     # "hc": [
-    #     "hc035_",  # How many weeks did you receive professional help for domestic tasks
+    #     "hc035_",  # How many weeks did you receive paid help for domestic tasks
     #     "hc036_",  # How many hours per week did you receive such professional help?
     #     "hc037_",  # How many weeks did you receive meals-on-wheel
-    #     "hc696_",  # Payed anything yourself stay in nursing home
+    #     "hc696_",  # Paid anything yourself stay in nursing home
     #     "hc127d1",  # help with personal care
     #     "hc127d2",  # help with domestic tasks in own home
     #     "hc127d3",  # meals on wheels
@@ -303,10 +303,10 @@ KEYS_TO_REMOVE_WAVE5 = {
         "sp010d1_3",  # help given person 3: personal care
     ],
     # "hc": [
-    #     "hc035_",  # How many weeks did you receive professional help for domestic tasks
+    #     "hc035_",  # How many weeks did you receive paid help for domestic tasks
     #     "hc036_",  # How many hours per week did you receive such professional help?
     #     "hc037_",  # How many weeks did you receive meals-on-wheel
-    #     "hc696_",  # Payed anything yourself stay in nursing home
+    #     "hc696_",  # Paid anything yourself stay in nursing home
     # ],
 }
 
@@ -352,7 +352,7 @@ KEYS_TO_REMOVE_WAVE6 = {
         "sp021d19",
     ],
     # "hc": [
-    #     "hc035_",  # How many weeks did you receive professional help for domestic tasks
+    #     "hc035_",  # How many weeks did you receive paid help for domestic tasks
     #     "hc036_",  # How many hours per week did you receive such professional help?
     #     "hc037_",  # How many weeks did you receive meals-on-wheel
     # ],
@@ -625,18 +625,6 @@ def task_merge_waves_and_modules(
 
     # Sort the DataFrame by 'mergeid' and 'wave'
     stacked_gv_data = stacked_gv_data.sort_values(by=["mergeid", "wave"])
-
-    # Reset the index after sorting
-    stacked_gv_data = stacked_gv_data.reset_index(drop=True)
-    stacked_gv_data = stacked_gv_data.drop("gender", axis=1)
-
-    # Concatenate the DataFrames vertically
-    stacked_gv_data = pd.concat(gv_wave_list, axis=0, ignore_index=True)
-
-    # Sort the DataFrame by 'mergeid' and 'wave'
-    stacked_gv_data = stacked_gv_data.sort_values(by=["mergeid", "wave"])
-
-    # Reset the index after sorting
     stacked_gv_data = stacked_gv_data.reset_index(drop=True)
     stacked_gv_data = stacked_gv_data.drop("gender", axis=1)
 
@@ -672,8 +660,8 @@ def process_wave(wave_number, data_modules):
 
         # Read and filter
         if module in ("re", "rp") and wave_number == wave_7:
-            wave_module = pd.read_stata(module_file, convert_categoricals=False)
-            wave_module = wave_module[wave_module["country"] == GERMANY]
+            _wave_module = pd.read_stata(module_file, convert_categoricals=False)
+            _wave_module = _wave_module[_wave_module["country"] == GERMANY]
 
             lookup = {
                 f"{var[3:]}": f"{var}"
@@ -682,8 +670,8 @@ def process_wave(wave_number, data_modules):
             }
 
         else:
-            wave_module = pd.read_stata(module_file, convert_categoricals=False)
-            wave_module = wave_module[wave_module["country"] == GERMANY]
+            _wave_module = pd.read_stata(module_file, convert_categoricals=False)
+            _wave_module = _wave_module[_wave_module["country"] == GERMANY]
 
             lookup = {
                 "sp009_1sp": "sp009_1",
@@ -735,14 +723,14 @@ def process_wave(wave_number, data_modules):
             }
 
         # Rename columns using the dictionary
-        wave_module = wave_module.rename(columns=lookup)
+        _wave_module = _wave_module.rename(columns=lookup)
 
         module_vars = ["mergeid"] + data_modules[module]
 
         # Select columns
-        wave_module = wave_module[module_vars]
+        _wave_module = _wave_module[module_vars]
 
-        wave_data[module] = wave_module
+        wave_data[module] = _wave_module
 
     add_wealth_data = "gv_imputations" in data_modules
     merged_data = wave_data["cv_r"]
