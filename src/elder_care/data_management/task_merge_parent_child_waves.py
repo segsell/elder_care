@@ -38,7 +38,9 @@ CHILDREN = [
     "ch017_",  # highest education
 ]
 
-HEALTH = [
+PHYSICAL_HEALTH = ["ph003_"]
+
+HEALTH_CARE = [
     "hc029_",  # in nursing home during last 12 months
     # 1 = yes, temporarily
     # 3 = yes, permanently
@@ -124,9 +126,10 @@ def task_merge_parent_child_waves_and_modules(
 
     data_modules = {
         "cv_r": CV_R,
+        "ph": PHYSICAL_HEALTH,
         "ch": vars_children,
         "sp": SOCIAL_SUPPORT,
-        "hc": HEALTH,
+        "hc": HEALTH_CARE,
     }
 
     wave1 = process_wave(wave=1, data_modules=data_modules)
@@ -171,7 +174,7 @@ def process_wave(wave, data_modules):
 
     merged_data = wave_data["cv_r"]
 
-    for module_key in ("ch", "sp", "hc"):
+    for module_key in ("ph", "ch", "sp", "hc"):
         merged_data = merged_data.merge(
             wave_data[module_key],
             on="mergeid",

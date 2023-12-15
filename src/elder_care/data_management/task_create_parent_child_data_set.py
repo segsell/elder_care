@@ -1,6 +1,4 @@
 """Create the parent child data set of females between 50 and 68."""
-
-import re
 from pathlib import Path
 from typing import Annotated
 
@@ -9,8 +7,14 @@ import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
 
-MIN_AGE = 0
+MIN_AGE = 65
 MAX_AGE = 105
+
+HEALTH_EXCELLENT = 1
+HEALTH_VERY_GOOD = 2
+HEALTH_GOOD = 3
+HEALTH_FAIR = 4
+HEALTH_POOR = 5
 
 
 def table(df_col):
@@ -33,7 +37,6 @@ def task_create_parent_child_data(
     path: Annotated[Path, Product] = BLD / "data" / "parent_child_data.csv",
 ) -> None:
     """Create the estimation data set."""
-
     dat = pd.read_csv(path_to_raw_data)
 
     # Make prettier
@@ -49,12 +52,30 @@ def task_create_parent_child_data(
 
     dat = create_care_variables(dat)
 
+    dat = create_health_variables(dat)
+    breakpoint()
+
     dat.to_csv(path, index=False)
+
+
+def create_health_variables(dat):
+    """Create dummy for health status."""
+    dat = replace_negative_values_with_nan(dat, "ph003_")
+
+    _cond = [
+        (dat["ph003_"] == HEALTH_EXCELLENT) | (dat["ph003_"] == HEALTH_VERY_GOOD),
+        (dat["ph003_"] == HEALTH_GOOD) | (dat["ph003_"] == HEALTH_FAIR),
+        (dat["ph003_"] == HEALTH_POOR),
+    ]
+    _val = [0, 1, 2]
+
+    dat["health"] = np.select(_cond, _val, default=np.nan)
+
+    return dat
 
 
 def create_care_variables(dat):
     """Create a dummy for formal care."""
-
     # (Pdb++) table(dat["hc029_"])
     # hc029_
     # -2.0        4
@@ -130,6 +151,8 @@ def create_care_variables(dat):
     _val = [1, 0]
     dat["nursing_home"] = np.select(_cond, _val, default=np.nan)
 
+    # TODO: RENAME WAVES 1, 2 (3, 4 missing): hc127d1
+
     # formal home care by professional nursing service
     # _cond = (dat["hc035_"] > 0) | (dat["hc036_"] > 0)
     _cond = [
@@ -151,7 +174,7 @@ def create_care_variables(dat):
             & dat["hc127d2"].isna()
             & dat["hc127d3"].isna()
             & dat["hc127d4"].isna()
-        )
+        ),
         # & (dat["hc127dno"] == 1),
     ]
     _val = [1, np.nan]
@@ -274,7 +297,6 @@ def create_care_variables(dat):
     # mean_formal_care = dat.loc[dat["any_care"] == 1, "only_formal"].mean()
     # mean_nursing_home = dat.loc[dat["any_care"] == 1, "only_nursing_home"].mean()
 
-    breakpoint()
     # dat["formal_care"] = np.where(dat["formal_care"] > 0, 1, 0)
 
     return dat
