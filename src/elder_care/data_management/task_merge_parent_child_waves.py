@@ -44,6 +44,12 @@ HEALTH = [
     # 3 = yes, permanently
     # 5 = no
     "hc031_",  # Weeks stayed in a nursing home or residential care facility
+    "hc032d1",  # nursing or personal care
+    "hc032d2",  # domestic tasks
+    "hc032d3",  # meals on wheels
+    "hc032dno",  # none of these
+    "hc033_",  # How many weeks did you receive paid help for personal care
+    "hc034_",  # How many hours per week did you receive such professional help?
     "hc035_",  # How many weeks did you receive professional help for domestic tasks
     "hc036_",  # How many hours per week did you receive such professional help?
     "hc037_",  # How many weeks did you receive meals-on-wheel
@@ -104,6 +110,8 @@ GV_CHILDREN = [
 
 
 # =============================================================================
+def table(df_col):
+    return pd.crosstab(df_col, columns="Count")["Count"]
 
 
 def task_merge_parent_child_waves_and_modules(
@@ -225,6 +233,9 @@ def process_module(module, wave, args):
             "sp004d2_1",
             "sp004d2_2",
             "sp004d2_3",
+            # "hc032_",
+            # "hc033_",
+            # "hc034_",
             "hc035_",  # How many weeks did you receive paid help for domestic tasks
             "hc036_",  # How many hours per week did you receive such professional help?
             "hc037_",  # How many weeks did you receive meals-on-wheel
