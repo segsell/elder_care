@@ -53,7 +53,7 @@ def task_create_parent_child_data(
     dat = create_care_variables(dat)
 
     dat = create_health_variables(dat)
-    breakpoint()
+    # breakpoint()
 
     dat.to_csv(path, index=False)
 
