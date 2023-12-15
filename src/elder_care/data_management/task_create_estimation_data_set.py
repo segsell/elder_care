@@ -931,7 +931,7 @@ def create_caregving(dat):
     breakpoint()
     # Set year_diff to 0 where lagged_care is not 1 or care is not 1
     dat_copy["year_diff"] = dat_copy["year_diff"].where(
-        (dat_copy["lagged_care"] == 1) & (dat_copy["care"] == 1), 0
+        (dat_copy["lagged_care"] == 1) & (dat_copy["care"] == 1), 0,
     )
 
     # Calculate the cumulative sum of year_diff within each mergeid group
