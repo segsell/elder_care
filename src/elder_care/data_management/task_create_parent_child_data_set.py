@@ -1,6 +1,4 @@
 """Create the parent child data set of females between 50 and 68."""
-
-import re
 from pathlib import Path
 from typing import Annotated
 
@@ -33,7 +31,6 @@ def task_create_parent_child_data(
     path: Annotated[Path, Product] = BLD / "data" / "parent_child_data.csv",
 ) -> None:
     """Create the estimation data set."""
-
     dat = pd.read_csv(path_to_raw_data)
 
     # Make prettier
@@ -54,7 +51,6 @@ def task_create_parent_child_data(
 
 def create_care_variables(dat):
     """Create a dummy for formal care."""
-
     # (Pdb++) table(dat["hc029_"])
     # hc029_
     # -2.0        4
@@ -151,7 +147,7 @@ def create_care_variables(dat):
             & dat["hc127d2"].isna()
             & dat["hc127d3"].isna()
             & dat["hc127d4"].isna()
-        )
+        ),
         # & (dat["hc127dno"] == 1),
     ]
     _val = [1, np.nan]
