@@ -416,6 +416,7 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
     dat["retired"] = np.select(_cond, _val, 0)
 
     dat = _replace_missing_retirement(dat)
+    dat = _make_retirement_absorbing(dat)
     dat = _replace_missing_working(dat)
 
     # lagged retired
@@ -464,6 +465,9 @@ def _replace_missing_working(dat):
     # 0.0    4229
     # 1.0    2372
 
+    # !! No work possible in retirement
+    dat.loc[dat["retired"] == 1, "working"] = 0
+
     return dat
 
 
@@ -471,13 +475,12 @@ def _make_retirement_absorbing(dat):
     """Enforce absorbing retirement."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
-    replace_with_zero = (
-        # (dat["retired"].shift(1) == 0) &
-        (dat["retired"].shift(-1) == 0)
-        # & (dat["retired"].shift(1).notna())
-        # & (dat["mergeid"].shift(-1) == dat["mergeid"])
-        & (dat["mergeid"] == dat["mergeid"].shift(-1))
+    # cannot be retired in t if also not retired in t + 1
+    replace_with_zero = (dat["retired"].shift(-1) == 0) & (
+        dat["mergeid"] == dat["mergeid"].shift(-1)
     )
+
+    # retired if retired already in t - 1
     replace_with_one = (
         (dat["retired"].shift(1) == 1)
         # & (dat["working"] == 0)
