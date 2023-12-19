@@ -149,6 +149,7 @@ def task_create_estimation_data(
     dat = create_married(dat)
 
     dat = create_caregving(dat)
+    dat = _drop_spousal_and_other_within_household_care(dat)
 
     dat = create_parental_health_status(dat, parent="mother")
     dat = create_parental_health_status(dat, parent="father")
@@ -894,8 +895,6 @@ def create_caregving(dat):
     _choice = [1]
     dat["intensive_care"] = np.select(_cond, _choice, default=0)
 
-    dat = _drop_spousal_and_other_within_household_care(dat)
-
     # intensive care dominates light care
     dat["light_care"] = np.where(
         (dat["intensive_care"] == 1) & (dat["light_care"] == 1),
@@ -917,25 +916,15 @@ def create_caregving(dat):
     # TODO: if two years in between add 2 years of care experience
     dat["_care_experience"] = dat.groupby("mergeid")["lagged_care"].cumsum()
 
-    dat_copy = dat.copy()
-    # Calculate the difference in years for consecutive rows within each group
-    dat_copy["year_diff"] = dat_copy.groupby("mergeid")["int_year"].diff()
-
+    dat = dat.copy()
+    dat["year_diff"] = dat.groupby("mergeid")["int_year"].diff()
     _cond = [
-        (dat_copy["lagged_care"] == 1) & (dat_copy["care"] == 1),
-        (dat_copy["lagged_care"] == 1) & (dat_copy["care"] == 0),
+        (dat["lagged_care"] == 1) & (dat["care"] == 1),
+        (dat["lagged_care"] == 1) & (dat["care"] == 0),
     ]
-    _val = [dat_copy["year_diff"], dat_copy["year_diff"]]
-    dat_copy["care_exp"] = np.select(_cond, _val, default=0)
-    dat_copy["care_experience"] = dat_copy.groupby("mergeid")["care_exp"].cumsum()
-    breakpoint()
-    # Set year_diff to 0 where lagged_care is not 1 or care is not 1
-    dat_copy["year_diff"] = dat_copy["year_diff"].where(
-        (dat_copy["lagged_care"] == 1) & (dat_copy["care"] == 1), 0
-    )
-
-    # Calculate the cumulative sum of year_diff within each mergeid group
-    dat_copy["care_experience"] = dat_copy.groupby("mergeid")["year_diff"].cumsum()
+    _val = [dat["year_diff"], dat["year_diff"]]
+    dat["care_exp_crosssect"] = np.select(_cond, _val, default=0)
+    dat["care_experience"] = dat.groupby("mergeid")["care_exp_crosssect"].cumsum()
 
     return dat
 
@@ -955,37 +944,32 @@ def _drop_spousal_and_other_within_household_care(dat):
     # sp019d32
     # sp019d34
     # sp019d35
-    suffixes = list(range(1, 10))  # + list(range(19, 33)) + list(range(34, 38))
-    condition = (
-        ~dat[[f"sp019d{suffix}" for suffix in [1, 4, 5, 6, 7, 8, 9]]]
-        .isin([1])
-        .any(axis=1)
-    )
-    old_dat = dat.copy()
-    dat = dat[condition]
+    # parental_care = dat["care"] == 1
 
-    mask = (
-        old_dat[[f"sp019d{suffix}" for suffix in [1, 4, 5, 6, 7, 8, 9]]]
+    other_care_inside = (
+        dat[[f"sp019d{suffix}" for suffix in [1, 4, 5, 6, 7, 8, 9]]]
         .isin([1])
         .any(axis=1)
     )
-    mergeids_to_drop = old_dat[mask]["mergeid"].unique()
-    dat_all_mergeids_dropped = old_dat[~old_dat["mergeid"].isin(mergeids_to_drop)]
+    mergeids_other_care = dat[other_care_inside]["mergeid"].unique()
+    dat_all_mergeids_dropped = dat[~dat["mergeid"].isin(mergeids_other_care)]
 
     # spouse outside the household
-    dat = dat[~((dat["sp009_1"] == 1) | (dat["sp009_2"] == 1) | (dat["sp009_3"] == 1))]
-
-    condition_mask = (
+    spousal_care_outside = (
         (dat_all_mergeids_dropped["sp009_1"] == 1)
         | (dat_all_mergeids_dropped["sp009_2"] == 1)
         | (dat_all_mergeids_dropped["sp009_3"] == 1)
     )
-    mergeids_to_drop = dat_all_mergeids_dropped[condition_mask]["mergeid"].unique()
+    mergeids_spousal_care = dat_all_mergeids_dropped[spousal_care_outside][
+        "mergeid"
+    ].unique()
     filtered_dat = dat_all_mergeids_dropped[
-        ~dat_all_mergeids_dropped["mergeid"].isin(mergeids_to_drop)
+        ~dat_all_mergeids_dropped["mergeid"].isin(mergeids_spousal_care)
     ]
 
-    return dat
+    # dat[(parental_care == 1) & ((other_care_inside == 1) | (spousal_care_outside == 1))]
+
+    return filtered_dat
 
 
 def create_married(dat):
