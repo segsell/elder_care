@@ -913,9 +913,9 @@ def create_caregving(dat):
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
     dat["lagged_care"] = dat.groupby("mergeid")["care"].shift(1)
 
-    # TODO: if two years in between add 2 years of care experience
     dat["_care_experience"] = dat.groupby("mergeid")["lagged_care"].cumsum()
 
+    # if two years in between add 2 years of care experience
     dat = dat.copy()
     dat["year_diff"] = dat.groupby("mergeid")["int_year"].diff()
     _cond = [
@@ -930,7 +930,6 @@ def create_caregving(dat):
 
 
 def _drop_spousal_and_other_within_household_care(dat):
-    org_dat = dat.copy()
     # within household
     # sp019d1 # spouse/partner within household
     # sp019d4sp # mother in law
@@ -944,10 +943,9 @@ def _drop_spousal_and_other_within_household_care(dat):
     # sp019d32
     # sp019d34
     # sp019d35
-    # parental_care = dat["care"] == 1
 
     other_care_inside = (
-        dat[[f"sp019d{suffix}" for suffix in [1, 4, 5, 6, 7, 8, 9]]]
+        dat[[f"sp019d{suffix}" for suffix in (1, 4, 5, 6, 7, 8, 9)]]
         .isin([1])
         .any(axis=1)
     )
@@ -963,13 +961,10 @@ def _drop_spousal_and_other_within_household_care(dat):
     mergeids_spousal_care = dat_all_mergeids_dropped[spousal_care_outside][
         "mergeid"
     ].unique()
-    filtered_dat = dat_all_mergeids_dropped[
+
+    return dat_all_mergeids_dropped[
         ~dat_all_mergeids_dropped["mergeid"].isin(mergeids_spousal_care)
     ]
-
-    # dat[(parental_care == 1) & ((other_care_inside == 1) | (spousal_care_outside == 1))]
-
-    return filtered_dat
 
 
 def create_married(dat):

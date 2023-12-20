@@ -110,6 +110,46 @@ GV_CHILDREN = [
     "ch_hh_receive_care_",
 ]
 
+GV_VARS = [
+    "gender",
+    "age",  # Age of respondent (based on interview year)
+    "age_p",  # Age of partner (based on interview year)
+    "mstat",  # Marital status
+    "single",
+    "couple",
+    "partner",
+    "nursinghome",
+    # "perho",
+    "ydip",
+    "yind",
+    "ypen1",  # Annual old age, early retirement pensions, survivor and war pension
+    "ypen2",  # Annual private occupational pensions
+    "ypen5",  # Annual payment from social assistance
+    "yreg1",  # Other regular payments from private pensions
+    "yreg2",  # Other regular payment from private transfer
+    "thinc",  # Total household net income - version A
+    "thinc2",  # Total household net income - version B
+    "hnetw",  # Household net worth (hnfass + hrass)
+    "yedu",
+    "yedu_p",
+    "isced",
+    "sphus",  # Self-perceived health - US scale
+    "nchild",  # Number of children
+    "gali",  # Limitation with activities: PH005
+    "chronic",  # Number of chronic diseases: PH006
+    "adl",  # Limitations with activities of daily living: PH049_1
+    "iadl",  # Limitations with instrumental activities of daily living: PH049_2
+    "eurod",  # EURO depression scale: MH002-MH017 (MH031)
+    "cjs",  # Current job situation: EP005
+    "pwork",  # Did any paid work: EP002
+    "empstat",  # Employee or self-employed: EP009; 2- 8
+    "rhfo",  # Received help from others (how many): SP002, SP005, SP007
+    "ghto",  # Given help to others (how many): SP008, SP011, SP013
+    "ghih",  # Given help in the household (how many): SP0181 2 4 5 6 7 (R) 8
+    "rhih",  # Received help in the household (how many): SP0201 2 4 5 6 7 (R) 8
+    "otrf",  # Owner, tenant or rent free: HO0021 2 4 5 6 7 (R) 8
+]
+
 
 # =============================================================================
 def table(df_col):
@@ -149,13 +189,45 @@ def task_merge_parent_child_waves_and_modules(
     gv_7 = process_gv_children(wave=7, args=vars_gv_children)
     gv_8 = process_gv_children(wave=8, args=vars_gv_children)
 
-    gv_datasets = [gv_6, gv_7, gv_8]
-    gv_data = pd.concat(gv_datasets, axis=0, ignore_index=True)
+    gv_children_datasets = [gv_6, gv_7, gv_8]
+    gv_data = pd.concat(gv_children_datasets, axis=0, ignore_index=True)
     gv_data = gv_data.sort_values(by=["mergeid", "wave"])
 
-    data_merged = data.merge(gv_data, on=["mergeid", "wave"], how="left")
+    wave_data = data.merge(gv_data, on=["mergeid", "wave"], how="left")
+
+    # GV_IMPUTATIONS
+    gv_wave1 = process_gv_imputations(wave=1, args=GV_VARS)
+    gv_wave2 = process_gv_imputations(wave=2, args=GV_VARS)
+    gv_wave4 = process_gv_imputations(wave=4, args=GV_VARS)
+    gv_wave5 = process_gv_imputations(wave=5, args=GV_VARS)
+    gv_wave6 = process_gv_imputations(wave=6, args=GV_VARS)
+    gv_wave7 = process_gv_imputations(wave=7, args=GV_VARS)
+    gv_wave8 = process_gv_imputations(wave=8, args=GV_VARS)
+
+    gv_list = [
+        gv_wave1,
+        gv_wave2,
+        gv_wave4,
+        gv_wave5,
+        gv_wave6,
+        gv_wave7,
+        gv_wave8,
+    ]
+
+    # Concatenate the DataFrames vertically
+    stacked_gv_data = pd.concat(gv_list, axis=0, ignore_index=True)
+    stacked_gv_data = stacked_gv_data.sort_values(by=["mergeid", "wave"])
+    stacked_gv_data = stacked_gv_data.reset_index(drop=True)
+    stacked_gv_data = stacked_gv_data.drop("gender", axis=1)
+
+    data_merged_gv = wave_data.merge(
+        stacked_gv_data,
+        on=["mergeid", "wave"],
+        how="left",
+    )
+
     # save data
-    data_merged.to_csv(path, index=False)
+    data_merged_gv.to_csv(path, index=False)
 
     # create moments of formal care by informal care from children
     # (parent age brackets), (no informal care, light, intensive),
@@ -325,3 +397,53 @@ def merge_wave_datasets(wave_datasets):
     combined_data = combined_data[combined_data["int_year"] != MISSING_VALUE]
 
     return combined_data.sort_values(by=["mergeid", "int_year"])
+
+
+def process_gv_imputations(wave, args):
+    module = "gv_imputations"
+    module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
+    data = pd.read_stata(module_file, convert_categoricals=False)
+
+    # Filter the data based on the "country" column
+    data = data[data["country"] == GERMANY]
+
+    # Select columns 'mergeid' and the specified args (create missing columns with NaN)
+    selected_columns = ["mergeid"] + [col for col in args if col in data.columns]
+    columns = ["mergeid", *args]
+
+    # Create missing columns and fill with NaN
+    for col in args:
+        if col not in selected_columns:
+            data[col] = np.nan
+
+    data = data[columns]
+
+    # Replace negative values with NaN using NumPy
+
+    # Group the data by 'mergeid'
+    grouped_data = data.groupby("mergeid")
+
+    # Create a dictionary to store the aggregation method for each column
+    aggregation_methods = {}
+    for column in args:
+        dtype = data[column].dtype
+        if pd.api.types.is_integer_dtype(dtype):
+            aggregation_methods[column] = "median"
+        elif pd.api.types.is_float_dtype(dtype):
+            aggregation_methods[column] = "mean"
+
+    # Replace negative values with NaN using NumPy
+    # this should not change the meaning except for cases where
+    # all 5 entries are missing
+    # check ?!
+    data[args] = np.where(data[args] >= 0, data[args], np.nan)
+
+    # Apply aggregation methods and store the results in a new DataFrame
+    aggregated_data = grouped_data.agg(aggregation_methods).reset_index()
+
+    # if "age_p" in args:
+    #    # note that single people also have partner_alive = 0
+
+    aggregated_data["wave"] = wave
+
+    return aggregated_data

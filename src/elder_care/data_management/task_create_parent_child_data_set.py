@@ -7,6 +7,16 @@ import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
 
+
+WAVE_1 = 1
+WAVE_2 = 2
+WAVE_3 = 3
+WAVE_4 = 4
+WAVE_5 = 5
+WAVE_6 = 6
+WAVE_7 = 7
+WAVE_8 = 8
+
 MIN_AGE = 65
 MAX_AGE = 105
 
@@ -15,6 +25,15 @@ HEALTH_VERY_GOOD = 2
 HEALTH_GOOD = 3
 HEALTH_FAIR = 4
 HEALTH_POOR = 5
+
+
+CHILD_ONE_GAVE_HELP = 10
+OTHER_CHILD_GAVE_HELP = 19
+
+NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD = 5
+ANSWER_NO = 5
+YES_TEMPORARILY = 1
+YES_PERMANENTLY = 3
 
 
 def table(df_col):
@@ -54,6 +73,8 @@ def task_create_parent_child_data(
 
     dat = create_health_variables(dat)
 
+    dat = create_care_combinations(dat)
+
     dat.to_csv(path, index=False)
 
 
@@ -75,57 +96,6 @@ def create_health_variables(dat):
 
 def create_care_variables(dat):
     """Create a dummy for formal care."""
-    # (Pdb++) table(dat["hc029_"])
-    # hc029_
-    # -2.0        4
-    # -1.0        1
-    # 1.0       66
-    # 3.0       21
-    # 5.0    12254
-    # Name: Count, dtype: int64
-    # (Pdb++)
-    # hc029_
-    # -2.0        4
-    # -1.0        1
-    # 1.0       66
-    # 3.0       21
-    # 5.0    12254
-    # Name: Count, dtype: int64
-    # (Pdb++) 66 + 21
-    # 87
-    # (Pdb++) (66 + 21) / 12254
-    # 0.007099722539578913
-    # (Pdb++) 0.04 * 0.15
-    # 0.006
-
-    # Define age brackets
-    # age_brackets = {
-    #     "[65, 70)": (65, 70),
-    #     "[70, 75)": (70, 75),
-    #     "[75, 80)": (75, 80),
-    #     "[80, 85)": (80, 85),
-    #     "[85, 90)": (85, 90),
-    #     "[90 and older]": (90, float("inf")),
-    # }
-
-    # # Create an empty DataFrame to store results
-    # result_df = pd.DataFrame(columns=["age_bracket", "hc029_"])
-
-    # # Iterate through age brackets and filter data
-    # for label, (start_age, end_age) in age_brackets.items():
-    #     filtered_data = dat[(dat["age"] >= start_age) & (dat["age"] < end_age)]
-    #     filtered_data["age_bracket"] = label
-    #     result_df = pd.concat([result_df, filtered_data])
-
-    # # Reset index of the result DataFrame
-    # result_df.reset_index(drop=True, inplace=True)
-
-    # Display the result
-    # print(result_df[["age_bracket", "hc029_"]])
-
-    # Iterate through columns and set values < 0 to NA
-    # for job in job_start:
-
     dat = replace_negative_values_with_nan(dat, "hc029_")  # was in nursing home
     dat = replace_negative_values_with_nan(dat, "hc031_")  # Weeks in nursing home
     dat = replace_negative_values_with_nan(dat, "hc032d1")
@@ -144,16 +114,15 @@ def create_care_variables(dat):
 
     # nursing home
     _cond = [
-        (dat["hc029_"].isin([1, 3]) | (dat["hc031_"] > 0)),
-        dat["hc029_"] == 5,
+        (dat["hc029_"].isin([YES_TEMPORARILY, YES_PERMANENTLY]) | (dat["hc031_"] > 0)),
+        dat["hc029_"] == ANSWER_NO,
     ]
     _val = [1, 0]
     dat["nursing_home"] = np.select(_cond, _val, default=np.nan)
 
-    # TODO: RENAME WAVES 1, 2 (3, 4 missing): hc127d1
+    # RENAME WAVES 1, 2 (3, 4 missing): hc127d1
 
     # formal home care by professional nursing service
-    # _cond = (dat["hc035_"] > 0) | (dat["hc036_"] > 0)
     _cond = [
         (dat["hc032d1"] == 1)
         | (dat["hc032d2"] == 1)
@@ -194,32 +163,38 @@ def create_care_variables(dat):
         dat["sp021d10"] == 1,
         dat["sp021d10"] == 0,
         (
-            dat["wave"].isin([1, 2, 5])
+            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
             & (
-                dat["sp003_1"].between(10, 19)
-                | dat["sp003_2"].between(10, 19)
-                | dat["sp003_3"].between(10, 19)
+                dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
             )
         )
         | (
-            (dat["wave"].isin([6, 7, 8]))
-            & (dat["sp002_"] == 5)
-            & ((dat["sp003_1"] == 10) | (dat["sp003_2"] == 10) | (dat["sp003_3"] == 10))
+            (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
+            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
+            & (
+                (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+                | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+                | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+            )
         ),
         (
-            dat["wave"].isin([1, 2, 5])
-            & (dat["sp002_"] == 5)
+            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
+            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
             & ~(
-                dat["sp003_1"].between(10, 19)
-                | dat["sp003_2"].between(10, 19)
-                | dat["sp003_3"].between(10, 19)
+                dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
             )
         )
         | (
-            (dat["wave"].isin([6, 7, 8]))
-            & (dat["sp002_"] == 5)
+            (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
+            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
             & ~(
-                (dat["sp003_1"] == 10) | (dat["sp003_2"] == 10) | (dat["sp003_3"] == 10)
+                (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+                | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+                | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
             )
         ),
     ]
@@ -235,25 +210,24 @@ def create_care_variables(dat):
     dat["informal_care_general"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        # (dat["nursing_home"] == 1)
         (dat["home_care"] == 1) | (dat["informal_care_general"] == 1),
-        # (dat["nursing_home"] == 0)
         (dat["home_care"] == 0) & (dat["informal_care_general"] == 0),
     ]
     _val = [1, 0]
     dat["any_care"] = np.select(_cond, _val, default=np.nan)
 
     _cond = [
-        # (dat["nursing_home"] == 0)
         (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
-        # (dat["nursing_home"].isna())
         (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
     ]
     _val = [1, np.nan]
     dat["combination_care"] = np.select(_cond, _val, default=0)
 
+    return dat
+
+
+def create_care_combinations(dat):
     _cond = [
-        # (dat["nursing_home"] == 0)
         (dat["home_care"] == 0) & (dat["informal_care_general"] == 1),
         (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
     ]
@@ -261,42 +235,32 @@ def create_care_variables(dat):
     dat["only_informal"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        # ((dat["nursing_home"] == 0) &
         (dat["home_care"] == 1) & (dat["informal_care_general"] == 0),
-        # (dat["nursing_home"].isna())
         (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
     ]
     _val = [1, np.nan]
     dat["only_home_care"] = np.select(_cond, _val, default=0)
 
-    # _cond = [
-    #     (dat["nursing_home"] == 1)
-    #     & (dat["home_care"] == 0)
-    #     & (dat["informal_care_general"] == 0),
-    #     (dat["nursing_home"].isna())
-    #     & (dat["home_care"].isna())
-    #     & (dat["informal_care_general"].isna()),
-    # ]
-    # _val = [1, np.nan]
-    # dat["only_nursing_home"] = np.select(_cond, _val, default=0)
+    _cond = [
+        (dat["nursing_home"] == 1)
+        & (dat["home_care"] == 0)
+        & (dat["informal_care_general"] == 0),
+        (dat["nursing_home"].isna())
+        & (dat["home_care"].isna())
+        & (dat["informal_care_general"].isna()),
+    ]
+    _val = [1, np.nan]
+    dat["only_nursing_home"] = np.select(_cond, _val, default=0)
 
-    # _cond = [
-    #     (dat["nursing_home"] == 1)
-    #     | (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
-    #     (dat["nursing_home"].isna())
-    #     & (dat["home_care"].isna())
-    #     & (dat["informal_care_general"].isna()),
-    # ]
-    # _val = [1, np.nan]
-    # dat["only_formal"] = np.select(_cond, _val, default=0)
-
-    mean_home_care = dat.loc[dat["any_care"] == 1, "only_home_care"].mean()
-    mean_combination_care = dat.loc[dat["any_care"] == 1, "combination_care"].mean()
-    mean_informal_care = dat.loc[dat["any_care"] == 1, "only_informal"].mean()
-    # mean_formal_care = dat.loc[dat["any_care"] == 1, "only_formal"].mean()
-    # mean_nursing_home = dat.loc[dat["any_care"] == 1, "only_nursing_home"].mean()
-
-    # dat["formal_care"] = np.where(dat["formal_care"] > 0, 1, 0)
+    _cond = [
+        (dat["nursing_home"] == 1)
+        | (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
+        (dat["nursing_home"].isna())
+        & (dat["home_care"].isna())
+        & (dat["informal_care_general"].isna()),
+    ]
+    _val = [1, np.nan]
+    dat["only_formal"] = np.select(_cond, _val, default=0)
 
     return dat
 
@@ -305,3 +269,19 @@ def replace_negative_values_with_nan(dat, col):
     """Replace negative values with NaN."""
     dat[col] = np.where(dat[col] < 0, np.nan, dat[col])
     return dat
+
+
+def create_means(dat):
+    mean_home_care = dat.loc[dat["any_care"] == 1, "only_home_care"].mean()
+    mean_combination_care = dat.loc[dat["any_care"] == 1, "combination_care"].mean()
+    mean_informal_care = dat.loc[dat["any_care"] == 1, "only_informal"].mean()
+    mean_formal_care = dat.loc[dat["any_care"] == 1, "only_formal"].mean()
+    mean_nursing_home = dat.loc[dat["any_care"] == 1, "only_nursing_home"].mean()
+
+    return (
+        mean_home_care,
+        mean_combination_care,
+        mean_informal_care,
+        mean_formal_care,
+        mean_nursing_home,
+    )
