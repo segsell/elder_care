@@ -492,10 +492,10 @@ GV_VARS = [
     "single",
     "couple",
     "partner",
-    "nursinghome",
-    # "perho",
-    "ydip",
-    "yind",
+    "nursinghome",  # Living in nursing home: MN024_
+    # "perho", # Percentage of house owned
+    "ydip",  # Earnings from employment: EP205
+    "yind",  # Earnings from self-employment: EP207
     "ypen1",  # Annual old age, early retirement pensions, survivor and war pension
     "ypen2",  # Annual private occupational pensions
     "ypen5",  # Annual payment from social assistance

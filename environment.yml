@@ -25,6 +25,8 @@ dependencies:
   - plotly
   - pytask
   - scipy
+  - seaborn
+  - statsmodels
 
   # Misc
   - black

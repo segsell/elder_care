@@ -969,7 +969,7 @@ def _drop_spousal_and_other_within_household_care(dat):
 
 def create_married(dat):
     """Create married variable."""
-    # Partner We use marriage information in SHARE to construct an indicator on the
+    # We use marriage information in SHARE to construct an indicator on the
     # existence of a partner living in the same household.
     # We do not distinguish between marriage and registered partnership.
 

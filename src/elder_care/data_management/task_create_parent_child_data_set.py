@@ -1,4 +1,4 @@
-"""Create the parent child data set of females between 50 and 68."""
+"""Create the parent child data set of people older than 65."""
 from pathlib import Path
 from typing import Annotated
 
@@ -71,9 +71,9 @@ def task_create_parent_child_data(
 
     dat = create_care_variables(dat)
 
-    dat = create_health_variables(dat)
-
     dat = create_care_combinations(dat)
+
+    dat = create_health_variables(dat)
 
     dat.to_csv(path, index=False)
 
@@ -199,7 +199,7 @@ def create_care_variables(dat):
         ),
     ]
     _val = [1, 0, 1, 0]
-    dat["informal_care"] = np.select(_cond, _val, default=np.nan)
+    dat["informal_care_child"] = np.select(_cond, _val, default=np.nan)
 
     # informal care general
     _cond = [
@@ -210,18 +210,28 @@ def create_care_variables(dat):
     dat["informal_care_general"] = np.select(_cond, _val, default=0)
 
     _cond = [
+        (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
+        (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
+    ]
+    _val = [1, np.nan]
+    dat["combination_care"] = np.select(_cond, _val, default=0)
+
+    _cond = [
         (dat["home_care"] == 1) | (dat["informal_care_general"] == 1),
         (dat["home_care"] == 0) & (dat["informal_care_general"] == 0),
     ]
     _val = [1, 0]
     dat["any_care"] = np.select(_cond, _val, default=np.nan)
 
-    _cond = [
-        (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
-        (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
-    ]
-    _val = [1, np.nan]
-    dat["combination_care"] = np.select(_cond, _val, default=0)
+    # lagged care
+    dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
+    dat["lagged_any_care"] = dat.groupby("mergeid")["any_care"].shift(1)
+    dat["lagged_informal_care"] = dat.groupby("mergeid")["informal_care_general"].shift(
+        1,
+    )
+    dat["lagged_informal_care_child"] = dat.groupby("mergeid")[
+        "informal_care_child"
+    ].shift(1)
 
     return dat
 
