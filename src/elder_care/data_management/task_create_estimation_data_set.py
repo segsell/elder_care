@@ -96,9 +96,6 @@ def task_create_estimation_data(
     path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
 ) -> None:
     """Create the estimation data set."""
-    # nurs
-    # Out-of-pocket payment for nursing home / home care
-
     # Load the data
     dat = pd.read_csv(path_to_raw_data)
 
@@ -152,6 +149,7 @@ def task_create_estimation_data(
     dat = create_married(dat)
 
     dat = create_caregving(dat)
+    dat = _drop_spousal_and_other_within_household_care(dat)
 
     dat = create_parental_health_status(dat, parent="mother")
     dat = create_parental_health_status(dat, parent="father")
@@ -419,6 +417,7 @@ def create_retired(dat: pd.DataFrame) -> pd.DataFrame:
     dat["retired"] = np.select(_cond, _val, 0)
 
     dat = _replace_missing_retirement(dat)
+    dat = _make_retirement_absorbing(dat)
     dat = _replace_missing_working(dat)
 
     # lagged retired
@@ -467,6 +466,9 @@ def _replace_missing_working(dat):
     # 0.0    4229
     # 1.0    2372
 
+    # !! No work possible in retirement
+    dat.loc[dat["retired"] == 1, "working"] = 0
+
     return dat
 
 
@@ -474,13 +476,12 @@ def _make_retirement_absorbing(dat):
     """Enforce absorbing retirement."""
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
-    replace_with_zero = (
-        # (dat["retired"].shift(1) == 0) &
-        (dat["retired"].shift(-1) == 0)
-        # & (dat["retired"].shift(1).notna())
-        # & (dat["mergeid"].shift(-1) == dat["mergeid"])
-        & (dat["mergeid"] == dat["mergeid"].shift(-1))
+    # cannot be retired in t if also not retired in t + 1
+    replace_with_zero = (dat["retired"].shift(-1) == 0) & (
+        dat["mergeid"] == dat["mergeid"].shift(-1)
     )
+
+    # retired if retired already in t - 1
     replace_with_one = (
         (dat["retired"].shift(1) == 1)
         # & (dat["working"] == 0)
@@ -911,14 +912,64 @@ def create_caregving(dat):
     # care experience
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
     dat["lagged_care"] = dat.groupby("mergeid")["care"].shift(1)
-    dat["care_experience"] = dat.groupby("mergeid")["lagged_care"].cumsum()
+
+    dat["_care_experience"] = dat.groupby("mergeid")["lagged_care"].cumsum()
+
+    # if two years in between add 2 years of care experience
+    dat = dat.copy()
+    dat["year_diff"] = dat.groupby("mergeid")["int_year"].diff()
+    _cond = [
+        (dat["lagged_care"] == 1) & (dat["care"] == 1),
+        (dat["lagged_care"] == 1) & (dat["care"] == 0),
+    ]
+    _val = [dat["year_diff"], dat["year_diff"]]
+    dat["care_exp_crosssect"] = np.select(_cond, _val, default=0)
+    dat["care_experience"] = dat.groupby("mergeid")["care_exp_crosssect"].cumsum()
 
     return dat
 
 
+def _drop_spousal_and_other_within_household_care(dat):
+    # within household
+    # sp019d1 # spouse/partner within household
+    # sp019d4sp # mother in law
+    # sp019d5sp # father in law
+    # sp019d6
+    # sp019d7
+    # sp019d8
+    # sp019d9
+    # sp019d19
+    # sp019d19
+    # sp019d32
+    # sp019d34
+    # sp019d35
+
+    other_care_inside = (
+        dat[[f"sp019d{suffix}" for suffix in (1, 4, 5, 6, 7, 8, 9)]]
+        .isin([1])
+        .any(axis=1)
+    )
+    mergeids_other_care = dat[other_care_inside]["mergeid"].unique()
+    dat_all_mergeids_dropped = dat[~dat["mergeid"].isin(mergeids_other_care)]
+
+    # spouse outside the household
+    spousal_care_outside = (
+        (dat_all_mergeids_dropped["sp009_1"] == 1)
+        | (dat_all_mergeids_dropped["sp009_2"] == 1)
+        | (dat_all_mergeids_dropped["sp009_3"] == 1)
+    )
+    mergeids_spousal_care = dat_all_mergeids_dropped[spousal_care_outside][
+        "mergeid"
+    ].unique()
+
+    return dat_all_mergeids_dropped[
+        ~dat_all_mergeids_dropped["mergeid"].isin(mergeids_spousal_care)
+    ]
+
+
 def create_married(dat):
     """Create married variable."""
-    # Partner We use marriage information in SHARE to construct an indicator on the
+    # We use marriage information in SHARE to construct an indicator on the
     # existence of a partner living in the same household.
     # We do not distinguish between marriage and registered partnership.
 
