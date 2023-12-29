@@ -1,6 +1,7 @@
 """Create exogenous transition probabilities."""
 from pathlib import Path
 
+import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -19,7 +20,54 @@ PARENT_MIN_AGE = 65
 RETIREMENT_AGE = 65
 
 
-def task_create_exog_other_income(
+def task_create_params_parental_health_transition():
+    """Health transition probabilities for parents.
+
+    Estimated from SOEP data.
+
+    """
+    params_female = {
+        "medium_health": {
+            "medium_health_age": 0.0304,
+            "medium_health_age_squared": -1.31e-05,
+            "medium_health_lagged_good_health": -1.155,
+            "medium_health_lagged_medium_health": 0.736,
+            "medium_health_lagged_bad_health": 1.434,
+            "medium_health_constant": -1.550,
+        },
+        "bad_health": {
+            "bad_health_age": 0.196,
+            "bad_health_age_squared": -0.000885,
+            "bad_health_lagged_good_health": -2.558,
+            "bad_health_lagged_medium_health": -0.109,
+            "bad_health_lagged_bad_health": 2.663,
+            "bad_health_constant": -9.220,
+        },
+    }
+
+    params_male = {
+        "medium_health": {
+            "medium_health_age": 0.176,
+            "medium_health_age_squared": -0.000968,
+            "medium_health_lagged_good_health": -1.047,
+            "medium_health_lagged_medium_health": 1.016,
+            "medium_health_lagged_bad_health": 1.743,
+            "medium_health_constant": -7.374,
+        },
+        "bad_health": {
+            "bad_health_age": 0.260,
+            "bad_health_age_squared": -0.00134,
+            "bad_health_lagged_good_health": -2.472,
+            "bad_health_lagged_medium_health": 0.115,
+            "bad_health_lagged_bad_health": 3.067,
+            "bad_health_constant": -11.89,
+        },
+    }
+
+    return params_female, params_male
+
+
+def task_create_params_exog_other_income(
     path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
 ) -> None:
     """Fit linear regression model to predict exogenous other income."""
@@ -58,7 +106,7 @@ def task_create_exog_other_income(
     return model.params
 
 
-def task_create_exog_care_demand(
+def task_create_params_exog_care_demand(
     path_to_raw_data: Path = BLD / "data" / "parent_child_data.csv",
 ) -> None:
     """Create exogenous care demand probabilities."""
@@ -140,6 +188,85 @@ def task_create_survival_probabilities(
     coefs_female = logit_female.params
 
     return coefs_male, coefs_female
+
+
+def exog_health_transition(age, good_health, medium_health, bad_health, params):
+    """Compute exogenous health transition probabilities.
+
+    Multinomial logit model with three health states: good, medium, bad.
+
+    This function computes the transition probabilities for an individual's health
+    state based on their current age, squared age, and lagged health states.
+    It uses a set of predefined parameters for medium and bad health states to
+    calculate linear combinations, and then applies the softmax function to these
+    linear combinations to get the transition probabilities.
+
+
+    Returns:
+        jnp.ndarray: Array of shape (3,) representing the probabilities of
+            transitioning to good, medium, and bad health states, respectively.
+
+    """
+    age_squared = age**2
+
+    # Linear combination for medium health
+    lc_medium_health = (
+        params["medium_health"]["medium_health_age"] * age
+        + params["medium_health"]["medium_health_age_squared"] * age_squared
+        + params["medium_health"]["medium_health_lagged_good_health"] * good_health
+        + params["medium_health"]["medium_health_lagged_medium_health"] * medium_health
+        + params["medium_health"]["medium_health_lagged_bad_health"] * bad_health
+        + params["medium_health"]["medium_health_constant"]
+    )
+
+    # Linear combination for bad health
+    lc_bad_health = (
+        params["bad_health"]["bad_health_age"] * age
+        + params["bad_health"]["bad_health_age_squared"] * age_squared
+        + params["bad_health"]["bad_health_lagged_good_health"] * good_health
+        + params["bad_health"]["bad_health_lagged_medium_health"] * medium_health
+        + params["bad_health"]["bad_health_lagged_bad_health"] * bad_health
+        + params["bad_health"]["bad_health_constant"]
+    )
+
+    linear_comb = np.array([0, lc_medium_health, lc_bad_health])
+    transition_probs = softmax(linear_comb)
+
+    return jnp.array([transition_probs[0], transition_probs[1], transition_probs[2]])
+
+
+def softmax(lc):
+    """Compute the softmax of each element in an array of linear combinations.
+
+    The softmax function is applied to an array of linear combination values (lc)
+    to calculate the probabilities of each class in a multinomial logistic
+    regression model.
+    This function is typically used for multi-class classification problems.
+
+    Args:
+        lc (np.ndarray): An array of linear combination values. This can be a 1D array
+            representing linear combinations for each class in a single data point,
+            or a 2D array representing multiple data points.
+
+    Returns:
+        np.ndarray: An array of the same shape as `lc` where each value is transformed
+            into the probability of the corresponding class, ensuring that the sum of
+            probabilities across classes (for each data point if 2D) equals 1.
+
+    Example:
+    >>> lc = np.array([0, 1, 2])
+    >>> softmax(lc)
+    array([0.09003057, 0.24472847, 0.66524096])
+
+    Note:
+    - The function applies np.exp to each element in `lc` and then normalizes so that
+      the sum of these exponentials is 1.
+    - For numerical stability, the maximum value in each set of linear combinations
+      is subtracted from each linear combination before exponentiation.
+
+    """
+    e_lc = np.exp(lc - np.max(lc))  # Subtract max for numerical stability
+    return e_lc / e_lc.sum(axis=0)
 
 
 def predict_other_income(age, married, high_educ, params):
