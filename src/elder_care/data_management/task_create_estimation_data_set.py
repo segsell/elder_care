@@ -178,10 +178,23 @@ def task_create_estimation_data(
     dat = create_years_since_retirement(dat)
     # consider retired if most recent job ended before first interview
 
+    dat = interpolate_missing_values(dat, col="hnetw")
+
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
+
+
+def interpolate_missing_values(dat, col, direction="forward"):
+    """Interpolate missing values via linear interpolation."""
+    dat[col] = dat.groupby("mergeid")[col].transform(
+        lambda x: x.interpolate(method="linear", axis=0, limit_direction=direction),
+    )
+
+    # "DE-000132-01"
+
+    return dat
 
 
 def create_retrospective_work_experience(dat):
@@ -1051,6 +1064,12 @@ def create_working(dat):
         (dat["working_general"] == 1)
         & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
         & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+        1,
+        0,
+    )
+
+    dat["working_part_or_full_time"] = np.where(
+        (dat["part_time"] == 1) | (dat["full_time"] == 1),
         1,
         0,
     )
