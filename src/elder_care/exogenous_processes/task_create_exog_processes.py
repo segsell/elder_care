@@ -17,6 +17,11 @@ MAX_YEAR = 2017
 PARENT_MIN_AGE = 65
 
 
+GOOD_HEALTH = 0
+MEDIUM_HEALTH = 1
+BAD_HEALTH = 2
+
+
 RETIREMENT_AGE = 65
 
 
@@ -188,6 +193,60 @@ def task_create_survival_probabilities(
     coefs_female = logit_female.params
 
     return coefs_male, coefs_female
+
+
+def exog_care_demand_probability(
+    parental_age,
+    good_health,
+    medium_health,
+    bad_health,
+    params,
+):
+    """Create exogenous care demand probabilities.
+
+    Compute based on parent alive. Otherwise zero.
+    Done outside?!
+
+    Nested exogenous transitions:
+    - First, a parent's health state is determined by their age and lagged health state.
+
+    """
+    trans_probs_health = exog_health_transition(
+        parental_age,
+        good_health,
+        medium_health,
+        bad_health,
+        params,
+    )
+    # parent alive?
+
+    prob_care_good = _exog_care_demand(parental_age, parental_health=0, params=params)
+    prob_care_medium = _exog_care_demand(parental_age, parental_health=1, params=params)
+    prob_care_bad = _exog_care_demand(parental_age, parental_health=2, params=params)
+
+    _trans_probs_care_demand = jnp.array(
+        [prob_care_bad, prob_care_medium, prob_care_good],
+    )
+    joint_trans_prob = trans_probs_health @ _trans_probs_care_demand
+
+    return jnp.array([1 - joint_trans_prob, joint_trans_prob])
+
+
+def _exog_care_demand(parental_age, parental_health, params):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    logit = (
+        params["exog_care_mother_constant"]
+        + params["exog_care_mother_age"] * parental_age
+        + params["exog_care_mother_age_squared"] * (parental_age**2)
+        + params["exog_care_mother_medium_health"] * (parental_health == MEDIUM_HEALTH)
+        + params["exog_care_mother_bad_health"] * (parental_health == BAD_HEALTH)
+    )
+    return 1 / (1 + np.exp(-logit))
 
 
 def exog_health_transition(age, good_health, medium_health, bad_health, params):
