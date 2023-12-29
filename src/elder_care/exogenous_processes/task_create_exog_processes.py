@@ -6,7 +6,7 @@ import pandas as pd
 import statsmodels.api as sm
 from elder_care.config import BLD
 from elder_care.config import SRC
-
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 FEMALE = 2
 MALE = 1
@@ -17,6 +17,45 @@ PARENT_MIN_AGE = 65
 
 
 RETIREMENT_AGE = 65
+
+
+def task_create_exog_other_income(
+    path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
+) -> None:
+    """Fit linear regression model to predict exogenous other income."""
+    data = pd.read_csv(path_to_raw_data)
+
+    data["age_squared"] = data["age"] ** 2
+    data["age_65_and_older"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
+
+    _dat = data[
+        [
+            "other_income",
+            "age",
+            "age_squared",
+            "age_65_and_older",
+            "married",
+            "high_educ",
+        ]
+    ]
+    dat = _dat.dropna()
+
+    regressors = dat[["age", "age_65_and_older", "married", "high_educ"]]
+    regressors = sm.add_constant(regressors)
+
+    dat.loc[dat["other_income"] <= 0, "other_income"] = np.finfo(float).eps
+    y_log = np.log(dat["other_income"])
+
+    model = sm.OLS(y_log, regressors).fit()
+
+    vif_data = pd.DataFrame()
+    vif_data["feature"] = regressors.columns
+    vif_data["VIF"] = [
+        variance_inflation_factor(regressors.values, i)
+        for i in range(regressors.shape[1])
+    ]
+
+    return model.params
 
 
 def task_create_exog_care_demand(
@@ -62,36 +101,6 @@ def task_create_exog_care_demand(
     return logit_single_father.params, logit_single_mother.params, logit_couple.params
 
 
-def predict_care_demand(
-    age,
-    sex,
-    lagged_care,
-    coefs_single_father,
-    coefs_single_mother,
-    coefs_couple,
-):
-    """Predicts the survival probability based on logit parameters.
-
-    Parameters:
-        age (int): The age of the individual. Age >= 65.
-        sex (str): The gender of the individual ('male' or 'female').
-
-    Returns:
-        float: Predicted binary survival probability.
-
-    """
-    if sex.lower() == "male":
-        coefs = coefs_single_father
-    elif sex.lower() == "female":
-        coefs = coefs_single_mother
-    else:
-        coefs = coefs_couple
-
-    # Logit prediction
-    logit = coefs[0] + coefs[1] * age + coefs[2] * (age**2) + coefs[3] * lagged_care
-    return 1 / (1 + np.exp(-logit))
-
-
 def task_create_survival_probabilities(
     path_to_raw_data: Path = SRC
     / "data"
@@ -133,6 +142,49 @@ def task_create_survival_probabilities(
     return coefs_male, coefs_female
 
 
+def predict_other_income(age, married, high_educ, params):
+    """Predict other income based on log-lin regression."""
+    log_other_income = (
+        params["other_income_const"]
+        + params["other_income_age"] * age
+        + params["other_income_age_65_and_older"] * (age >= RETIREMENT_AGE)
+        + params["other_income_married"] * married
+        + params["other_income_high_educ"] * high_educ
+    )
+
+    return np.exp(log_other_income)
+
+
+def predict_care_demand(
+    age,
+    sex,
+    lagged_care,
+    coefs_single_father,
+    coefs_single_mother,
+    coefs_couple,
+):
+    """Predicts the survival probability based on logit parameters.
+
+    Parameters:
+        age (int): The age of the individual. Age >= 65.
+        sex (str): The gender of the individual ('male' or 'female').
+
+    Returns:
+        float: Predicted binary survival probability.
+
+    """
+    if sex.lower() == "male":
+        coefs = coefs_single_father
+    elif sex.lower() == "female":
+        coefs = coefs_single_mother
+    else:
+        coefs = coefs_couple
+
+    # Logit prediction
+    logit = coefs[0] + coefs[1] * age + coefs[2] * (age**2) + coefs[3] * lagged_care
+    return 1 / (1 + np.exp(-logit))
+
+
 def predict_survival_probability(age, sex):
     """Predicts the survival probability based on logit parameters.
 
@@ -162,6 +214,7 @@ def predict_survival_probability(age, sex):
 
 
 def probability_full_time_offer(age, high_educ, lagged_choice, params):
+    """Compute logit probability of full time offer."""
     logit = (
         params["full_time_constant"]
         + params["full_time_not_working_last_period"] * is_not_working(lagged_choice)
@@ -178,6 +231,7 @@ def probability_full_time_offer(age, high_educ, lagged_choice, params):
 
 
 def probability_part_time_offer(age, high_educ, lagged_choice, params):
+    """Compute logit probability of part time offer."""
     logit = (
         params["part_time_constant"]
         + params["part_time_not_working_last_period"] * is_not_working(lagged_choice)
