@@ -179,11 +179,35 @@ def task_create_estimation_data(
     # consider retired if most recent job ended before first interview
 
     dat = interpolate_missing_values(dat, col="hnetw")
+    dat = compute_spousal_and_other_income(dat, hh_income="thinc")
 
     dat.to_csv(path, index=False)
 
 
 # =====================================================================================
+
+
+def compute_spousal_and_other_income(dat, hh_income=None):
+    """Compute spousal and other income."""
+    if hh_income is None:
+        hh_income = "thinc_avg"
+        dat["thinc_avg"] = dat[["thinc", "thinc2"]].mean(axis=1)
+
+    _cond = [
+        (dat["ydip"] >= 0) & (dat["yind"] >= 0),
+        (dat["ydip"] >= 0) & (dat["yind"].isna()),
+        (dat["ydip"].isna()) & (dat["yind"] >= 0),
+    ]
+    _val = [
+        dat[hh_income] - dat["ydip"] - dat["yind"],
+        dat[hh_income] - dat["ydip"],
+        dat[hh_income] - dat["yind"],
+    ]
+    dat["other_income"] = np.select(_cond, _val, default=np.nan)
+
+    dat["other_income"] = np.where(dat["other_income"] < 0, 0, dat["other_income"])
+
+    return dat
 
 
 def interpolate_missing_values(dat, col, direction="forward"):
