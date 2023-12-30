@@ -61,7 +61,8 @@ def task_create_moments(
     ]
     moments += [
         dat.loc[
-            (dat["intensive_care"] == True) & (dat["age"] == age), "full_time",
+            (dat["intensive_care"] == True) & (dat["age"] == age),
+            "full_time",
         ].mean()
         for age in range(MIN_AGE, MAX_AGE + 1)
     ]
