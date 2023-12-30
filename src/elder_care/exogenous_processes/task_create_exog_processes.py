@@ -197,6 +197,7 @@ def task_create_survival_probabilities(
 
 def exog_care_demand_probability(
     parental_age,
+    parent_alive,
     good_health,
     medium_health,
     bad_health,
@@ -210,7 +211,21 @@ def exog_care_demand_probability(
     Nested exogenous transitions:
     - First, a parent's health state is determined by their age and lagged health state.
 
+    Args:
+        parental_age (int): Age of parent.
+        parent_alive (int): Binary indicator of whether parent is alive.
+        good_health (int): Binary indicator of good health.
+        medium_health (int): Binary indicator of medium health.
+        bad_health (int): Binary indicator of bad health.
+        params (dict): Dictionary of parameters.
+
+    Returns:
+        jnp.ndarray: Array of shape (2,) representing the probabilities of
+            no care demand and care demand, respectively.
+
     """
+    survival_prob = predict_survival_probability(parental_age, sex="female")  # mother
+
     trans_probs_health = exog_health_transition(
         parental_age,
         good_health,
@@ -227,9 +242,14 @@ def exog_care_demand_probability(
     _trans_probs_care_demand = jnp.array(
         [prob_care_bad, prob_care_medium, prob_care_good],
     )
-    joint_trans_prob = trans_probs_health @ _trans_probs_care_demand
 
-    return jnp.array([1 - joint_trans_prob, joint_trans_prob])
+    # Non-zero probability of care demand only if parent is alive,
+    # weighted by the parent's survival probability
+    joint_prob_care_demand = (survival_prob * parent_alive) * (
+        trans_probs_health @ _trans_probs_care_demand
+    )
+
+    return jnp.array([1 - joint_prob_care_demand, joint_prob_care_demand])
 
 
 def _exog_care_demand(parental_age, parental_health, params):
