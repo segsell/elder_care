@@ -93,7 +93,16 @@ def table(df_col):
 
 def task_create_estimation_data(
     path_to_raw_data: Path = BLD / "data" / "data_merged.csv",
-    path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
+    path_to_main: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
+    path_to_design_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "estimation_data_design_weight.csv",
+    path_to_hh_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "estimation_data_hh_weight.csv",
+    path_to_ind_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "estimation_data_ind_weight.csv",
 ) -> None:
     """Create the estimation data set."""
     # Load the data
@@ -178,13 +187,81 @@ def task_create_estimation_data(
     dat = create_years_since_retirement(dat)
     # consider retired if most recent job ended before first interview
 
+    dat = create_log_hourly_wage(dat)
+
     dat = interpolate_missing_values(dat, col="hnetw")
     dat = compute_spousal_and_other_income(dat, hh_income="thinc")
 
-    dat.to_csv(path, index=False)
+    dat.reset_index(drop=True, inplace=True)
+
+    dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
+    dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
+    dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
+
+    # Save
+    dat.to_csv(path_to_main, index=False)
+    dat_design_weight.to_csv(path_to_design_weight, index=False)
+    dat_hh_weight.to_csv(path_to_hh_weight, index=False)
+    dat_ind_weight.to_csv(path_to_ind_weight, index=False)
 
 
 # =====================================================================================
+
+
+def multiply_rows_with_weight(dat, weight):
+    # Create a DataFrame of weights with the same shape as dat
+    weights = dat[weight].values.reshape(-1, 1)
+
+    static_cols = [
+        "mergeid",
+        "int_year",
+        "int_month",
+        "age",
+        "care",
+        "any_care",
+        "light_care",
+        "intensive_care",
+        weight,
+    ]
+    data_columns = dat.drop(columns=static_cols).values
+
+    result = data_columns * weights
+
+    dat_weighted = pd.DataFrame(
+        result,
+        columns=[col for col in dat.columns if col not in static_cols],
+    )
+    dat_weighted.insert(0, "mergeid", dat["mergeid"])
+    dat_weighted.insert(1, "int_year", dat["int_year"])
+    dat_weighted.insert(2, "int_month", dat["int_month"])
+    dat_weighted.insert(3, "age", dat["age"])
+    dat_weighted.insert(4, weight, dat[weight])
+    dat_weighted.insert(5, "care", dat["care"])
+    dat_weighted.insert(6, "any_care", dat["any_care"])
+    dat_weighted.insert(7, "light_care", dat["light_care"])
+    dat_weighted.insert(8, "intensive_care", dat["intensive_care"])
+
+    return dat_weighted
+
+
+# def multiply_row_with_weight(row, weight):
+#     columns_to_multiply = [
+#         col for col in row.index if col not in ["mergeid", "int_year", f"{weight}"]
+#     ]
+
+#     row[columns_to_multiply] *= weight
+
+#     return row
+
+
+def create_log_hourly_wage(dat):
+    dat["ydip"] = np.where(dat["ydip"] < 0, 0, dat["ydip"])
+    dat["yind"] = np.where(dat["yind"] < 0, 0, dat["yind"])
+
+    dat["labor_income"] = dat["ydip"] + dat["yind"]
+
+    dat["log_hourly_wage"] = np.log(dat["labor_income"] / (dat["ep013_"] * 52))
+    return dat
 
 
 def compute_spousal_and_other_income(dat, hh_income=None):
@@ -820,7 +897,8 @@ def create_caregving(dat):
     ]
     choices_care = [1, 0]
 
-    dat["care"] = np.select(conditions_care, choices_care, default=np.nan)
+    # dat["any_care"] = np.select(conditions_care, choices_care, default=np.nan)
+    dat["any_care"] = np.select(conditions_care, choices_care, default=0)
 
     conditions_parents_outside = [
         (dat["sp008_"] == 1)
@@ -1046,10 +1124,10 @@ def create_working(dat):
 
     _cond = [
         (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
-        ((dat["cjs"] < 0) | (dat["cjs"].isna())),
+        (dat["cjs"] > 0) & (dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED),
     ]
-    _val = [1, np.nan]
-    dat["working"] = np.select(_cond, _val, default=0)
+    _val = [1, 0]
+    dat["working"] = np.select(_cond, _val, default=np.nan)
 
     _cond = [
         (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
@@ -1079,7 +1157,7 @@ def create_working(dat):
     )
     dat["part_time"] = np.where(
         (dat["working"] == 1)
-        & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
+        # & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
         & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
         1,
         0,
@@ -1092,11 +1170,34 @@ def create_working(dat):
         0,
     )
 
-    dat["working_part_or_full_time"] = np.where(
-        (dat["part_time"] == 1) | (dat["full_time"] == 1),
-        1,
-        0,
-    )
+    #
+    dat["e013_"] = np.where(dat["ep013_"] < 0, np.nan, dat["ep013_"])
+    _cond = [
+        dat["ep013_"] > WORKING_FULL_TIME_THRESH,
+        (dat["ep013_"] > 0) & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+    ]
+    _val = [1, 0]
+    dat["full_time"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [
+        (dat["ep013_"] > 0) & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+        dat["ep013_"] > WORKING_FULL_TIME_THRESH,
+    ]
+    _val = [1, 0]
+    dat["full_time"] = np.select(_cond, _val, default=np.nan)
+
+    # dat["working_part_or_full_time"] = np.where(
+    #     (dat["part_time"] == 1) | (dat["full_time"] == 1),
+    #     1,
+    #     0,
+    # )
+
+    _cond = [
+        (dat["full_time"] == True) | (dat["part_time"] == True),
+        (dat["full_time"] == False) & (dat["part_time"] == False),
+    ]
+    _val = [1, 0]
+    dat["working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
 
     return dat
 
