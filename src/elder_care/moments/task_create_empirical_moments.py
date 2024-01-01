@@ -50,6 +50,9 @@ def task_create_empirical_moments(
         for age in range(MIN_AGE, MAX_AGE + 1)
     ]
     breakpoint()
+    dat.loc[
+        (dat["intensive_care"] == 0) & (dat["age"] < 62), "working_part_or_full_time"
+    ].sum() / dat["design_weight"].sum()
 
     # wealth by age bin
 
@@ -110,6 +113,7 @@ def task_create_empirical_moments(
     # moments += [
     #     dat.loc[
     #         (dat["intensive_care"] == True) & (dat["age"] == age),
+
     #         "full_time",
     #     ].mean()
     #     for age in range(MIN_AGE, MAX_AGE + 1)
