@@ -51,7 +51,7 @@ def task_create_empirical_moments(
     ]
     breakpoint()
     dat.loc[
-        (dat["intensive_care"] == 0) & (dat["age"] < 62), "working_part_or_full_time"
+        (dat["intensive_care"] == 0) & (dat["age"] < 62), "working_part_or_full_time",
     ].sum() / dat["design_weight"].sum()
 
     # wealth by age bin
