@@ -245,7 +245,7 @@ def multiply_rows_with_weight(dat, weight):
 
     # data['design_weight_avg'] = data.groupby('mergeid')['design_weight'].transform('mean')
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
-        "mean"
+        "mean",
     )
 
     return dat_weighted
@@ -1051,7 +1051,8 @@ def create_caregving(dat):
         )
         & (
             # (dat["sp018_"] == 0)  # or personal care in hh
-            ((dat["sp019d2"] != 1) & (dat["sp019d3"] != 1))  # for mother or father
+            (dat["sp019d2"] != 1)
+            & (dat["sp019d3"] != 1)  # for mother or father
         ),
     ]
     _choice = [1, 0]

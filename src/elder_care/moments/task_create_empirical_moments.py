@@ -69,7 +69,7 @@ def task_create_moments(
     dat.loc[(dat["any_care"] == True), "care"].mean()
 
     dat.loc[(dat["any_care"] == True), "care_weighted"].sum() / dat.loc[
-        dat["any_care"] == True, "hh_weight"
+        dat["any_care"] == True, "hh_weight",
     ].sum()
 
     moments = []
@@ -195,7 +195,7 @@ def multiply_rows_with_weight(dat, weight):
 
     # data['design_weight_avg'] = data.groupby('mergeid')['design_weight'].transform('mean')
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
-        "mean"
+        "mean",
     )
 
     return dat_weighted
