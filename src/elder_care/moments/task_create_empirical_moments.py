@@ -69,7 +69,8 @@ def task_create_moments(
     dat.loc[(dat["any_care"] == True), "care"].mean()
 
     dat.loc[(dat["any_care"] == True), "care_weighted"].sum() / dat.loc[
-        dat["any_care"] == True, "hh_weight",
+        dat["any_care"] == True,
+        "hh_weight",
     ].sum()
 
     moments = []

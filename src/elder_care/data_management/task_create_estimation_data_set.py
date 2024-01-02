@@ -250,11 +250,13 @@ def task_create_estimation_data(
     # 0.04706640876853
 
     mean_female = dat.loc[
-        (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1), "care_to_mother",
+        (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1),
+        "care_to_mother",
     ].mean()
 
     mean_male = dat.loc[
-        (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1), "care_to_mother",
+        (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1),
+        "care_to_mother",
     ].mean()
 
     dat = dat[dat["gender"] == FEMALE]
