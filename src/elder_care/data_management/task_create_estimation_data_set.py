@@ -219,7 +219,7 @@ def task_create_estimation_data(
 
     dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
     dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
-    breakpoint()
+    # breakpoint()
 
     # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["care_in_year"] == 1), "care_to_father"].mean()
     # 0.20738636363636365
@@ -249,13 +249,15 @@ def task_create_estimation_data(
     # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["any_care"] == 1), "care_to_father"].mean()
     # 0.04706640876853
 
-    mean_female = dat.loc[
-        (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1), "care_to_mother",
-    ].mean()
+    # mean_female = dat.loc[
+    #     (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1),
+    #     "care_to_mother",
+    # ].mean()
 
-    mean_male = dat.loc[
-        (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1), "care_to_mother",
-    ].mean()
+    # mean_male = dat.loc[
+    #     (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1),
+    #     "care_to_mother",
+    # ].mean()
 
     dat = dat[dat["gender"] == FEMALE]
     dat.reset_index(drop=True, inplace=True)
@@ -1293,18 +1295,19 @@ def create_working(dat):
     _cond = [
         # dat["working"] == 1,
         dat["ep013_"] >= WORKING_FULL_TIME_THRESH,
-        (dat["ep013_"] > 0) & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
-        dat["ep013_"] == 0,
+        (dat["ep013_"] >= 0) & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+        # (dat["cjs"] > 0) & (dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED),
     ]
-    _val = [1, 0, 0]
+    _val = [1, 0]
     dat["full_time"] = np.select(_cond, _val, default=np.nan)
 
     _cond = [
         # dat["working"] == 1,
-        (dat["ep013_"] > WORKING_PART_TIME_THRESH)
+        (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
         & (dat["ep013_"] < WORKING_FULL_TIME_THRESH),
         dat["ep013_"] >= WORKING_FULL_TIME_THRESH,
         dat["ep013_"] == 0,
+        # (dat["cjs"] > 0) & (dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED),
     ]
     _val = [1, 0, 0]
     dat["part_time"] = np.select(_cond, _val, default=np.nan)
@@ -1321,6 +1324,7 @@ def create_working(dat):
         (dat["full_time"].isna()) & (dat["part_time"] == False),
         (dat["full_time"] == False) & (dat["part_time"].isna()),
         dat["ep013_"] == 0,
+        # (dat["cjs"] > 0) & (dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED),
     ]
     _val = [1, 0, 0, 0, 0]
     dat["working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
