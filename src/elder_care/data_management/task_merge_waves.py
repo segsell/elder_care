@@ -592,22 +592,22 @@ def task_merge_waves_and_modules(
     _weights_w8 = {"gv_weights": ["dw_w8", "cchw_w8_main", "cciw_w8_main"]}
 
     variables_wave1 = filter_nested_dict(
-        ALL_VARIABLES | _weights_w1, KEYS_TO_REMOVE_WAVE1
+        ALL_VARIABLES | _weights_w1, KEYS_TO_REMOVE_WAVE1,
     )
     variables_wave2 = filter_nested_dict(
-        ALL_VARIABLES | _weights_w2, KEYS_TO_REMOVE_WAVE2
+        ALL_VARIABLES | _weights_w2, KEYS_TO_REMOVE_WAVE2,
     )
     variables_wave4 = filter_nested_dict(
-        ALL_VARIABLES | _weights_w4, KEYS_TO_REMOVE_WAVE4
+        ALL_VARIABLES | _weights_w4, KEYS_TO_REMOVE_WAVE4,
     )
     variables_wave5 = filter_nested_dict(
-        ALL_VARIABLES | _weights_w5, KEYS_TO_REMOVE_WAVE5
+        ALL_VARIABLES | _weights_w5, KEYS_TO_REMOVE_WAVE5,
     )
     variables_wave6 = filter_nested_dict(
-        ALL_VARIABLES | _weights_w6, KEYS_TO_REMOVE_WAVE6
+        ALL_VARIABLES | _weights_w6, KEYS_TO_REMOVE_WAVE6,
     )
     variables_wave8 = filter_nested_dict(
-        ALL_VARIABLES | _weights_w8, KEYS_TO_REMOVE_WAVE8
+        ALL_VARIABLES | _weights_w8, KEYS_TO_REMOVE_WAVE8,
     )
 
     wave1 = process_wave(wave_number=1, data_modules=variables_wave1)
