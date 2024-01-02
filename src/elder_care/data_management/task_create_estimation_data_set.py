@@ -109,7 +109,6 @@ def task_create_estimation_data(
     dat = pd.read_csv(path_to_raw_data)
 
     # Filter for females
-    dat = dat[dat["gender"] == FEMALE]
 
     dat = dat.sort_values(by=["mergeid", "int_year"])
     dat["first_int_year"] = dat.groupby("mergeid")["int_year"].transform("first")
@@ -191,7 +190,74 @@ def task_create_estimation_data(
 
     dat = interpolate_missing_values(dat, col="hnetw")
     dat = compute_spousal_and_other_income(dat, hh_income="thinc")
+    "sp009_1" == MOTHER
 
+    # Descriptives
+
+    care_to_mother = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == MOTHER)
+            | (dat["sp009_2"] == MOTHER)
+            | (dat["sp009_3"] == MOTHER)
+        ),
+    ]
+    care_to_father = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == FATHER)
+            | (dat["sp009_2"] == FATHER)
+            | (dat["sp009_3"] == FATHER)
+        ),
+    ]
+
+    dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
+    dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
+    breakpoint()
+
+    # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["care_in_year"] == 1), "care_to_father"].mean()
+    # 0.20738636363636365
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["care_in_year"] == 1), "care_to_father"].mean()
+    # 0.20970266040688576
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE), "care_in_year"].mean()
+    # 0.10456553755522828
+    # (Pdb++) dat.loc[(dat["gender"] != FEMALE), "care_in_year"].mean()
+    # 0.06500461680517082
+
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["care_in_year"] == 1), "care_to_mother"].mean()
+    # 0.892018779342723
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["any_care"] == 1), "care_to_mother"].mean()
+    # 0.322215941209723
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["any_care"] == 1), "care_to_father"].mean()
+    # 0.07574901074053138
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["any_care"] == 1), "care_parents"].mean()
+    # 0.36122102882984736
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["any_care"] == 1), "care"].mean()
+    # 0.3600904465799887
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["any_care"] == 1), "care_to_father"].mean()
+    # 0.07574901074053138
+    # (Pdb++) dat.loc[(dat["gender"] == FEMALE) & (dat["any_care"] == 1), "care_to_mother"].mean()
+    # 0.322215941209723
+    # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["any_care"] == 1), "care_to_mother"].mean()
+    # 0.1947130883301096
+    # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["any_care"] == 1), "care_to_father"].mean()
+    # 0.04706640876853
+
+    mean_female = dat.loc[
+        (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1), "care_to_mother",
+    ].mean()
+
+    mean_male = dat.loc[
+        (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1), "care_to_mother",
+    ].mean()
+
+    dat = dat[dat["gender"] == FEMALE]
     dat.reset_index(drop=True, inplace=True)
 
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
@@ -245,7 +311,7 @@ def multiply_rows_with_weight(dat, weight):
 
     # data['design_weight_avg'] = data.groupby('mergeid')['design_weight'].transform('mean')
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
-        "mean"
+        "mean",
     )
 
     return dat_weighted
@@ -1051,7 +1117,8 @@ def create_caregving(dat):
         )
         & (
             # (dat["sp018_"] == 0)  # or personal care in hh
-            ((dat["sp019d2"] != 1) & (dat["sp019d3"] != 1))  # for mother or father
+            (dat["sp019d2"] != 1)
+            & (dat["sp019d3"] != 1)  # for mother or father
         ),
     ]
     _choice = [1, 0]
@@ -1169,6 +1236,10 @@ def create_working(dat):
     # 5 Homemaker
     # 97 Other
 
+    # Drop disabled
+
+    # Drop within household care
+
     _cond = [
         (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
         (dat["cjs"] > 0) & (dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED),
@@ -1249,8 +1320,9 @@ def create_working(dat):
         (dat["full_time"] == False) & (dat["part_time"] == False),
         (dat["full_time"].isna()) & (dat["part_time"] == False),
         (dat["full_time"] == False) & (dat["part_time"].isna()),
+        dat["ep013_"] == 0,
     ]
-    _val = [1, 0, 0, 0]
+    _val = [1, 0, 0, 0, 0]
     dat["working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
 
     return dat
