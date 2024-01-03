@@ -35,6 +35,16 @@ def task_create_moments(
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
     path_to_ind_weight: Path = BLD / "data" / "estimation_data_ind_weight.csv",
     path_to_parent_child_data: Path = BLD / "data" / "parent_child_data.csv",
+    path_to_parent_child_design_weight: Path = BLD
+    / "data"
+    / "parent_child_data_design_weight.csv",
+    path_to_parent_child_hh_weight: Path = BLD
+    / "data"
+    / "parent_child_data_hh_weight.csv",
+    path_to_parent_child_ind_weight: Path = BLD
+    / "data"
+    / "parent_child_data_ind_weight.csv",
+    #
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
     dat_un = pd.read_csv(path_to_estimation_data)
@@ -42,7 +52,10 @@ def task_create_moments(
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     dat_ind_weight = pd.read_csv(path_to_ind_weight)
 
-    parent = pd.read_csv(path_to_parent_child_data)
+    parent_un = pd.read_csv(path_to_parent_child_data)
+    parent_design_weight = pd.read_csv(path_to_parent_child_design_weight)
+    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    parent_ind_weight = pd.read_csv(path_to_parent_child_ind_weight)
 
     # _observed_any_care = dat["any_care"].mean()
     # _observed_no_care = 1 - _observed_any_care
@@ -322,7 +335,6 @@ def task_create_moments(
     )
 
     net_wealth_by_age = get_moments_by_age(dat, moment="hnetw", is_caregiver="all")
-    breakpoint()
 
     # (Pdb++) dat.loc[(dat["age"] < 61) & (dat["intensive_care"] == True), "full_time"].sum() / dat.loc[(dat["age"] < 61) & (dat["intensive_care"] == True), "hh_weight"].sum()
     # 0.15722689712906093
@@ -382,88 +394,104 @@ def task_create_moments(
     # (Pdb++) 390 / 637
     # 0.6122448979591837
 
-    dat.loc[(dat["any_care"] == True), "care"].mean()
-
-    dat.loc[(dat["any_care"] == True), "care_weighted"].sum() / dat.loc[
-        dat["any_care"] == True,
-        "hh_weight",
-    ].sum()
-
-    moments = []
-
-    moments += [
-        dat.loc[dat["age"] == age, "working"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
-    moments += [
-        dat.loc[dat["age"] == age, "full_time"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
-    # wealth by age bin
-
-    # group by age bins?
-
-    moments += [
-        dat.loc[(dat["care"] == False) & (dat["age"] == age), "working"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-    moments += [
-        dat.loc[(dat["care"] == False) & (dat["age"] == age), "full_time"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
-    moments += [
-        dat.loc[(dat["care"] == True) & (dat["age"] == age), "working"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-    moments += [
-        dat.loc[(dat["care"] == True) & (dat["age"] == age), "full_time"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
-    moments += [
-        dat.loc[(dat["intensive_care"] == True) & (dat["age"] == age), "working"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-    moments += [
-        dat.loc[
-            (dat["intensive_care"] == True) & (dat["age"] == age),
-            "full_time",
-        ].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
     # share giving care
-    moments += [
-        dat.loc[dat["age"] == age, "care"].mean() for age in range(MIN_AGE, MAX_AGE + 1)
+
+    _share_intensive_care = []
+    _share_intensive_care += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "intensive_care_new",
+        ].mean()
+        for age_bin in age_bins_fine
     ]
-    moments += [
-        dat.loc[dat["age"] == age, "intensive_care"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
+
+    intensive_care_var = "intensive_care_no_other"
+    # intensive_care_var = "intensive_care_new"
+    dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
+
+    share_intensive_care = []
+    share_intensive_care += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "intensive_care_weighted",
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins_fine
     ]
 
     # share intensive care givers among informal care givers
-    moments += [
-        dat.loc[(dat["care"] == True) & (dat["age"] == age), "intensive_care"].mean()
-        for age in range(MIN_AGE, MAX_AGE + 1)
+
+    # ================================================================================
+    # PARENT CHILD DATA
+    # ================================================================================
+
+    # care mix by health status of parent
+
+    # (Pdb++) parent_child
+    # [0.1103448275862069, 0.14909303686366296, 0.12862190812720847, 0.006269592476489028, 0.042832065535400816, 0.1674911660777385, 0.013166144200626959, 0.038853130485664134, 0.11448763250883393]
+
+    parent = parent_hh_weight.copy()
+
+    parent_child = []
+    parent_child += [
+        parent_un.loc[
+            (parent_un["health"] == health) & (parent_un["married"] == False),
+            "only_informal",
+        ].mean()
+        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
     ]
 
-    # parent child data
-    moments += [
-        parent.loc[parent["health"] == health, "only_informal"].mean()
+    parent_child += [
+        parent_un.loc[
+            (parent_un["health"] == health) & (parent_un["married"] == False),
+            "combination_care",
+        ].mean()
         for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
     ]
-    moments += [
-        parent.loc[parent["health"] == health, "combination_care"].mean()
+    # home care is formal home-based care without informal care
+    # nursing home options not part of the current study
+    parent_child += [
+        parent_un.loc[
+            (parent_un["health"] == health) & (parent_un["married"] == False),
+            "only_home_care",
+        ].mean()
         for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
     ]
-    # only informal
-    moments += [
-        parent.loc[parent["health"] == health, "only_home_care"].mean()
+
+    # weighted parent child moments
+    parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
+    parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
+    parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
+
+    parent_child_weighted = []
+    parent_child_weighted += [
+        parent.loc[
+            (parent["married"] == False) & (parent["health"] == health),
+            "only_informal_weighted",
+        ].sum()
+        / parent.loc[parent["health"] == health, weight].sum()
         for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
     ]
+    parent_child_weighted += [
+        parent.loc[
+            (parent["married"] == False) & (parent["health"] == health),
+            "combination_care_weighted",
+        ].sum()
+        / parent.loc[parent["health"] == health, weight].sum()
+        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
+    ]
+    parent_child_weighted += [
+        parent.loc[
+            (parent["married"] == False) & (parent["health"] == health),
+            "only_home_care_weighted",
+        ].sum()
+        / parent.loc[parent["health"] == health, weight].sum()
+        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
+    ]
+    breakpoint()
 
     filtered_dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
     grouped = filtered_dat.groupby("age")["working"].mean()

@@ -224,7 +224,6 @@ def task_create_estimation_data(
 
     dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
     dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
-    # breakpoint()
 
     # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["care_in_year"] == 1), "care_to_father"].mean()
     # 0.20738636363636365
@@ -264,8 +263,6 @@ def task_create_estimation_data(
         "care_to_mother",
     ].mean()
 
-    breakpoint()
-
     dat = dat[dat["gender"] == FEMALE]
     dat.reset_index(drop=True, inplace=True)
 
@@ -296,6 +293,10 @@ def multiply_rows_with_weight(dat, weight):
         "any_care",
         "light_care",
         "intensive_care",
+        "intensive_care_new",
+        "intensive_care_no_other",
+        "intensive_care_general",
+        "intensive_care_all_parents",
         "wave",
         weight,
     ]
@@ -316,7 +317,13 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(6, "any_care", dat["any_care"])
     dat_weighted.insert(7, "light_care", dat["light_care"])
     dat_weighted.insert(8, "intensive_care", dat["intensive_care"])
-    dat_weighted.insert(9, "wave", dat["wave"])
+    dat_weighted.insert(9, "intensive_care_new", dat["intensive_care_new"])
+    dat_weighted.insert(10, "intensive_care_no_other", dat["intensive_care_no_other"])
+    dat_weighted.insert(11, "intensive_care_no_general", dat["intensive_care_general"])
+    dat_weighted.insert(
+        12, "intensive_care_all_parents", dat["intensive_care_all_parents"]
+    )
+    dat_weighted.insert(13, "wave", dat["wave"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",

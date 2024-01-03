@@ -23,6 +23,6 @@ def test_parent_child_data_merged():
     """Tests shape of parent child data set."""
     data = pd.read_csv(BLD / "data" / "data_parent_child_merged.csv")
 
-    n_cols = 400
+    n_cols = 403
 
     assert data.shape == (24607, n_cols)

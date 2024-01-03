@@ -17,7 +17,7 @@ WAVE_6 = 6
 WAVE_7 = 7
 WAVE_8 = 8
 
-MIN_AGE = 65
+MIN_AGE = 68
 MAX_AGE = 105
 
 HEALTH_EXCELLENT = 1
@@ -26,8 +26,11 @@ HEALTH_GOOD = 3
 HEALTH_FAIR = 4
 HEALTH_POOR = 5
 
+RECEIVED_HELP_DAILY = 1
+
 
 CHILD_ONE_GAVE_HELP = 10
+STEP_CHILD_GAVE_HELP = 11
 OTHER_CHILD_GAVE_HELP = 19
 
 NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD = 5
@@ -53,7 +56,16 @@ def count(df_col):
 
 def task_create_parent_child_data(
     path_to_raw_data: Path = BLD / "data" / "data_parent_child_merged.csv",
-    path: Annotated[Path, Product] = BLD / "data" / "parent_child_data.csv",
+    path_to_main: Annotated[Path, Product] = BLD / "data" / "parent_child_data.csv",
+    path_to_design_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_design_weight.csv",
+    path_to_hh_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_hh_weight.csv",
+    path_to_ind_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_ind_weight.csv",
 ) -> None:
     """Create the estimation data set."""
     dat = pd.read_csv(path_to_raw_data)
@@ -67,15 +79,76 @@ def task_create_parent_child_data(
     )
 
     # Keep only those aged 65 and older
-    dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
+    dat = dat[(dat["age"] > MIN_AGE) & (dat["age"] <= MAX_AGE)]
+
+    dat = create_married_or_partner_alive(dat)
 
     dat = create_care_variables(dat)
 
-    dat = create_care_combinations(dat)
+    # dat = create_care_combinations(dat, informal_care_var="informal_care_general")
+    dat = create_care_combinations(dat, informal_care_var="informal_care_child")
 
     dat = create_health_variables(dat)
 
-    dat.to_csv(path, index=False)
+    dat.reset_index(drop=True, inplace=True)
+
+    dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
+    dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
+    dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
+
+    # Save
+    dat.to_csv(path_to_main, index=False)
+    dat_design_weight.to_csv(path_to_design_weight, index=False)
+    dat_hh_weight.to_csv(path_to_hh_weight, index=False)
+    dat_ind_weight.to_csv(path_to_ind_weight, index=False)
+
+
+def multiply_rows_with_weight(dat, weight):
+    # Create a DataFrame of weights with the same shape as dat
+    weights = dat[weight].values.reshape(-1, 1)
+
+    static_cols = [
+        "mergeid",
+        "int_year",
+        "int_month",
+        "age",
+        "only_informal",
+        "combination_care",
+        "only_home_care",
+        "informal_care_child",
+        "informal_care_general",
+        "health",
+        "married",
+        "wave",
+        weight,
+    ]
+    data_columns = dat.drop(columns=static_cols).values
+
+    result = data_columns * weights
+
+    dat_weighted = pd.DataFrame(
+        result,
+        columns=[col for col in dat.columns if col not in static_cols],
+    )
+    dat_weighted.insert(0, "mergeid", dat["mergeid"])
+    dat_weighted.insert(1, "int_year", dat["int_year"])
+    dat_weighted.insert(2, "int_month", dat["int_month"])
+    dat_weighted.insert(3, "age", dat["age"])
+    dat_weighted.insert(4, weight, dat[weight])
+    dat_weighted.insert(5, "only_informal", dat["only_informal"])
+    dat_weighted.insert(6, "combination_care", dat["combination_care"])
+    dat_weighted.insert(7, "only_home_care", dat["only_home_care"])
+    dat_weighted.insert(8, "informal_care_child", dat["informal_care_child"])
+    dat_weighted.insert(9, "informal_care_general", dat["informal_care_general"])
+    dat_weighted.insert(10, "health", dat["health"])
+    dat_weighted.insert(11, "married", dat["married"])
+    dat_weighted.insert(12, "wave", dat["wave"])
+
+    dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
+        "mean",
+    )
+
+    return dat_weighted
 
 
 def create_health_variables(dat):
@@ -160,45 +233,66 @@ def create_care_variables(dat):
 
     # informal care by own children
     _cond = [
-        dat["sp021d10"] == 1,
-        dat["sp021d10"] == 0,
+        dat["sp021d10"] == 1,  # help within household from own children
+        # help outside the household from own children
         (
             dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
             & (
-                dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                (
+                    dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                    # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
+                )
             )
         )
         | (
             (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
             & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
             & (
-                (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
-                | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
-                | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+                (
+                    (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+                    # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+                    # & (dat["sp005_3"] == RECEIVED_HELP_DAILY)
+                )
             )
         ),
-        (
-            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
-            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            & ~(
-                dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-            )
-        )
-        | (
-            (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
-            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            & ~(
-                (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
-                | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
-                | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+        ((dat["sp021d10"] == 0) | (dat["sp021d10"].isna()))
+        & (
+            (
+                dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
+                & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
+                #     & ~(
+                #         dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                #         | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                #         | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                #     )
+                # )
+                | (
+                    (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
+                    & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
+                    #     & ~(
+                    #         (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+                    #         | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+                    #         | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+                )
             )
         ),
     ]
-    _val = [1, 0, 1, 0]
+    _val = [1, 1, 0]
     dat["informal_care_child"] = np.select(_cond, _val, default=np.nan)
 
     # informal care general
@@ -236,17 +330,17 @@ def create_care_variables(dat):
     return dat
 
 
-def create_care_combinations(dat):
+def create_care_combinations(dat, informal_care_var):
     _cond = [
-        (dat["home_care"] == 0) & (dat["informal_care_general"] == 1),
-        (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
+        (dat["home_care"] == 0) & (dat[informal_care_var] == 1),
+        (dat["home_care"].isna()) & (dat[informal_care_var].isna()),
     ]
     _val = [1, np.nan]
     dat["only_informal"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        (dat["home_care"] == 1) & (dat["informal_care_general"] == 0),
-        (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
+        (dat["home_care"] == 1) & (dat[informal_care_var] == 0),
+        (dat["home_care"].isna()) & (dat[informal_care_var].isna()),
     ]
     _val = [1, np.nan]
     dat["only_home_care"] = np.select(_cond, _val, default=0)
@@ -254,20 +348,20 @@ def create_care_combinations(dat):
     _cond = [
         (dat["nursing_home"] == 1)
         & (dat["home_care"] == 0)
-        & (dat["informal_care_general"] == 0),
+        & (dat[informal_care_var] == 0),
         (dat["nursing_home"].isna())
         & (dat["home_care"].isna())
-        & (dat["informal_care_general"].isna()),
+        & (dat[informal_care_var].isna()),
     ]
     _val = [1, np.nan]
     dat["only_nursing_home"] = np.select(_cond, _val, default=0)
 
     _cond = [
         (dat["nursing_home"] == 1)
-        | (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
+        | (dat["home_care"] == 1) & (dat[informal_care_var] == 1),
         (dat["nursing_home"].isna())
         & (dat["home_care"].isna())
-        & (dat["informal_care_general"].isna()),
+        & (dat[informal_care_var].isna()),
     ]
     _val = [1, np.nan]
     dat["only_formal"] = np.select(_cond, _val, default=0)
@@ -295,3 +389,26 @@ def create_means(dat):
         mean_formal_care,
         mean_nursing_home,
     )
+
+
+def create_married_or_partner_alive(dat):
+    """Create married variable."""
+    # We use marriage information in SHARE to construct an indicator on the
+    # existence of a partner living in the same household.
+    # We do not distinguish between marriage and registered partnership.
+    # dn014_
+    # Widowed
+
+    conditions_married_or_partner = [
+        dat["mstat"].isin([1, 2]),
+        dat["mstat"].isin([3, 4, 5, 6]),
+    ]
+    values_married_or_partner = [1, 0]
+    # replace with zeros or nans
+    dat["married"] = np.select(
+        conditions_married_or_partner,
+        values_married_or_partner,
+        np.nan,
+    )
+
+    return dat
