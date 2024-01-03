@@ -16,8 +16,8 @@ DONT_KNOW = -1
 ANSWER_YES = 1
 ANSWER_NO = 5
 
-MIN_AGE = 55
-MAX_AGE = 68
+MIN_AGE = 50
+MAX_AGE = 65
 MIN_WORKING_AGE = 14
 
 MIN_YEARS_SCHOOLING = 0
@@ -1311,6 +1311,19 @@ def create_working(dat):
     ]
     _val = [1, 0, 0]
     dat["part_time"] = np.select(_cond, _val, default=np.nan)
+
+    #
+    dat.loc[
+        (dat["part_time"].isin([0, 1])) & (dat["full_time"].isna()), "full_time",
+    ] = 0
+    dat.loc[
+        (dat["full_time"].isin([0, 1])) & (dat["part_time"].isna()), "part_time",
+    ] = 0
+
+    # check
+    # (Pdb++) either_nan_count = dat[(dat['part_time'].isna() & dat['full_time'].notna()) | (dat['part_time'].notna() & dat['full_time'].isna())]
+    # (Pdb++) either_nan_count.shape
+    # (0, 398)
 
     # dat["working_part_or_full_time"] = np.where(
     #     (dat["part_time"] == 1) | (dat["full_time"] == 1),
