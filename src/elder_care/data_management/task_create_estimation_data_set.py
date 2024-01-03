@@ -1187,7 +1187,7 @@ def _create_intensive_parental_care(dat):
             & (dat["sp011_2"] != GIVEN_HELP_DAILY)
             & (dat["sp011_3"] != GIVEN_HELP_DAILY)
         )
-        & (dat["sp018_"] == ANSWER_NO)
+        & (dat["sp018_"] == ANSWER_NO),
         #
         # (
         #     (
@@ -1251,7 +1251,7 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
             & (dat["sp011_2"] != GIVEN_HELP_DAILY)
             & (dat["sp011_3"] != GIVEN_HELP_DAILY)
         )
-        & (dat["sp018_"] == ANSWER_NO)
+        & (dat["sp018_"] == ANSWER_NO),
         #
         # (
         #     (
@@ -1284,7 +1284,6 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
 
 def _create_intensive_care_general(dat):
     """Create general intensive care to anyone (not only parents)."""
-
     _cond = [
         (
             (dat["sp011_1"] == GIVEN_HELP_DAILY)
