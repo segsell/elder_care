@@ -252,7 +252,8 @@ def task_create_moments(
     labor_income = []
     labor_income += [
         dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]), "labor_income",
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "labor_income",
         ].sum()
         / dat.loc[
             (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
@@ -295,17 +296,29 @@ def task_create_moments(
     net_wealth_fine_bins = []
 
     net_wealth_fine_bins += get_moments_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="hnetw", is_caregiver="all",
+        dat,
+        age_bins=age_bins_fine,
+        moment="hnetw",
+        is_caregiver="all",
     )
     net_wealth_fine_bins += get_moments_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="hnetw", is_caregiver=False,
+        dat,
+        age_bins=age_bins_fine,
+        moment="hnetw",
+        is_caregiver=False,
     )
     net_wealth_fine_bins += get_moments_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="hnetw", is_caregiver=True,
+        dat,
+        age_bins=age_bins_fine,
+        moment="hnetw",
+        is_caregiver=True,
     )
 
     net_wealth_coarse_bins = get_moments_by_age_bin(
-        dat, age_bins=age_bins_coarse, moment="hnetw", is_caregiver="all",
+        dat,
+        age_bins=age_bins_coarse,
+        moment="hnetw",
+        is_caregiver="all",
     )
 
     net_wealth_by_age = get_moments_by_age(dat, moment="hnetw", is_caregiver="all")
@@ -460,7 +473,11 @@ def task_create_moments(
 
 
 def get_moments_by_age(
-    dat, moment, is_caregiver, care_type="intensive_care", weight="hh_weight",
+    dat,
+    moment,
+    is_caregiver,
+    care_type="intensive_care",
+    weight="hh_weight",
 ):
     if is_caregiver in [None, "all"]:
         care_cond = True
@@ -481,7 +498,12 @@ def get_moments_by_age(
 
 
 def get_moments_by_age_bin(
-    dat, age_bins, moment, is_caregiver, care_type="intensive_care", weight="hh_weight",
+    dat,
+    age_bins,
+    moment,
+    is_caregiver,
+    care_type="intensive_care",
+    weight="hh_weight",
 ):
     if is_caregiver in [None, "all"]:
         care_cond = True
