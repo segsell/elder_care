@@ -257,38 +257,39 @@ def create_care_variables(dat):
             & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
             & (
                 (
-                    (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+                    dat["sp003_1"]
+                    == CHILD_ONE_GAVE_HELP
                     # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
                 )
                 | (
-                    (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+                    dat["sp003_2"]
+                    == CHILD_ONE_GAVE_HELP
                     # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
                 )
                 | (
-                    (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+                    dat["sp003_3"]
+                    == CHILD_ONE_GAVE_HELP
                     # & (dat["sp005_3"] == RECEIVED_HELP_DAILY)
                 )
             )
         ),
         ((dat["sp021d10"] == 0) | (dat["sp021d10"].isna()))
         & (
-            (
-                dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
+            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
+            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
+            #     & ~(
+            #         dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+            #         | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+            #         | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+            #     )
+            # )
+            | (
+                (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
                 & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
                 #     & ~(
-                #         dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                #         | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                #         | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                #     )
-                # )
-                | (
-                    (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
-                    & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-                    #     & ~(
-                    #         (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
-                    #         | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
-                    #         | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
-                )
+                #         (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+                #         | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+                #         | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
             )
         ),
     ]
