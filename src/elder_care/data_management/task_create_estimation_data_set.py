@@ -249,15 +249,15 @@ def task_create_estimation_data(
     # (Pdb++) dat.loc[(dat["gender"] != FEMALE) & (dat["any_care"] == 1), "care_to_father"].mean()
     # 0.04706640876853
 
-    # mean_female = dat.loc[
-    #     (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1),
-    #     "care_to_mother",
-    # ].mean()
+    mean_female = dat.loc[
+        (dat["gender"] == FEMALE) & (dat["care_in_year"] == 1),
+        "care_to_mother",
+    ].mean()
 
-    # mean_male = dat.loc[
-    #     (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1),
-    #     "care_to_mother",
-    # ].mean()
+    mean_male = dat.loc[
+        (dat["gender"] != FEMALE) & (dat["care_in_year"] == 1),
+        "care_to_mother",
+    ].mean()
 
     dat = dat[dat["gender"] == FEMALE]
     dat.reset_index(drop=True, inplace=True)
@@ -1314,10 +1314,12 @@ def create_working(dat):
 
     #
     dat.loc[
-        (dat["part_time"].isin([0, 1])) & (dat["full_time"].isna()), "full_time",
+        (dat["part_time"].isin([0, 1])) & (dat["full_time"].isna()),
+        "full_time",
     ] = 0
     dat.loc[
-        (dat["full_time"].isin([0, 1])) & (dat["part_time"].isna()), "part_time",
+        (dat["full_time"].isin([0, 1])) & (dat["part_time"].isna()),
+        "part_time",
     ] = 0
 
     # check
