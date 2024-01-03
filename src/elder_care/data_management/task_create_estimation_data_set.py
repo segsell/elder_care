@@ -1136,9 +1136,10 @@ def create_caregving(dat):
         0,
     )
 
-    dat = _create_intensive_care_general(dat)
     dat = _create_intensive_parental_care(dat)
+    dat = _create_intensive_care_general(dat)
     dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
+    dat = _create_intensive_parental_care_without_any_other_care(dat)
 
     # care experience
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
@@ -1180,8 +1181,8 @@ def _create_intensive_parental_care(dat):
             (dat["sp018_"] == 1)  # or personal care in hh
             & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
         ),  # include mother and father in law?
-        (dat["sp018_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
-        (dat["sp018_"] == ANSWER_YES)
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
         & (
             (dat["sp011_1"] != GIVEN_HELP_DAILY)
             & (dat["sp011_2"] != GIVEN_HELP_DAILY)
@@ -1218,8 +1219,36 @@ def _create_intensive_parental_care(dat):
     return dat
 
 
+def _create_intensive_parental_care_without_any_other_care(dat):
+    _cond = [
+        (
+            (
+                (dat["sp011_1"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+        ),  # include mother and father in law?
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0]
+    dat["intensive_care_no_other"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
 def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
-    parents_all = [
+    all_parents = [
         MOTHER,
         FATHER,
         MOTHER_IN_LAW,
@@ -1230,22 +1259,22 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
 
     _cond = [
         (
-            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin(parents_all)))
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin(all_parents)))
             | (
                 (dat["sp011_2"] == GIVEN_HELP_DAILY)
-                & (dat["sp009_2"].isin(parents_all))
+                & (dat["sp009_2"].isin(all_parents))
             )
             | (
                 (dat["sp011_3"] == GIVEN_HELP_DAILY)
-                & (dat["sp009_3"].isin(parents_all))
+                & (dat["sp009_3"].isin(all_parents))
             )
         )
         | (
             (dat["sp018_"] == 1)  # or personal care in hh
             & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
         ),  # include mother and father in law?
-        (dat["sp018_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
-        (dat["sp018_"] == ANSWER_YES)
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
         & (
             (dat["sp011_1"] != GIVEN_HELP_DAILY)
             & (dat["sp011_2"] != GIVEN_HELP_DAILY)
@@ -1296,7 +1325,7 @@ def _create_intensive_care_general(dat):
         ),  # include mother and father in law?
         (dat["sp018_"] == ANSWER_NO)
         & (dat["sp018_"] == ANSWER_NO),  # or personal care in hh
-        (dat["sp018_"] == ANSWER_YES)
+        (dat["sp008_"] == ANSWER_YES)
         & (
             (dat["sp011_1"] != GIVEN_HELP_DAILY)
             & (dat["sp011_2"] != GIVEN_HELP_DAILY)
