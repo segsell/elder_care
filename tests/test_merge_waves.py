@@ -14,7 +14,7 @@ def test_data_merged():
     """Tests shape of estimation data set."""
     data = pd.read_csv(BLD / "data" / "data_merged.csv")
 
-    n_cols = 291
+    n_cols = 294
 
     assert data.shape == (26593, n_cols)
 
