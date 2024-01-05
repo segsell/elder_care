@@ -172,7 +172,7 @@ def multiply_rows_with_weight(dat, weight):
     )
     dat_weighted.insert(18, "gender", dat["gender"])
     dat_weighted.insert(
-        19, "lagged_no_informal_care_child", dat["lagged_no_informal_care_child"]
+        19, "lagged_no_informal_care_child", dat["lagged_no_informal_care_child"],
     )
     dat_weighted.insert(20, "lagged_no_home_care", dat["lagged_no_home_care"])
     dat_weighted.insert(21, "no_informal_care_child", dat["no_informal_care_child"])

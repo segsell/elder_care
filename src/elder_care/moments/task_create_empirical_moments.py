@@ -76,16 +76,20 @@ def task_create_moments(
 
     # share working by age
     share_not_working_by_age = get_share_by_age(
-        dat, moment="not_working_part_or_full_time", weight=weight
+        dat, moment="not_working_part_or_full_time", weight=weight,
     )
     share_working_by_age = get_share_by_age(
-        dat, moment="working_part_or_full_time", weight=weight,
+        dat,
+        moment="working_part_or_full_time",
+        weight=weight,
     )
     share_working_full_time_by_age = get_share_by_age(
-        dat, moment="full_time", weight=weight,
+        dat,
+        moment="full_time",
+        weight=weight,
     )
     share_working_part_time_by_age = get_share_by_age(
-        dat, moment="part_time", weight=weight
+        dat, moment="part_time", weight=weight,
     )
 
     employment_by_age = pd.concat(
@@ -106,13 +110,13 @@ def task_create_moments(
         weight=weight,
     )
     share_working_by_age_bin = get_share_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="working_part_or_full_time", weight=weight
+        dat, age_bins=age_bins_fine, moment="working_part_or_full_time", weight=weight,
     )
     share_working_full_time_by_age_bin = get_share_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="full_time", weight=weight
+        dat, age_bins=age_bins_fine, moment="full_time", weight=weight,
     )
     share_working_part_time_by_age_bin = get_share_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="part_time", weight=weight
+        dat, age_bins=age_bins_fine, moment="part_time", weight=weight,
     )
 
     employment_by_age_bin = pd.concat(
@@ -128,7 +132,7 @@ def task_create_moments(
     # income by age, working and non-working?
     net_income_by_age = get_income_by_age(dat, moment="labor_income", weight=weight)
     net_income_by_age_bin = get_income_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="labor_income", weight=weight
+        dat, age_bins=age_bins_fine, moment="labor_income", weight=weight,
     )
 
     # total household NET wealth by age bin
@@ -141,11 +145,14 @@ def task_create_moments(
     # where the components are defined as in Summerfield et al. (2013, pp. 71–75).
     # We deflate wealth by the consumer price
     wealth_by_age_bin = get_wealth_by_age_bin(
-        dat, age_bins, moment="hnetw", weight=weight,
+        dat,
+        age_bins,
+        moment="hnetw",
+        weight=weight,
     )
 
     income_and_wealth = pd.concat(
-        [net_income_by_age_bin, wealth_by_age_bin], ignore_index=False, axis=0
+        [net_income_by_age_bin, wealth_by_age_bin], ignore_index=False, axis=0,
     )
 
     # share working by caregiving type (and age bin) --> to be checked
@@ -828,15 +835,15 @@ def get_work_transition_unweighted(dat, previous_choice, current_choice):
                 dat[
                     (dat[f"lagged_{previous_choice}"] == True)
                     & (dat[current_choice] == True)
-                ]
+                ],
             )
             / len(
                 dat[
                     (dat[f"lagged_{previous_choice}"] == True)
                     & (dat[current_choice].notna())
-                ]
-            )
-        }
+                ],
+            ),
+        },
     )
 
 
@@ -852,8 +859,8 @@ def get_work_transition_weighted(dat, previous_choice, current_choice, weight):
                 (dat[f"lagged_{previous_choice}"] == True)
                 & (dat[current_choice].notna()),
                 weight,
-            ].sum()
-        }
+            ].sum(),
+        },
     )
 
 
@@ -864,15 +871,15 @@ def get_care_transition_unweighted(dat, previous_choice, current_choice):
                 dat[
                     (dat[f"lagged_{previous_choice}"] == True)
                     & (dat[current_choice] == True)
-                ]
+                ],
             )
             / len(
                 dat[
                     (dat[f"lagged_{previous_choice}"] == True)
                     & (dat[current_choice].notna())
-                ]
-            )
-        }
+                ],
+            ),
+        },
     )
 
 
@@ -887,8 +894,8 @@ def get_care_transition_weighted(dat, previous_choice, current_choice, weight):
                 (dat[f"lagged_{previous_choice}"] == True)
                 & (dat[current_choice].notna()),
                 weight,
-            ].sum()
-        }
+            ].sum(),
+        },
     )
 
 
@@ -913,7 +920,7 @@ def get_share_by_age(
                 weight,
             ].sum()
             for age in range(MIN_AGE + 1, MAX_AGE + 1)
-        }
+        },
     )
 
 
@@ -934,7 +941,7 @@ def get_share_by_age_bin(
                 weight,
             ].sum()
             for age_bin in age_bins
-        }
+        },
     )
 
 
@@ -963,7 +970,7 @@ def get_share_by_informal_care_type_by_age_bin(
                 weight,
             ].sum()
             for age_bin in age_bins
-        }
+        },
     )
 
 
@@ -980,7 +987,7 @@ def get_share_by_informal_care_type(dat, moment, is_caregiver, care_type, weight
                 (dat[care_type] == is_caregiver),
                 weight,
             ].sum(),
-        }
+        },
     )
 
 
@@ -996,7 +1003,7 @@ def get_income_by_age(dat, moment, weight):
                 weight,
             ].sum()
             for age in range(MIN_AGE + 1, MAX_AGE + 1)
-        }
+        },
     )
 
 
@@ -1012,7 +1019,7 @@ def get_income_by_age_bin(dat, age_bins, moment, weight):
                 weight,
             ].sum()
             for age_bin in age_bins
-        }
+        },
     )
 
 
@@ -1028,7 +1035,7 @@ def get_wealth_by_age_bin(dat, age_bins, moment, weight):
                 weight,
             ].sum()
             for age_bin in age_bins
-        }
+        },
     )
 
 
@@ -1092,7 +1099,7 @@ def get_caregiving_status_by_parental_health(
                 weight,
             ].sum()
             for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-        }
+        },
     )
     # return pd.Series(
     #     {
