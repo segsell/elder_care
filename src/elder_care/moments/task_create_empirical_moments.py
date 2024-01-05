@@ -74,10 +74,10 @@ def task_create_moments(
 
     # share working by age
     share_working_by_age = get_share_by_age(
-        dat, moment="working_part_or_full_time", weight=weight
+        dat, moment="working_part_or_full_time", weight=weight,
     )
     share_working_full_time_by_age = get_share_by_age(
-        dat, moment="full_time", weight=weight
+        dat, moment="full_time", weight=weight,
     )
 
     # income by age, working and non-working?
@@ -93,7 +93,7 @@ def task_create_moments(
     # where the components are defined as in Summerfield et al. (2013, pp. 71–75).
     # We deflate wealth by the consumer price
     wealth_by_age_bin = get_wealth_by_age_bin(
-        dat, age_bins, moment="hnetw", weight=weight
+        dat, age_bins, moment="hnetw", weight=weight,
     )
 
     # share working by caregiving type (and age bin) --> to be checked
@@ -473,7 +473,11 @@ def get_wealth_by_age_bin(dat, age_bins, moment, weight):
 
 
 def get_caregiving_status_by_parental_health(
-    dat, moment, parent, is_other_parent_alive, weight,
+    dat,
+    moment,
+    parent,
+    is_other_parent_alive,
+    weight,
 ):
     parent_status = (
         is_other_parent_alive * "couple" + (1 - is_other_parent_alive) * "single"
