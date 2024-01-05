@@ -117,6 +117,7 @@ def multiply_rows_with_weight(dat, weight):
         "only_home_care",
         "informal_care_child",
         "informal_care_general",
+        "home_care",
         "health",
         "married",
         "wave",
@@ -140,9 +141,10 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(7, "only_home_care", dat["only_home_care"])
     dat_weighted.insert(8, "informal_care_child", dat["informal_care_child"])
     dat_weighted.insert(9, "informal_care_general", dat["informal_care_general"])
-    dat_weighted.insert(10, "health", dat["health"])
-    dat_weighted.insert(11, "married", dat["married"])
-    dat_weighted.insert(12, "wave", dat["wave"])
+    dat_weighted.insert(10, "home_care", dat["home_care"])
+    dat_weighted.insert(11, "health", dat["health"])
+    dat_weighted.insert(12, "married", dat["married"])
+    dat_weighted.insert(13, "wave", dat["wave"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",

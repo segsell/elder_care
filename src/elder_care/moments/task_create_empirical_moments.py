@@ -73,253 +73,97 @@ def task_create_moments(
     ]
     age_bins = age_bins_fine
 
-    # 1. Share working by age bin
-
-    filtered_dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
-    grouped = filtered_dat.groupby("age")["working"].sum()
-
-    # working
-
-    working_by_age_bin = {
-        f"working_{age_bin[0]}_{age_bin[1]}": dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "working_part_or_full_time",
-        ].sum()
-        / dat.loc[(dat["age"] >= age_bin[0]) & (dat["age"] <= age_bin[1]), weight].sum()
-        for age_bin in age_bins
-    }
-    breakpoint()
-
-    moments += [
-        dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "working_part_or_full_time",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    moments += [
-        dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "working_part_or_full_time",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    # full-time
-    full_time = []
-    full_time += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "full_time",
-        ].sum()
-        / dat.loc[(dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]), weight].sum()
-        for age_bin in age_bins
-    ]
-
-    full_time += [
-        dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "full_time",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    full_time += [
-        dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "full_time",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    # part-time
-    part_time = []
-    part_time += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "part_time",
-        ].sum()
-        / dat.loc[(dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]), weight].sum()
-        for age_bin in age_bins
-    ]
-
-    part_time += [
-        dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "part_time",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    part_time += [
-        dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "part_time",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    age_moments = []
-    age_moments += [
-        dat.loc[(dat["age"] == age), "working_part_or_full_time"].sum()
-        / dat.loc[(dat["age"] == age), weight].sum()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-    age_moments += [
-        dat.loc[(dat["age"] == age), "full_time"].sum()
-        / dat.loc[(dat["age"] == age), weight].sum()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-    age_moments += [
-        dat.loc[(dat["age"] == age), "part_time"].sum()
-        / dat.loc[(dat["age"] == age), weight].sum()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
-    # age labor income
-    age_labor_income = []
-    age_labor_income += [
-        dat.loc[(dat["age"] == age), "labor_income"].sum()
-        / dat.loc[(dat["age"] == age), weight].sum()
-        for age in range(MIN_AGE, MAX_AGE + 1)
-    ]
-
-    # labor income
-    age_bins = [(AGE_50, AGE_55), (AGE_55, AGE_60), (AGE_60, AGE_65)]
-    labor_income = []
-    labor_income += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "labor_income",
-        ].sum()
-        / dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-    labor_income += [
-        dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "labor_income",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == False)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-    labor_income += [
-        dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            "labor_income",
-        ].sum()
-        / dat.loc[
-            (dat["intensive_care"] == True)
-            & (dat["age"] > age_bin[0])
-            & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins
-    ]
-
-    age_bins = [(AGE_50, AGE_55), (AGE_55, AGE_60), (AGE_60, AGE_65)]
-    net_wealth_fine_bins = []
-
-    net_wealth_fine_bins += get_moments_by_age_bin(
-        dat,
-        age_bins=age_bins_fine,
-        moment="hnetw",
-        is_caregiver="all",
+    # share working by age
+    share_working_by_age = get_share_by_age(
+        dat, moment="working_part_or_full_time", weight=weight
     )
-    net_wealth_fine_bins += get_moments_by_age_bin(
-        dat,
-        age_bins=age_bins_fine,
-        moment="hnetw",
-        is_caregiver=False,
+    share_working_full_time_by_age = get_share_by_age(
+        dat, moment="full_time", weight=weight
     )
-    net_wealth_fine_bins += get_moments_by_age_bin(
+
+    # income by age, working and non-working?
+    net_income_by_age = get_income_by_age(dat, moment="labor_income", weight=weight)
+
+    # total household NET wealth by age bin
+    # We calculate wealth using the HILDA wealth model, which is based on variables collected
+    # in the special module
+    # included in waves 2, 6, 10 and 14. We calculate wealth at the household level,
+    # which includes the wealth of the spouse. Our
+    # measure of wealth is financial wealth plus non-financial wealth minus household debt
+    # minus combined household super,
+    # where the components are defined as in Summerfield et al. (2013, pp. 71–75).
+    # We deflate wealth by the consumer price
+    wealth_by_age_bin = get_wealth_by_age_bin(
+        dat, age_bins, moment="hnetw", weight=weight
+    )
+
+    # share working by caregiving type (and age bin) --> to be checked
+
+    share_working_informal_care_by_age_bin = get_share_by_informal_care_type_by_age_bin(
         dat,
-        age_bins=age_bins_fine,
-        moment="hnetw",
+        age_bins,
+        moment="working_part_or_full_time",
         is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    share_working_no_informal_care_by_age_bin = (
+        get_share_by_informal_care_type_by_age_bin(
+            dat,
+            age_bins,
+            moment="working_part_or_full_time",
+            is_caregiver=False,
+            care_type=intensive_care_var,
+            weight=weight,
+        )
     )
 
-    net_wealth_coarse_bins = get_moments_by_age_bin(
-        dat,
-        age_bins=age_bins_coarse,
-        moment="hnetw",
-        is_caregiver="all",
+    share_working_full_time_informal_care_by_age_bin = (
+        get_share_by_informal_care_type_by_age_bin(
+            dat,
+            age_bins,
+            moment="full_time",
+            is_caregiver=True,
+            care_type=intensive_care_var,
+            weight=weight,
+        )
+    )
+    share_working_full_time_no_informal_care_by_age_bin = (
+        get_share_by_informal_care_type_by_age_bin(
+            dat,
+            age_bins,
+            moment="full_time",
+            is_caregiver=False,
+            care_type=intensive_care_var,
+            weight=weight,
+        )
     )
 
-    net_wealth_by_age = get_moments_by_age(dat, moment="hnetw", is_caregiver="all")
+    share_working_part_time_informal_care_by_age_bin = (
+        get_share_by_informal_care_type_by_age_bin(
+            dat,
+            age_bins,
+            moment="part_time",
+            is_caregiver=True,
+            care_type=intensive_care_var,
+            weight=weight,
+        )
+    )
+    share_working_part_time_no_informal_care_by_age_bin = (
+        get_share_by_informal_care_type_by_age_bin(
+            dat,
+            age_bins,
+            moment="part_time",
+            is_caregiver=False,
+            care_type=intensive_care_var,
+            weight=weight,
+        )
+    )
 
-    _share_intensive_care = []
-    _share_intensive_care += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "intensive_care_new",
-        ].mean()
-        for age_bin in age_bins_fine
-    ]
+    # net_wealth_by_age = get_moments_by_age(dat, moment="hnetw", is_caregiver="all")
 
-    intensive_care_var = "intensive_care_no_other"
-    # intensive_care_var = "intensive_care_new"
+    # ================================================================================
+
     dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
 
     share_intensive_care = []
@@ -341,72 +185,149 @@ def task_create_moments(
     # PARENT CHILD DATA
     # ================================================================================
 
+    # weighted parent child moments
+    parent["informal_care_weighted"] = parent["informal_care_child"] * parent[weight]
+    parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
+    parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
+    parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
+    parent = parent_hh_weight.copy()
+
     # care mix by health status of parent
 
     # (Pdb++) parent_child
     # [0.1103448275862069, 0.14909303686366296, 0.12862190812720847, 0.006269592476489028, 0.042832065535400816, 0.1674911660777385, 0.013166144200626959, 0.038853130485664134, 0.11448763250883393]
 
-    parent = parent_hh_weight.copy()
+    # parent child: mother
+    informal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
+        parent,
+        moment="informal_care_child_weighted",
+        parent="mother",
+        is_other_parent_alive=True,
+        weight=weight,
+    )
+    informal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
+        parent,
+        moment="informal_care_child_weighted",
+        parent="mother",
+        is_other_parent_alive=False,
+        weight=weight,
+    )
 
-    parent_child = []
-    parent_child += [
-        parent_un.loc[
-            (parent_un["health"] == health) & (parent_un["married"] == False),
-            "only_informal",
-        ].mean()
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
+    only_informal_care_by_mother_health_couple = (
+        get_caregiving_status_by_parental_health(
+            parent,
+            moment="only_informal_weighted",
+            parent="mother",
+            is_other_parent_alive=True,
+            weight=weight,
+        )
+    )
+    only_informal_care_by_mother_health_single = (
+        get_caregiving_status_by_parental_health(
+            parent,
+            moment="only_informal_weighted",
+            parent="mother",
+            is_other_parent_alive=False,
+            weight=weight,
+        )
+    )
 
-    parent_child += [
-        parent_un.loc[
-            (parent_un["health"] == health) & (parent_un["married"] == False),
-            "combination_care",
-        ].mean()
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
-    # home care is formal home-based care without informal care
-    # nursing home options not part of the current study
-    parent_child += [
-        parent_un.loc[
-            (parent_un["health"] == health) & (parent_un["married"] == False),
-            "only_home_care",
-        ].mean()
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
+    combination_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
+        parent,
+        moment="combination_care_weighted",
+        parent="mother",
+        is_other_parent_alive=True,
+        weight=weight,
+    )
+    combination_care_by_mother_health_single = get_caregiving_status_by_parental_health(
+        parent,
+        moment="combination_care_weighted",
+        parent="mother",
+        is_other_parent_alive=False,
+        weight=weight,
+    )
 
-    # weighted parent child moments
-    parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
-    parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
-    parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
+    only_home_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
+        parent,
+        moment="only_home_care_weighted",
+        parent="mother",
+        is_other_parent_alive=True,
+        weight=weight,
+    )
+    only_home_care_by_mother_health_single = get_caregiving_status_by_parental_health(
+        parent,
+        moment="only_home_care_weighted",
+        parent="mother",
+        is_other_parent_alive=False,
+        weight=weight,
+    )
 
-    parent_child_weighted = []
-    parent_child_weighted += [
-        parent.loc[
-            (parent["married"] == False) & (parent["health"] == health),
-            "only_informal_weighted",
-        ].sum()
-        / parent.loc[parent["health"] == health, weight].sum()
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
-    parent_child_weighted += [
-        parent.loc[
-            (parent["married"] == False) & (parent["health"] == health),
-            "combination_care_weighted",
-        ].sum()
-        / parent.loc[parent["health"] == health, weight].sum()
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
-    parent_child_weighted += [
-        parent.loc[
-            (parent["married"] == False) & (parent["health"] == health),
-            "only_home_care_weighted",
-        ].sum()
-        / parent.loc[parent["health"] == health, weight].sum()
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
-    breakpoint()
+    # parent child: father
+    informal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
+        parent,
+        moment="informal_care_child_weighted",
+        parent="father",
+        is_other_parent_alive=True,
+        weight=weight,
+    )
+    informal_care_by_father_health_single = get_caregiving_status_by_parental_health(
+        parent,
+        moment="informal_care_child_weighted",
+        parent="father",
+        is_other_parent_alive=False,
+        weight=weight,
+    )
 
-    pd.Series(moments).to_csv(path_to_save, index=False)
+    only_informal_care_by_father_health_couple = (
+        get_caregiving_status_by_parental_health(
+            parent,
+            moment="only_informal_weighted",
+            parent="father",
+            is_other_parent_alive=True,
+            weight=weight,
+        )
+    )
+    only_informal_care_by_father_health_single = (
+        get_caregiving_status_by_parental_health(
+            parent,
+            moment="only_informal_weighted",
+            parent="father",
+            is_other_parent_alive=False,
+            weight=weight,
+        )
+    )
+
+    combination_care_by_father_health_couple = get_caregiving_status_by_parental_health(
+        parent,
+        moment="combination_care_weighted",
+        parent="father",
+        is_other_parent_alive=True,
+        weight=weight,
+    )
+    combination_care_by_father_health_single = get_caregiving_status_by_parental_health(
+        parent,
+        moment="combination_care_weighted",
+        parent="father",
+        is_other_parent_alive=False,
+        weight=weight,
+    )
+
+    only_home_care_by_father_health_couple = get_caregiving_status_by_parental_health(
+        parent,
+        moment="only_home_care_weighted",
+        parent="father",
+        is_other_parent_alive=True,
+        weight=weight,
+    )
+    only_home_care_by_father_health_single = get_caregiving_status_by_parental_health(
+        parent,
+        moment="only_home_care_weighted",
+        parent="father",
+        is_other_parent_alive=False,
+        weight=weight,
+    )
+
+    # TODO: labor and caregiving transitions
 
 
 def get_share_by_age(
@@ -490,7 +411,7 @@ def get_share_by_informal_care_type(dat, moment, is_caregiver, care_type, weight
 
 def get_income_by_age(dat, moment, weight):
     return {
-        f"{moment}_{age}": dat.loc[
+        f"{moment}_": dat.loc[
             (dat["age"] == age),
             moment,
         ].sum()
@@ -499,6 +420,20 @@ def get_income_by_age(dat, moment, weight):
             weight,
         ].sum()
         for age in range(MIN_AGE + 1, MAX_AGE + 1)
+    }
+
+
+def get_wealth_by_age_bin(dat, age_bins, moment, weight):
+    return {
+        f"{moment}_{age_bin[0]}_{age_bin[1]}": dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            moment,
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins
     }
 
 
