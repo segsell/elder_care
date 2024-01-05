@@ -136,7 +136,6 @@ def task_create_moments(
     )
 
     # income by age, working and non-working?
-    net_income_by_age = get_income_by_age(dat, moment="labor_income", weight=weight)
     net_income_by_age_bin = get_income_by_age_bin(
         dat,
         age_bins=age_bins_fine,
@@ -161,7 +160,7 @@ def task_create_moments(
     )
 
     income_and_wealth = pd.concat(
-        [net_income_by_age, net_income_by_age_bin, wealth_by_age_bin],
+        [net_income_by_age_bin, wealth_by_age_bin],
         ignore_index=False,
         axis=0,
     )
