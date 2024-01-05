@@ -321,7 +321,9 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(10, "intensive_care_no_other", dat["intensive_care_no_other"])
     dat_weighted.insert(11, "intensive_care_no_general", dat["intensive_care_general"])
     dat_weighted.insert(
-        12, "intensive_care_all_parents", dat["intensive_care_all_parents"],
+        12,
+        "intensive_care_all_parents",
+        dat["intensive_care_all_parents"],
     )
     dat_weighted.insert(13, "wave", dat["wave"])
 
