@@ -76,7 +76,9 @@ def task_create_moments(
 
     # share working by age
     share_not_working_by_age = get_share_by_age(
-        dat, moment="not_working_part_or_full_time", weight=weight,
+        dat,
+        moment="not_working_part_or_full_time",
+        weight=weight,
     )
     share_working_by_age = get_share_by_age(
         dat,
@@ -89,7 +91,9 @@ def task_create_moments(
         weight=weight,
     )
     share_working_part_time_by_age = get_share_by_age(
-        dat, moment="part_time", weight=weight,
+        dat,
+        moment="part_time",
+        weight=weight,
     )
 
     employment_by_age = pd.concat(
@@ -110,13 +114,22 @@ def task_create_moments(
         weight=weight,
     )
     share_working_by_age_bin = get_share_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="working_part_or_full_time", weight=weight,
+        dat,
+        age_bins=age_bins_fine,
+        moment="working_part_or_full_time",
+        weight=weight,
     )
     share_working_full_time_by_age_bin = get_share_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="full_time", weight=weight,
+        dat,
+        age_bins=age_bins_fine,
+        moment="full_time",
+        weight=weight,
     )
     share_working_part_time_by_age_bin = get_share_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="part_time", weight=weight,
+        dat,
+        age_bins=age_bins_fine,
+        moment="part_time",
+        weight=weight,
     )
 
     employment_by_age_bin = pd.concat(
@@ -132,7 +145,10 @@ def task_create_moments(
     # income by age, working and non-working?
     net_income_by_age = get_income_by_age(dat, moment="labor_income", weight=weight)
     net_income_by_age_bin = get_income_by_age_bin(
-        dat, age_bins=age_bins_fine, moment="labor_income", weight=weight,
+        dat,
+        age_bins=age_bins_fine,
+        moment="labor_income",
+        weight=weight,
     )
 
     # total household NET wealth by age bin
@@ -152,7 +168,9 @@ def task_create_moments(
     )
 
     income_and_wealth = pd.concat(
-        [net_income_by_age_bin, wealth_by_age_bin], ignore_index=False, axis=0,
+        [net_income_by_age_bin, wealth_by_age_bin],
+        ignore_index=False,
+        axis=0,
     )
 
     # share working by caregiving type (and age bin) --> to be checked
