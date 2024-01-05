@@ -2,7 +2,6 @@
 from pathlib import Path
 from typing import Annotated
 
-import jax.numpy as jnp
 import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
@@ -405,7 +404,7 @@ def get_share_by_informal_care_type(dat, moment, is_caregiver, care_type, weight
         / dat.loc[
             (dat[care_type] == is_caregiver),
             weight,
-        ].sum()
+        ].sum(),
     }
 
 
@@ -474,7 +473,7 @@ def get_wealth_by_age_bin(dat, age_bins, moment, weight):
 
 
 def get_caregiving_status_by_parental_health(
-    dat, moment, parent, is_other_parent_alive, weight
+    dat, moment, parent, is_other_parent_alive, weight,
 ):
     parent_status = (
         is_other_parent_alive * "couple" + (1 - is_other_parent_alive) * "single"
