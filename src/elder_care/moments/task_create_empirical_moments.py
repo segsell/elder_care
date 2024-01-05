@@ -79,10 +79,10 @@ def task_create_moments(
         dat, moment="not_working_part_or_full_time", weight=weight
     )
     share_working_by_age = get_share_by_age(
-        dat, moment="working_part_or_full_time", weight=weight
+        dat, moment="working_part_or_full_time", weight=weight,
     )
     share_working_full_time_by_age = get_share_by_age(
-        dat, moment="full_time", weight=weight
+        dat, moment="full_time", weight=weight,
     )
     share_working_part_time_by_age = get_share_by_age(
         dat, moment="part_time", weight=weight
@@ -141,7 +141,7 @@ def task_create_moments(
     # where the components are defined as in Summerfield et al. (2013, pp. 71–75).
     # We deflate wealth by the consumer price
     wealth_by_age_bin = get_wealth_by_age_bin(
-        dat, age_bins, moment="hnetw", weight=weight
+        dat, age_bins, moment="hnetw", weight=weight,
     )
 
     income_and_wealth = pd.concat(
