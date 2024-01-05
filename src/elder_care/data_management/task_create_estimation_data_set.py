@@ -276,12 +276,15 @@ def task_create_estimation_data(
     dat_hh_weight.to_csv(path_to_hh_weight, index=False)
     dat_ind_weight.to_csv(path_to_ind_weight, index=False)
 
+    # breakpoint()
+
 
 # =====================================================================================
 
 
 def multiply_rows_with_weight(dat, weight):
     # Create a DataFrame of weights with the same shape as dat
+    dat = dat.copy()
     weights = dat[weight].values.reshape(-1, 1)
 
     static_cols = [
@@ -297,7 +300,15 @@ def multiply_rows_with_weight(dat, weight):
         "intensive_care_no_other",
         "intensive_care_general",
         "intensive_care_all_parents",
+        "lagged_part_time",
+        "lagged_full_time",
+        "lagged_working_part_or_full_time",
+        "lagged_working",
         "wave",
+        "no_intensive_informal",
+        "lagged_no_intensive_informal",
+        "lagged_intensive_care_no_other",
+        "lagged_not_working_part_or_full_time",
         weight,
     ]
     data_columns = dat.drop(columns=static_cols).values
@@ -326,6 +337,30 @@ def multiply_rows_with_weight(dat, weight):
         dat["intensive_care_all_parents"],
     )
     dat_weighted.insert(13, "wave", dat["wave"])
+    dat_weighted.insert(14, "lagged_part_time", dat["lagged_part_time"])
+    dat_weighted.insert(15, "lagged_full_time", dat["lagged_full_time"])
+    dat_weighted.insert(
+        16,
+        "lagged_working_part_or_full_time",
+        dat["lagged_working_part_or_full_time"],
+    )
+    dat_weighted.insert(17, "lagged_working", dat["lagged_working"])
+    dat_weighted.insert(18, "no_intensive_informal", dat["no_intensive_informal"])
+    dat_weighted.insert(
+        19,
+        "lagged_no_intensive_informal",
+        dat["lagged_no_intensive_informal"],
+    )
+    dat_weighted.insert(
+        20,
+        "lagged_intensive_care_no_other",
+        dat["lagged_intensive_care_no_other"],
+    )
+    dat_weighted.insert(
+        21,
+        "lagged_not_working_part_or_full_time",
+        dat["lagged_not_working_part_or_full_time"],
+    )
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -1150,6 +1185,10 @@ def create_caregving(dat):
     dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
     dat = _create_intensive_parental_care_without_any_other_care(dat)
 
+    dat["no_intensive_informal"] = 1 - dat["intensive_care_no_other"]
+    dat = _create_lagged_var(dat, "no_intensive_informal")
+    dat = _create_lagged_var(dat, "intensive_care_no_other")
+
     # care experience
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
     dat["lagged_care"] = dat.groupby("mergeid")["care"].shift(1)
@@ -1531,6 +1570,24 @@ def create_working(dat):
     _val = [1, 0, 0, 0, 0]
     dat["working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
 
+    _cond = [
+        dat["working_part_or_full_time"] == 1,
+        dat["working_part_or_full_time"] == 0,
+    ]
+    _val = [0, 1]
+    dat["not_working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
+
+    dat = _create_lagged_var(dat, "part_time")
+    dat = _create_lagged_var(dat, "full_time")
+    dat = _create_lagged_var(dat, "working_part_or_full_time")
+    dat = _create_lagged_var(dat, "not_working_part_or_full_time")
+
+    return dat
+
+
+def _create_lagged_var(dat, var):
+    """Create lagged variable by mergeid."""
+    dat[f"lagged_{var}"] = dat.groupby("mergeid")[var].shift(1)
     return dat
 
 

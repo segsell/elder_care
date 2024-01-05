@@ -109,6 +109,7 @@ def multiply_rows_with_weight(dat, weight):
 
     static_cols = [
         "mergeid",
+        "gender",
         "int_year",
         "int_month",
         "age",
@@ -118,6 +119,14 @@ def multiply_rows_with_weight(dat, weight):
         "informal_care_child",
         "informal_care_general",
         "home_care",
+        "no_informal_care_child",
+        "no_home_care",
+        "lagged_home_care",
+        "lagged_informal_care_general",
+        "lagged_informal_care_child",
+        "lagged_combination_care",
+        "lagged_no_informal_care_child",
+        "lagged_no_home_care",
         "health",
         "married",
         "wave",
@@ -145,6 +154,29 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(11, "health", dat["health"])
     dat_weighted.insert(12, "married", dat["married"])
     dat_weighted.insert(13, "wave", dat["wave"])
+    dat_weighted.insert(14, "lagged_home_care", dat["lagged_home_care"])
+    dat_weighted.insert(
+        15,
+        "lagged_informal_care_general",
+        dat["lagged_informal_care_general"],
+    )
+    dat_weighted.insert(
+        16,
+        "lagged_informal_care_child",
+        dat["lagged_informal_care_child"],
+    )
+    dat_weighted.insert(
+        17,
+        "lagged_combination_care",
+        dat["lagged_combination_care"],
+    )
+    dat_weighted.insert(18, "gender", dat["gender"])
+    dat_weighted.insert(
+        19, "lagged_no_informal_care_child", dat["lagged_no_informal_care_child"]
+    )
+    dat_weighted.insert(20, "lagged_no_home_care", dat["lagged_no_home_care"])
+    dat_weighted.insert(21, "no_informal_care_child", dat["no_informal_care_child"])
+    dat_weighted.insert(22, "no_home_care", dat["no_home_care"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -322,13 +354,22 @@ def create_care_variables(dat):
 
     # lagged care
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
-    dat["lagged_any_care"] = dat.groupby("mergeid")["any_care"].shift(1)
-    dat["lagged_informal_care"] = dat.groupby("mergeid")["informal_care_general"].shift(
-        1,
-    )
-    dat["lagged_informal_care_child"] = dat.groupby("mergeid")[
-        "informal_care_child"
-    ].shift(1)
+
+    _cond = [dat["informal_care_child"] == 1, dat["informal_care_child"] == 0]
+    _val = [0, 1]
+    dat["no_informal_care_child"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [dat["home_care"] == 1, dat["home_care"] == 0]
+    _val = [0, 1]
+    dat["no_home_care"] = np.select(_cond, _val, default=np.nan)
+
+    dat = _create_lagged_var(dat, "home_care")
+    dat = _create_lagged_var(dat, "informal_care_general")
+    dat = _create_lagged_var(dat, "informal_care_child")
+    dat = _create_lagged_var(dat, "combination_care")
+    dat = _create_lagged_var(dat, "any_care")
+    dat = _create_lagged_var(dat, "no_informal_care_child")
+    dat = _create_lagged_var(dat, "no_home_care")
 
     return dat
 
@@ -414,4 +455,10 @@ def create_married_or_partner_alive(dat):
         np.nan,
     )
 
+    return dat
+
+
+def _create_lagged_var(dat, var):
+    """Create lagged variable by mergeid."""
+    dat[f"lagged_{var}"] = dat.groupby("mergeid")[var].shift(1)
     return dat
