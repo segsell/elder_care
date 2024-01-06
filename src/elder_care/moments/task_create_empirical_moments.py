@@ -247,6 +247,7 @@ def task_create_moments(
 
     # labor and caregiving transitions
     # work transitions
+    employment_transitions_soep = get_employment_transitions_soep()
 
     # caregiving transitions
     care_transitions_estimation_data = (
@@ -274,6 +275,7 @@ def task_create_moments(
             employment_by_informal_caregiving_status_by_age_bin,
             caregiving_by_mother_health,
             caregiving_by_father_health,
+            employment_transitions_soep,
             care_transitions_estimation_data,
             care_transitions_parent_child_data,
         ],
@@ -281,7 +283,6 @@ def task_create_moments(
         axis=0,
     )
 
-    # save
     all_moments.to_csv(path_to_save)
 
 
@@ -1205,6 +1206,25 @@ def get_caregiving_status_by_parental_health(
                 weight,
             ].sum()
             for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
+        },
+    )
+
+
+def get_employment_transitions_soep():
+    """Get employment transitions of females age 51-65 from SOEP."""
+    return pd.Series(
+        {
+            "not_working_to_not_working": 0.93383000,
+            "not_working_to_part_time": 0.05226726,
+            "not_working_to_full_time": 0.01390274,
+            #
+            "part_time_to_not_working": 0.1275953,
+            "part_time_to_part_time": 0.80193001,
+            "part_time_to_full_time": 0.07047471,
+            #
+            "full_time_to_not_working": 0.06666667,
+            "full_time_to_part_time": 0.06812715,
+            "full_time_to_full_time": 0.86520619,
         },
     )
 
