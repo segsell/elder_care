@@ -162,35 +162,25 @@ def task_merge_parent_child_waves_and_modules(
 ) -> None:
     """Merge raw parent information."""
     child_suffixes = [str(i) for i in range(1, 21)]
-
     vars_children = [var + child for var in CHILDREN for child in child_suffixes]
 
-    data_modules = {
+    all_variables = {
         "cv_r": CV_R,
         "ph": PHYSICAL_HEALTH,
         "ch": vars_children,
         "sp": SOCIAL_SUPPORT,
         "hc": HEALTH_CARE,
     }
-    ALL_VARIABLES = data_modules
 
-    # =============================================================================
-
-    _weights_w1 = {"gv_weights": ["dw_w1", "cchw_w1", "cciw_w1"]}
-    _weights_w2 = {"gv_weights": ["dw_w2", "cchw_w2", "cciw_w2"]}
-    _weights_w4 = {"gv_weights": ["dw_w4", "cchw_w4", "cciw_w4"]}
-    _weights_w5 = {"gv_weights": ["dw_w5", "cchw_w5", "cciw_w5"]}
-    _weights_w6 = {"gv_weights": ["dw_w6", "cchw_w6", "cciw_w6"]}
-    _weights_w7 = {"gv_weights": ["dw_w7", "cchw_w7", "cciw_w7"]}
-    _weights_w8 = {"gv_weights": ["dw_w8", "cchw_w8_main", "cciw_w8_main"]}
-
-    variables_wave1 = ALL_VARIABLES | _weights_w1
-    variables_wave2 = ALL_VARIABLES | _weights_w2
-    variables_wave4 = ALL_VARIABLES | _weights_w4
-    variables_wave5 = ALL_VARIABLES | _weights_w5
-    variables_wave6 = ALL_VARIABLES | _weights_w6
-    variables_wave7 = ALL_VARIABLES | _weights_w7
-    variables_wave8 = ALL_VARIABLES | _weights_w8
+    variables_wave1 = all_variables | {"gv_weights": ["dw_w1", "cchw_w1", "cciw_w1"]}
+    variables_wave2 = all_variables | {"gv_weights": ["dw_w2", "cchw_w2", "cciw_w2"]}
+    variables_wave4 = all_variables | {"gv_weights": ["dw_w4", "cchw_w4", "cciw_w4"]}
+    variables_wave5 = all_variables | {"gv_weights": ["dw_w5", "cchw_w5", "cciw_w5"]}
+    variables_wave6 = all_variables | {"gv_weights": ["dw_w6", "cchw_w6", "cciw_w6"]}
+    variables_wave7 = all_variables | {"gv_weights": ["dw_w7", "cchw_w7", "cciw_w7"]}
+    variables_wave8 = all_variables | {
+        "gv_weights": ["dw_w8", "cchw_w8_main", "cciw_w8_main"],
+    }
 
     wave1 = process_wave(wave=1, data_modules=variables_wave1)
     wave2 = process_wave(wave=2, data_modules=variables_wave2)
@@ -200,10 +190,7 @@ def task_merge_parent_child_waves_and_modules(
     wave7 = process_wave(wave=7, data_modules=variables_wave7)
     wave8 = process_wave(wave=8, data_modules=variables_wave8)
 
-    # =============================================================================
-
     waves_list = [wave1, wave2, wave4, wave5, wave6, wave7, wave8]
-
     data = merge_wave_datasets(waves_list)
 
     vars_gv_children = [var + child for var in GV_CHILDREN for child in child_suffixes]
@@ -217,7 +204,6 @@ def task_merge_parent_child_waves_and_modules(
 
     wave_data = data.merge(gv_data, on=["mergeid", "wave"], how="left")
 
-    # GV_IMPUTATIONS
     gv_wave1 = process_gv_imputations(wave=1, args=GV_VARS)
     gv_wave2 = process_gv_imputations(wave=2, args=GV_VARS)
     gv_wave4 = process_gv_imputations(wave=4, args=GV_VARS)
@@ -236,7 +222,6 @@ def task_merge_parent_child_waves_and_modules(
         gv_wave8,
     ]
 
-    # Concatenate the DataFrames vertically
     stacked_gv_data = pd.concat(gv_list, axis=0, ignore_index=True)
     stacked_gv_data = stacked_gv_data.sort_values(by=["mergeid", "wave"])
     stacked_gv_data = stacked_gv_data.reset_index(drop=True)
@@ -248,15 +233,13 @@ def task_merge_parent_child_waves_and_modules(
         how="left",
     )
 
-    # Drop per-wave weights
     columns_to_drop = [
         col
         for col in data.columns
-        if any(col.startswith(prefix) for prefix in ["dw_w", "cciw_w", "cchw_w"])
+        if any(col.startswith(prefix) for prefix in ("dw_w", "cciw_w", "cchw_w"))
     ]
     data_merged_gv = data_merged_gv.drop(columns=columns_to_drop)
 
-    # save data
     data_merged_gv.to_csv(path, index=False)
 
     # create moments of formal care by informal care from children

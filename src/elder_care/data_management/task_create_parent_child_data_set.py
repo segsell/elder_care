@@ -82,15 +82,11 @@ def task_create_parent_child_data(
     dat = dat[(dat["age"] > MIN_AGE) & (dat["age"] <= MAX_AGE)]
 
     dat = create_married_or_partner_alive(dat)
-
     dat = create_care_variables(dat)
-
-    # dat = create_care_combinations(dat, informal_care_var="informal_care_general")
     dat = create_care_combinations(dat, informal_care_var="informal_care_child")
-
     dat = create_health_variables(dat)
 
-    dat.reset_index(drop=True, inplace=True)
+    dat = dat.reset_index(drop=True)
 
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
     dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
@@ -105,7 +101,7 @@ def task_create_parent_child_data(
 
 def multiply_rows_with_weight(dat, weight):
     # Create a DataFrame of weights with the same shape as dat
-    weights = dat[weight].values.reshape(-1, 1)
+    weights = dat[weight].to_numpy().reshape(-1, 1)
 
     static_cols = [
         "mergeid",
@@ -132,7 +128,7 @@ def multiply_rows_with_weight(dat, weight):
         "wave",
         weight,
     ]
-    data_columns = dat.drop(columns=static_cols).values
+    data_columns = dat.drop(columns=static_cols).to_numpy()
 
     result = data_columns * weights
 
@@ -205,21 +201,7 @@ def create_health_variables(dat):
 
 def create_care_variables(dat):
     """Create a dummy for formal care."""
-    dat = replace_negative_values_with_nan(dat, "hc029_")  # was in nursing home
-    dat = replace_negative_values_with_nan(dat, "hc031_")  # Weeks in nursing home
-    dat = replace_negative_values_with_nan(dat, "hc032d1")
-    dat = replace_negative_values_with_nan(dat, "hc032d2")
-    dat = replace_negative_values_with_nan(dat, "hc032d3")
-    dat = replace_negative_values_with_nan(dat, "hc032dno")
-    dat = replace_negative_values_with_nan(dat, "hc033_")
-    dat = replace_negative_values_with_nan(dat, "hc034_")
-    dat = replace_negative_values_with_nan(dat, "hc035_")
-    dat = replace_negative_values_with_nan(dat, "hc036_")
-    dat = replace_negative_values_with_nan(dat, "hc127d1")
-    dat = replace_negative_values_with_nan(dat, "hc127d2")
-    dat = replace_negative_values_with_nan(dat, "hc127d3")
-    dat = replace_negative_values_with_nan(dat, "hc127d4")
-    dat = replace_negative_values_with_nan(dat, "hc127dno")
+    dat = _process_negative_values(dat)
 
     # nursing home
     _cond = [
@@ -256,16 +238,6 @@ def create_care_variables(dat):
     ]
     _val = [1, np.nan]
     dat["home_care"] = np.select(_cond, _val, default=0)
-
-    dat = replace_negative_values_with_nan(dat, "sp020_")
-    dat = replace_negative_values_with_nan(dat, "sp021d10")
-    dat = replace_negative_values_with_nan(dat, "sp021d11")
-    dat = replace_negative_values_with_nan(dat, "sp021d20")
-    dat = replace_negative_values_with_nan(dat, "sp021d21")
-    dat = replace_negative_values_with_nan(dat, "sp002_")
-    dat = replace_negative_values_with_nan(dat, "sp003_1")
-    dat = replace_negative_values_with_nan(dat, "sp003_2")
-    dat = replace_negative_values_with_nan(dat, "sp003_3")
 
     # informal care by own children
     _cond = [
@@ -313,19 +285,9 @@ def create_care_variables(dat):
         & (
             dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
             & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            #     & ~(
-            #         dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-            #         | dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-            #         | dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-            #     )
-            # )
             | (
                 (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
                 & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-                #     & ~(
-                #         (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
-                #         | (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
-                #         | (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
             )
         ),
     ]
@@ -371,9 +333,7 @@ def create_care_variables(dat):
     dat = _create_lagged_var(dat, "combination_care")
     dat = _create_lagged_var(dat, "any_care")
     dat = _create_lagged_var(dat, "no_informal_care_child")
-    dat = _create_lagged_var(dat, "no_home_care")
-
-    return dat
+    return _create_lagged_var(dat, "no_home_care")
 
 
 def create_care_combinations(dat, informal_care_var):
@@ -463,4 +423,39 @@ def create_married_or_partner_alive(dat):
 def _create_lagged_var(dat, var):
     """Create lagged variable by mergeid."""
     dat[f"lagged_{var}"] = dat.groupby("mergeid")[var].shift(1)
+    return dat
+
+
+def _process_negative_values(dat):
+    """Replace negative values with NaN."""
+    columns_to_replace = [
+        "hc029_",
+        "hc031_",
+        "hc032d1",
+        "hc032d2",
+        "hc032d3",
+        "hc032dno",
+        "hc033_",
+        "hc034_",
+        "hc035_",
+        "hc036_",
+        "hc127d1",
+        "hc127d2",
+        "hc127d3",
+        "hc127d4",
+        "hc127dno",
+        "sp020_",
+        "sp021d10",
+        "sp021d11",
+        "sp021d20",
+        "sp021d21",
+        "sp002_",
+        "sp003_1",
+        "sp003_2",
+        "sp003_3",
+    ]
+
+    for col in columns_to_replace:
+        dat[col] = np.where(dat[col] < 0, np.nan, dat[col])
+
     return dat
