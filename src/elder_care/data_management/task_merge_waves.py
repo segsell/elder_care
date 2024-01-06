@@ -11,6 +11,10 @@ from pytask import Product
 GERMANY = 12
 MISSING_VALUE = -9
 
+
+WAVE_7 = 7
+WAVE_8 = 8
+
 ALL_VARIABLES = {
     "cv_r": [
         "int_year",
@@ -569,20 +573,48 @@ def task_merge_waves_and_modules(
         ],
         "re": re_vars,
         "rp": rp_vars + rp_vars_wave3,
+        "gv_weights": ["dw_w3", "cchw_w3", "cciw_w3"],
     }
 
     # Separate modules for partly retrospective wave 7
+    _retrospective_wave7 = {"re": re_vars, "rp": rp_vars + rp_vars_wave7}
+    _survey_weights_wave7 = {"gv_weights": ["dw_w7", "cchw_w7", "cciw_w7"]}
     variables_wave7 = filter_nested_dict(
-        ALL_VARIABLES | {"re": re_vars, "rp": rp_vars + rp_vars_wave7},
+        ALL_VARIABLES | _retrospective_wave7 | _survey_weights_wave7,
         KEYS_TO_REMOVE_WAVE7,
     )
 
-    variables_wave1 = filter_nested_dict(ALL_VARIABLES, KEYS_TO_REMOVE_WAVE1)
-    variables_wave2 = filter_nested_dict(ALL_VARIABLES, KEYS_TO_REMOVE_WAVE2)
-    variables_wave4 = filter_nested_dict(ALL_VARIABLES, KEYS_TO_REMOVE_WAVE4)
-    variables_wave5 = filter_nested_dict(ALL_VARIABLES, KEYS_TO_REMOVE_WAVE5)
-    variables_wave6 = filter_nested_dict(ALL_VARIABLES, KEYS_TO_REMOVE_WAVE6)
-    variables_wave8 = filter_nested_dict(ALL_VARIABLES, KEYS_TO_REMOVE_WAVE8)
+    _weights_w1 = {"gv_weights": ["dw_w1", "cchw_w1", "cciw_w1"]}
+    _weights_w2 = {"gv_weights": ["dw_w2", "cchw_w2", "cciw_w2"]}
+    _weights_w4 = {"gv_weights": ["dw_w4", "cchw_w4", "cciw_w4"]}
+    _weights_w5 = {"gv_weights": ["dw_w5", "cchw_w5", "cciw_w5"]}
+    _weights_w6 = {"gv_weights": ["dw_w6", "cchw_w6", "cciw_w6"]}
+    _weights_w8 = {"gv_weights": ["dw_w8", "cchw_w8_main", "cciw_w8_main"]}
+
+    variables_wave1 = filter_nested_dict(
+        ALL_VARIABLES | _weights_w1,
+        KEYS_TO_REMOVE_WAVE1,
+    )
+    variables_wave2 = filter_nested_dict(
+        ALL_VARIABLES | _weights_w2,
+        KEYS_TO_REMOVE_WAVE2,
+    )
+    variables_wave4 = filter_nested_dict(
+        ALL_VARIABLES | _weights_w4,
+        KEYS_TO_REMOVE_WAVE4,
+    )
+    variables_wave5 = filter_nested_dict(
+        ALL_VARIABLES | _weights_w5,
+        KEYS_TO_REMOVE_WAVE5,
+    )
+    variables_wave6 = filter_nested_dict(
+        ALL_VARIABLES | _weights_w6,
+        KEYS_TO_REMOVE_WAVE6,
+    )
+    variables_wave8 = filter_nested_dict(
+        ALL_VARIABLES | _weights_w8,
+        KEYS_TO_REMOVE_WAVE8,
+    )
 
     wave1 = process_wave(wave_number=1, data_modules=variables_wave1)
     wave2 = process_wave(wave_number=2, data_modules=variables_wave2)
@@ -631,6 +663,14 @@ def task_merge_waves_and_modules(
     # Merge 'data' and 'stacked_gv_data' on 'mergeid' and 'wave' with a left join
     data_merged = data.merge(stacked_gv_data, on=["mergeid", "wave"], how="left")
 
+    # Drop per-wave weights
+    columns_to_drop = [
+        col
+        for col in data.columns
+        if any(col.startswith(prefix) for prefix in ("dw_w", "cciw_w", "cchw_w"))
+    ]
+    data_merged = data_merged.drop(columns=columns_to_drop)
+
     # save data
     data_merged.to_csv(path, index=False)
 
@@ -639,6 +679,7 @@ def task_merge_waves_and_modules(
 
 
 def merge_wave_datasets(wave_datasets):
+    """Merge the wave datasets into one data frame."""
     # Combine the data frames in wave_datasets into one data frame
     combined_data = pd.concat(wave_datasets, axis=0, ignore_index=True)
 
@@ -650,8 +691,8 @@ def merge_wave_datasets(wave_datasets):
 
 
 def process_wave(wave_number, data_modules):
+    """Process a single wave of the SHARE data."""
     wave_data = {}
-    wave_7 = 7
 
     for module in data_modules:
         module_file = (
@@ -659,12 +700,12 @@ def process_wave(wave_number, data_modules):
         )
 
         # Read and filter
-        if module in ("re", "rp") and wave_number == wave_7:
+        if module in ("re", "rp") and wave_number == WAVE_7:
             _wave_module = pd.read_stata(module_file, convert_categoricals=False)
             _wave_module = _wave_module[_wave_module["country"] == GERMANY]
 
             lookup = {
-                f"{var[3:]}": f"{var}"
+                str(var[3:]): str(var)
                 for var in data_modules[module]
                 if var.startswith("sl")
             }
@@ -753,6 +794,16 @@ def process_wave(wave_number, data_modules):
         )
 
     merged_data["wave"] = wave_number
+
+    # Add survey weights
+    if wave_number == WAVE_8:
+        merged_data["design_weight"] = merged_data["dw_w8"]
+        merged_data["hh_weight"] = merged_data["cchw_w8_main"]
+        merged_data["ind_weight"] = merged_data["cciw_w8_main"]
+    else:
+        merged_data["design_weight"] = merged_data[f"dw_w{wave_number}"]
+        merged_data["hh_weight"] = merged_data[f"cchw_w{wave_number}"]
+        merged_data["ind_weight"] = merged_data[f"cciw_w{wave_number}"]
 
     return merged_data
 
