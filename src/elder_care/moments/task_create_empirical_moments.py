@@ -14,6 +14,8 @@ import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
 
+BASE_YEAR = 2015
+
 MALE = 1
 FEMALE = 2
 
@@ -44,13 +46,16 @@ def task_create_moments(
     path_to_parent_child_hh_weight: Path = BLD
     / "data"
     / "parent_child_data_hh_weight.csv",
+    path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
     """Create empirical moments for SHARE data."""
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    cpi_data = pd.read_csv(path_to_cpi)
 
     dat = dat_hh_weight.copy()
+    dat = deflate_income_and_wealth(dat, cpi_data)
 
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
@@ -139,7 +144,7 @@ def task_create_moments(
     net_income_by_age_bin = get_income_by_age_bin(
         dat,
         age_bins=age_bins_fine,
-        moment="labor_income",
+        moment="real_labor_income",
         weight=weight,
     )
 
@@ -155,7 +160,7 @@ def task_create_moments(
     wealth_by_age_bin = get_wealth_by_age_bin(
         dat,
         age_bins,
-        moment="hnetw",
+        moment="real_hnetw",
         weight=weight,
     )
 
@@ -1246,3 +1251,27 @@ def multiply_rows_with_weight(dat, weight):
     )
 
     return dat_weighted
+
+
+# ================================================================================
+# Deflate
+# ================================================================================
+
+
+def deflate_income_and_wealth(dat, cpi):
+    """Deflate income and wealth data."""
+    dat = dat.copy()
+
+    base_year_cpi = cpi[cpi["int_year"] == BASE_YEAR]["cpi"].iloc[0]
+    cpi["normalized_cpi"] = (cpi["cpi"] / base_year_cpi) * 100
+
+    dat_with_cpi = dat.merge(cpi, on="int_year")
+
+    vars_to_deflate = ["hnetw", "thinc", "thinc2", "ydip", "yind", "labor_income"]
+
+    for var in vars_to_deflate:
+        dat_with_cpi[f"real_{var}"] = (
+            dat_with_cpi[var] * 100 / dat_with_cpi["normalized_cpi"]
+        )
+
+    return dat_with_cpi
