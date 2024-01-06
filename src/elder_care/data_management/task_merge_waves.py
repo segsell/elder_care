@@ -667,7 +667,7 @@ def task_merge_waves_and_modules(
     columns_to_drop = [
         col
         for col in data.columns
-        if any(col.startswith(prefix) for prefix in ["dw_w", "cciw_w", "cchw_w"])
+        if any(col.startswith(prefix) for prefix in ("dw_w", "cciw_w", "cchw_w"))
     ]
     data_merged = data_merged.drop(columns=columns_to_drop)
 
@@ -679,6 +679,7 @@ def task_merge_waves_and_modules(
 
 
 def merge_wave_datasets(wave_datasets):
+    """Merge the wave datasets into one data frame."""
     # Combine the data frames in wave_datasets into one data frame
     combined_data = pd.concat(wave_datasets, axis=0, ignore_index=True)
 
@@ -690,6 +691,7 @@ def merge_wave_datasets(wave_datasets):
 
 
 def process_wave(wave_number, data_modules):
+    """Process a single wave of the SHARE data."""
     wave_data = {}
 
     for module in data_modules:
