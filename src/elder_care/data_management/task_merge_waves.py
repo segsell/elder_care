@@ -705,7 +705,7 @@ def process_wave(wave_number, data_modules):
             _wave_module = _wave_module[_wave_module["country"] == GERMANY]
 
             lookup = {
-                f"{var[3:]}": f"{var}"
+                str(var[3:]): str(var)
                 for var in data_modules[module]
                 if var.startswith("sl")
             }
