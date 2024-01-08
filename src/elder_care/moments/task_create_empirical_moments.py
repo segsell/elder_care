@@ -60,90 +60,18 @@ def task_create_moments(
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
 
-    age_bins_coarse = [(AGE_50, AGE_55), (AGE_55, AGE_60), (AGE_60, AGE_65)]
-    age_bins_fine = [
+    age_bins = [
         (AGE_50, AGE_53),
         (AGE_53, AGE_56),
         (AGE_56, AGE_59),
         (AGE_59, AGE_62),
         (AGE_62, AGE_65),
     ]
-    age_bins = age_bins_fine
-
-    # share working by age
-    share_not_working_by_age = get_share_by_age(
-        dat,
-        moment="not_working_part_or_full_time",
-        weight=weight,
-    )
-    share_working_by_age = get_share_by_age(
-        dat,
-        moment="working_part_or_full_time",
-        weight=weight,
-    )
-    share_working_full_time_by_age = get_share_by_age(
-        dat,
-        moment="full_time",
-        weight=weight,
-    )
-    share_working_part_time_by_age = get_share_by_age(
-        dat,
-        moment="part_time",
-        weight=weight,
-    )
-
-    employment_by_age = pd.concat(
-        [
-            share_working_by_age,
-            share_not_working_by_age,
-            share_working_part_time_by_age,
-            share_working_full_time_by_age,
-        ],
-        ignore_index=False,
-        axis=0,
-    )
-
-    # share working by age bin
-    share_not_working_by_age_bin = get_share_by_age_bin(
-        dat,
-        age_bins=age_bins_fine,
-        moment="not_working_part_or_full_time",
-        weight=weight,
-    )
-    share_working_by_age_bin = get_share_by_age_bin(
-        dat,
-        age_bins=age_bins_fine,
-        moment="working_part_or_full_time",
-        weight=weight,
-    )
-    share_working_full_time_by_age_bin = get_share_by_age_bin(
-        dat,
-        age_bins=age_bins_fine,
-        moment="full_time",
-        weight=weight,
-    )
-    share_working_part_time_by_age_bin = get_share_by_age_bin(
-        dat,
-        age_bins=age_bins_fine,
-        moment="part_time",
-        weight=weight,
-    )
-
-    employment_by_age_bin = pd.concat(
-        [
-            share_working_by_age_bin,
-            share_not_working_by_age_bin,
-            share_working_part_time_by_age_bin,
-            share_working_full_time_by_age_bin,
-        ],
-        ignore_index=False,
-        axis=0,
-    )
 
     # income by age, working and non-working?
     net_income_by_age_bin = get_income_by_age_bin(
         dat,
-        age_bins=age_bins_fine,
+        age_bins=age_bins,
         moment="real_labor_income",
         weight=weight,
     )
@@ -164,22 +92,6 @@ def task_create_moments(
         weight=weight,
     )
 
-    income_and_wealth = pd.concat(
-        [net_income_by_age_bin, wealth_by_age_bin],
-        ignore_index=False,
-        axis=0,
-    )
-
-    # share working by caregiving type (and age bin) --> to be checked
-    employment_by_informal_caregiving_status_by_age_bin = (
-        get_employment_by_caregiving_status_by_age_bin(
-            dat,
-            age_bins_coarse,
-            intensive_care_var,
-            weight=weight,
-        )
-    )
-
     # ================================================================================
 
     dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
@@ -194,7 +106,7 @@ def task_create_moments(
             (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
             weight,
         ].sum()
-        for age_bin in age_bins_fine
+        for age_bin in age_bins
     ]
 
     # ================================================================================
@@ -203,6 +115,7 @@ def task_create_moments(
 
     # weighted parent child moments
     parent = parent_hh_weight.copy()
+
     parent["informal_care_child_weighted"] = (
         parent["informal_care_child"] * parent[weight]
     )
@@ -267,14 +180,20 @@ def task_create_moments(
         )
     )
 
+    # share working by caregiving type (and age bin) --> to be checked
+    employment_by_age = get_employment_by_age_soep()
+    employment_by_caregiving_status = get_employment_by_caregiving_status_soep()
+
     all_moments = pd.concat(
         [
             employment_by_age,
-            employment_by_age_bin,
-            income_and_wealth,
-            employment_by_informal_caregiving_status_by_age_bin,
+            net_income_by_age_bin,
+            wealth_by_age_bin,
+            #
+            employment_by_caregiving_status,
             caregiving_by_mother_health,
             caregiving_by_father_health,
+            #
             employment_transitions_soep,
             care_transitions_estimation_data,
             care_transitions_parent_child_data,
@@ -293,7 +212,6 @@ def task_create_moments(
 
 def get_care_transitions_from_parent_child_data_weighted(parent, weight):
     """Get care transitions from parent child data set using survey weights."""
-    # weighted
     no_formal_to_no_formal_weighted = get_care_transition_weighted(
         parent,
         previous_choice="no_home_care",
@@ -572,7 +490,7 @@ def get_care_transitions_from_estimation_data_unweighted(
     )
 
 
-def get_emplyoment_transitions(dat, weight):
+def get_emplyoment_transitions_share(dat, weight):
     """Get employment transitions."""
     dat["not_working_part_or_full_time_weighted"] = (
         dat["not_working_part_or_full_time"] * dat[weight]
@@ -643,6 +561,11 @@ def get_emplyoment_transitions(dat, weight):
         ignore_index=False,
         axis=0,
     )
+
+
+# ================================================================================
+# Caregiving status by parental health
+# ================================================================================
 
 
 def get_caregiving_status_by_mother_health_and_marital_status(
@@ -956,6 +879,80 @@ def get_employment_by_caregiving_status_by_age_bin(
     )
 
 
+def get_employment_share_by_age_share(dat, weight):
+    """Get share working by age from SHARE data."""
+    share_not_working_by_age = get_share_by_age(
+        dat,
+        moment="not_working_part_or_full_time",
+        weight=weight,
+    )
+    share_working_by_age = get_share_by_age(
+        dat,
+        moment="working_part_or_full_time",
+        weight=weight,
+    )
+    share_working_full_time_by_age = get_share_by_age(
+        dat,
+        moment="full_time",
+        weight=weight,
+    )
+    share_working_part_time_by_age = get_share_by_age(
+        dat,
+        moment="part_time",
+        weight=weight,
+    )
+
+    return pd.concat(
+        [
+            share_working_by_age,
+            share_not_working_by_age,
+            share_working_part_time_by_age,
+            share_working_full_time_by_age,
+        ],
+        ignore_index=False,
+        axis=0,
+    )
+
+
+def get_employment_share_by_age_bin_share(dat, age_bins_fine, weight):
+    """Get employment share by age bin from SHARE data."""
+    share_not_working_by_age_bin = get_share_by_age_bin(
+        dat,
+        age_bins=age_bins_fine,
+        moment="not_working_part_or_full_time",
+        weight=weight,
+    )
+    share_working_by_age_bin = get_share_by_age_bin(
+        dat,
+        age_bins=age_bins_fine,
+        moment="working_part_or_full_time",
+        weight=weight,
+    )
+    share_working_full_time_by_age_bin = get_share_by_age_bin(
+        dat,
+        age_bins=age_bins_fine,
+        moment="full_time",
+        weight=weight,
+    )
+    share_working_part_time_by_age_bin = get_share_by_age_bin(
+        dat,
+        age_bins=age_bins_fine,
+        moment="part_time",
+        weight=weight,
+    )
+
+    return pd.concat(
+        [
+            share_working_by_age_bin,
+            share_not_working_by_age_bin,
+            share_working_part_time_by_age_bin,
+            share_working_full_time_by_age_bin,
+        ],
+        ignore_index=False,
+        axis=0,
+    )
+
+
 # ================================================================================
 # Auxiliary functions
 # ================================================================================
@@ -1183,6 +1180,66 @@ def get_wealth_by_age_bin(dat, age_bins, moment, weight):
     )
 
 
+def get_income_by_caregiving_status_and_age_bin(
+    dat,
+    age_bins,
+    moment,
+    is_caregiver,
+    care_type,
+    weight,
+):
+    """Calculate mean income by caregiving status and age bin."""
+    is_care = (1 - is_caregiver) * "no" + "informal_care"
+
+    return pd.Series(
+        {
+            f"{moment}_{is_care}_{age_bin[0]}_{age_bin[1]}": dat.loc[
+                (dat["age"] > age_bin[0])
+                & (dat["age"] <= age_bin[1])
+                & (dat[care_type] == is_caregiver),
+                moment,
+            ].sum()
+            / dat.loc[
+                (dat["age"] > age_bin[0])
+                & (dat["age"] <= age_bin[1])
+                & (dat[care_type] == is_caregiver),
+                weight,
+            ].sum()
+            for age_bin in age_bins
+        },
+    )
+
+
+def get_wealth_by_caregiving_status_and_age_bin(
+    dat,
+    age_bins,
+    moment,
+    is_caregiver,
+    care_type,
+    weight,
+):
+    """Calculate mean wealth by caregiving status and age bin."""
+    is_care = (1 - is_caregiver) * "no" + "informal_care"
+
+    return pd.Series(
+        {
+            f"{moment}_{is_care}_{age_bin[0]}_{age_bin[1]}": dat.loc[
+                (dat["age"] > age_bin[0])
+                & (dat["age"] <= age_bin[1])
+                & (dat[care_type] == is_caregiver),
+                moment,
+            ].sum()
+            / dat.loc[
+                (dat["age"] > age_bin[0])
+                & (dat["age"] <= age_bin[1])
+                & (dat[care_type] == is_caregiver),
+                weight,
+            ].sum()
+            for age_bin in age_bins
+        },
+    )
+
+
 def get_caregiving_status_by_parental_health(
     dat,
     moment,
@@ -1210,6 +1267,11 @@ def get_caregiving_status_by_parental_health(
     )
 
 
+# ================================================================================
+# SOEP
+# ================================================================================
+
+
 def get_employment_transitions_soep():
     """Get employment transitions of females age 51-65 from SOEP."""
     return pd.Series(
@@ -1225,6 +1287,88 @@ def get_employment_transitions_soep():
             "full_time_to_not_working": 0.06666667,
             "full_time_to_part_time": 0.06812715,
             "full_time_to_full_time": 0.86520619,
+        },
+    )
+
+
+def get_employment_by_caregiving_status_soep():
+    """Get employment by caregiving status of females age 51-65."""
+    return pd.Series(
+        {
+            "not_working_informal_care": 0.4925068,
+            "part_time_informal_care": 0.2897366,
+            "full_time_informal_care": 0.2177566,
+            #
+            "not_working_no_informal_care": 0.4313806,
+            "part_time_no_informal_care": 0.2589699,
+            "full_time_no_informal_care": 0.3096495,
+        },
+    )
+
+
+def get_employment_by_age_soep():
+    """Get employment shares by age of females age 51-65."""
+    return pd.Series(
+        {
+            "not_working_age_51": 0.2817563,
+            "part_time_age_51": 0.33975112,
+            "full_time_age_51": 0.37849260,
+            #
+            "not_working_age_52": 0.2896943,
+            "part_time_age_52": 0.33160750,
+            "full_time_age_52": 0.37869822,
+            #
+            "not_working_age_53": 0.2981287,
+            "part_time_age_53": 0.31991797,
+            "full_time_age_53": 0.38195335,
+            #
+            "not_working_age_54": 0.3181575,
+            "part_time_age_54": 0.31842528,
+            "full_time_age_54": 0.36341725,
+            #
+            "not_working_age_55": 0.3224364,
+            "part_time_age_55": 0.32467170,
+            "full_time_age_55": 0.35289187,
+            #
+            "not_working_age_56": 0.3390837,
+            "part_time_age_56": 0.31617647,
+            "full_time_age_56": 0.34473982,
+            #
+            "not_working_age_57": 0.3538098,
+            "part_time_age_57": 0.30773774,
+            "full_time_age_57": 0.33845245,
+            #
+            "not_working_age_58": 0.3940612,
+            "part_time_age_58": 0.28889576,
+            "full_time_age_58": 0.31704299,
+            #
+            "not_working_age_59": 0.4321149,
+            "part_time_age_59": 0.26305483,
+            "full_time_age_59": 0.30483029,
+            #
+            "not_working_age_60": 0.4791804,
+            "part_time_age_60": 0.24586913,
+            "full_time_age_60": 0.27495043,
+            #
+            "not_working_age_61": 0.5618399,
+            "part_time_age_61": 0.20272572,
+            "full_time_age_61": 0.23543441,
+            #
+            "not_working_age_62": 0.6517516,
+            "part_time_age_62": 0.15816857,
+            "full_time_age_62": 0.19007978,
+            #
+            "not_working_age_63": 0.7283603,
+            "part_time_age_63": 0.13265306,
+            "full_time_age_63": 0.13898663,
+            #
+            "not_working_age_64": 0.8322718,
+            "part_time_age_64": 0.08315640,
+            "full_time_age_64": 0.08457183,
+            #
+            "not_working_age_65": 0.8828348,
+            "part_time_age_65": 0.06339031,
+            "full_time_age_65": 0.05377493,
         },
     )
 
