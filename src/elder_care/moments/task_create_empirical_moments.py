@@ -67,11 +67,37 @@ def task_create_moments(
         (AGE_59, AGE_62),
         (AGE_62, AGE_65),
     ]
+    age_bins_coarse = [
+        (AGE_50, AGE_55),
+        (AGE_55, AGE_60),
+        (AGE_60, AGE_65),
+    ]
+
+    net_income_by_age_bin_part_time = get_income_by_employment_by_age_bin(
+        dat,
+        age_bins_coarse,
+        employment_status="part_time",
+        moment="labor_income_monthly",
+        weight=weight,
+    )
+    net_income_by_age_bin_full_time = get_income_by_employment_by_age_bin(
+        dat,
+        age_bins_coarse,
+        employment_status="full_time",
+        moment="labor_income_monthly",
+        weight=weight,
+    )
 
     # income by age, working and non-working?
     net_income_by_age_bin = get_income_by_age_bin(
         dat,
         age_bins=age_bins,
+        moment="real_labor_income",
+        weight=weight,
+    )
+    net_income_by_age_bin_coarse = get_income_by_age_bin(
+        dat,
+        age_bins=age_bins_coarse,
         moment="real_labor_income",
         weight=weight,
     )
@@ -88,6 +114,13 @@ def task_create_moments(
     wealth_by_age_bin = get_wealth_by_age_bin(
         dat,
         age_bins,
+        moment="real_hnetw",
+        weight=weight,
+    )
+
+    wealth_by_age_bin_coarse = get_wealth_by_age_bin(
+        dat,
+        age_bins_coarse,
         moment="real_hnetw",
         weight=weight,
     )
@@ -187,8 +220,12 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age,
+            net_income_by_age_bin_full_time,
+            net_income_by_age_bin_part_time,
             net_income_by_age_bin,
             wealth_by_age_bin,
+            net_income_by_age_bin_coarse,
+            wealth_by_age_bin_coarse,
             #
             employment_by_caregiving_status,
             caregiving_by_mother_health,
@@ -1163,6 +1200,33 @@ def get_income_by_age_bin(dat, age_bins, moment, weight):
     )
 
 
+def get_income_by_employment_by_age_bin(
+    dat,
+    age_bins,
+    employment_status,
+    moment,
+    weight,
+):
+    """Calculate mean income by age bin."""
+    return pd.Series(
+        {
+            f"{moment}_{employment_status}_{age_bin[0]}_{age_bin[1]}": dat.loc[
+                (dat[employment_status] > 0)
+                & (dat["age"] > age_bin[0])
+                & (dat["age"] <= age_bin[1]),
+                moment,
+            ].sum()
+            / dat.loc[
+                (dat[employment_status] > 0)
+                & (dat["age"] > age_bin[0])
+                & (dat["age"] <= age_bin[1]),
+                weight,
+            ].sum()
+            for age_bin in age_bins
+        },
+    )
+
+
 def get_wealth_by_age_bin(dat, age_bins, moment, weight):
     """Calculate mean wealth by age bin."""
     return pd.Series(
@@ -1431,7 +1495,15 @@ def deflate_income_and_wealth(dat, cpi):
 
     dat_with_cpi = dat.merge(cpi, on="int_year")
 
-    vars_to_deflate = ["hnetw", "thinc", "thinc2", "ydip", "yind", "labor_income"]
+    vars_to_deflate = [
+        "hnetw",
+        "thinc",
+        "thinc2",
+        "ydip",
+        "yind",
+        "labor_income",
+        "hourly_wage",
+    ]
 
     for var in vars_to_deflate:
         dat_with_cpi[f"real_{var}"] = (

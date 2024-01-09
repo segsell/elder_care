@@ -67,6 +67,8 @@ CHANGED_ONCE_FULL_TO_PART = 3.0
 CHANGED_ONCE_PART_TO_FULL = 4.0
 CHANGED_MULTIPLE_TIMES = 5.0
 
+HIGH_WAGE_THRESHOLD = 100
+
 FURTHER_EDUC = [
     "dn012d1",
     "dn012d2",
@@ -342,12 +344,48 @@ def multiply_rows_with_weight(dat, weight):
 
 
 def create_log_hourly_wage(dat):
+    """Create labor and wage variables.
+
+    EP205_EarningsEmplAT After any taxes and contributions, what was your approximate
+    annual income from employment in the year [FLLastYear]?
+
+    Please include any additional or extra or lump sum payment, such as bonuses, 13th
+    month, Christmas or Summer pays.
+
+    """
     dat["ydip"] = np.where(dat["ydip"] < 0, np.nan, dat["ydip"])
     dat["yind"] = np.where(dat["yind"] < 0, np.nan, dat["yind"])
 
     dat["labor_income"] = dat["ydip"] + dat["yind"]
+    dat["labor_income_monthly"] = dat["labor_income"] / 12
 
-    return dat
+    # Convert weekly working hours to daily working hours
+    # (assuming 5 working days in a week)
+    dat["daily_income"] = dat["labor_income"] / 260
+    dat["daily_working_hours"] = dat["ep013_"] / 5
+    dat["daily_wage"] = dat["daily_income"] / dat["daily_working_hours"]
+
+    _cond = [
+        (dat["part_time"] == True) | (dat["full_time"] == True),
+        (dat["ep013_"] == 0),
+    ]
+    _val = [(1 / (12 * 4.33)) * dat["labor_income"] / (dat["ep013_"]), 0]
+    dat["hourly_wage"] = np.select(_cond, _val, default=np.nan)
+
+    top_20_hourly_wage_part_time = dat.loc[
+        dat["part_time"] > 0,
+        "hourly_wage",
+    ].nlargest(20)
+    mergeids_high_hourly_wage_part_time = dat.loc[
+        dat["hourly_wage"].isin(
+            top_20_hourly_wage_part_time[
+                top_20_hourly_wage_part_time > HIGH_WAGE_THRESHOLD
+            ],
+        ),
+        "mergeid",
+    ]
+
+    return dat.drop(dat[dat["mergeid"].isin(mergeids_high_hourly_wage_part_time)].index)
 
 
 def compute_spousal_and_other_income(dat, hh_income=None):
