@@ -22,7 +22,7 @@ MEDIUM_HEALTH = 1
 BAD_HEALTH = 2
 
 
-RETIREMENT_AGE = 65
+RETIREMENT_AGE = 62  # 65
 
 
 def task_create_params_parental_health_transition():
@@ -72,6 +72,44 @@ def task_create_params_parental_health_transition():
     return params_female, params_male
 
 
+def task_create_params_spousal_income(
+    path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
+) -> None:
+    """Fit linear regression model to predict spousal income."""
+    data = pd.read_csv(path_to_raw_data)
+
+    data["age_squared"] = data["age"] ** 2
+    data["age_62_and_older"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
+
+    _dat = data[
+        [
+            "other_income",
+            "age",
+            "age_squared",
+            "age_62_and_older",
+            "married",
+        ]
+    ]
+    dat = _dat.dropna()
+
+    regressors = dat[["age", "age_62_and_older", "married"]]
+    regressors = sm.add_constant(regressors)
+
+    dat.loc[dat["other_income"] <= 0, "other_income"] = np.finfo(float).eps
+    y_log = np.log(dat["other_income"])
+
+    model = sm.OLS(y_log, regressors).fit()
+
+    vif_data = pd.DataFrame()
+    vif_data["feature"] = regressors.columns
+    vif_data["VIF"] = [
+        variance_inflation_factor(regressors.values, i)
+        for i in range(regressors.shape[1])
+    ]
+
+    return model.params
+
+
 def task_create_params_exog_other_income(
     path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
 ) -> None:
@@ -79,21 +117,21 @@ def task_create_params_exog_other_income(
     data = pd.read_csv(path_to_raw_data)
 
     data["age_squared"] = data["age"] ** 2
-    data["age_65_and_older"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
+    data["age_62_and_older"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
 
     _dat = data[
         [
             "other_income",
             "age",
             "age_squared",
-            "age_65_and_older",
+            "age_62_and_older",
             "married",
             "high_educ",
         ]
     ]
     dat = _dat.dropna()
 
-    regressors = dat[["age", "age_65_and_older", "married", "high_educ"]]
+    regressors = dat[["age", "age_62_and_older", "married", "high_educ"]]
     regressors = sm.add_constant(regressors)
 
     dat.loc[dat["other_income"] <= 0, "other_income"] = np.finfo(float).eps
@@ -353,7 +391,7 @@ def predict_other_income(age, married, high_educ, params):
     log_other_income = (
         params["other_income_const"]
         + params["other_income_age"] * age
-        + params["other_income_age_65_and_older"] * (age >= RETIREMENT_AGE)
+        + params["other_income_age_62_and_older"] * (age >= RETIREMENT_AGE)
         + params["other_income_married"] * married
         + params["other_income_high_educ"] * high_educ
     )
