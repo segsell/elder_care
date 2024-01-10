@@ -158,7 +158,9 @@ def table(df_col):
 
 
 def task_merge_parent_child_waves_and_modules(
-    path: Annotated[Path, Product] = BLD / "data" / "data_parent_child_merged.csv",
+    path_parent_child: Annotated[Path, Product] = BLD
+    / "data"
+    / "data_parent_child_merged.csv",
 ) -> None:
     """Merge raw parent information."""
     child_suffixes = [str(i) for i in range(1, 21)]
@@ -240,7 +242,7 @@ def task_merge_parent_child_waves_and_modules(
     ]
     data_merged_gv = data_merged_gv.drop(columns=columns_to_drop)
 
-    data_merged_gv.to_csv(path, index=False)
+    data_merged_gv.to_csv(path_parent_child, index=False)
 
     # create moments of formal care by informal care from children
     # (parent age brackets), (no informal care, light, intensive),
@@ -258,6 +260,9 @@ def process_wave(wave, data_modules):
         wave_data[module] = _wave_module
 
     merged_data = wave_data["cv_r"]
+    merged_data = merged_data.rename(
+        columns={f"mergeidp{wave}": "mergeidp", f"coupleid{wave}": "coupleid"},
+    )
 
     for module_key in ("ph", "ch", "sp", "hc", "gv_weights"):
         merged_data = merged_data.merge(
@@ -293,6 +298,10 @@ def process_module(module, wave, args):
     data = data[data["country"] == GERMANY]
 
     selected_columns = ["mergeid"] + [col for col in args if col in data.columns]
+
+    if module == "cv_r":
+        selected_columns += [f"mergeidp{wave}", f"coupleid{wave}"]
+
     columns = ["mergeid", *args]
 
     if wave == WAVE_7:
@@ -375,6 +384,9 @@ def process_module(module, wave, args):
         columns = ["mergeid", *filtered_args]
     else:
         columns = ["mergeid", *args]
+
+    if module == "cv_r":
+        columns += [f"mergeidp{wave}", f"coupleid{wave}"]
 
     # Replace negative values with NaN using NumPy
     # Create missing columns and fill with NaN

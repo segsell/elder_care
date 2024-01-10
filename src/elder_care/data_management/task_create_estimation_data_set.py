@@ -812,7 +812,13 @@ def create_parental_health_status(dat, parent):
 
 
 def create_age_parent_and_parent_alive(dat, parent):
-    """Create age and alive variables for parents."""
+    """Create age and alive variables for parents.
+
+    # Drop all corresponding mergeids? mask = dat[f"{parent}_age"] < (MIN_AGE + 16)
+    filtered_mergeids = dat.loc[mask, "mergeid"] filtered_mergeid_list =
+    filtered_mergeids.tolist()
+
+    """
     if parent == "mother":
         parent_indicator = 1
     elif parent == "father":
@@ -820,6 +826,15 @@ def create_age_parent_and_parent_alive(dat, parent):
 
     dat = dat.sort_values(by=["mergeid", "int_year"])
     dat[f"{parent}_age"] = dat[f"dn028_{parent_indicator}"].copy()
+
+    # ==============================================================================
+
+    # Replace negative values with NaN
+    dat[f"{parent}_age"] = np.where(
+        dat[f"{parent}_age"] < MIN_AGE + 16,
+        np.nan,
+        dat[f"{parent}_age"],
+    )
 
     dat[f"lagged_{parent}_age"] = dat.groupby("mergeid")[f"{parent}_age"].shift(1)
     # Get the first non-NaN value of '{parent}_age'

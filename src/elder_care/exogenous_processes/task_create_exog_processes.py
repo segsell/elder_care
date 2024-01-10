@@ -150,33 +150,140 @@ def task_create_params_exog_other_income(
 
 
 def task_create_params_exog_care_demand(
-    path_to_raw_data: Path = BLD / "data" / "parent_child_data.csv",
+    path_to_parent_data: Path = BLD / "data" / "parent_child_data.csv",
+    path_to_parent_couple_data: Path = BLD / "data" / "parent_child_data_couple.csv",
 ) -> None:
     """Create exogenous care demand probabilities."""
-    data = pd.read_csv(path_to_raw_data)
-    data = data.copy()
+    parent = pd.read_csv(path_to_parent_data)
+    couple_raw = pd.read_csv(path_to_parent_couple_data)
+    couple = couple_raw[
+        ~(
+            (couple_raw["mother_married"] == False)
+            & (couple_raw["father_married"] == False)
+        )
+    ]
 
-    data["age_squared"] = data["age"] ** 2
-    x_with_nans = sm.add_constant(data[["age", "age_squared", "lagged_any_care"]])
-    x = x_with_nans.dropna()
-    data = data.dropna(subset=["age", "age_squared", "lagged_any_care"])
+    parent["mother_age"] = parent.loc[parent["gender"] == FEMALE, "age"]
+    parent["father_age"] = parent.loc[parent["gender"] == MALE, "age"]
 
-    x_single_male = x[(data["any_care"].notna()) & (data["gender"] == MALE)]
-    y_single_male = data["any_care"][
-        (data["any_care"].notna()) & (data["gender"] == MALE)
+    parent["mother_health"] = parent.loc[parent["gender"] == FEMALE, "health"]
+    parent["father_health"] = parent.loc[parent["gender"] == MALE, "health"]
+
+    parent = _prepare_dependent_variables_care_demand(parent)
+    couple = _prepare_dependent_variables_care_demand(couple)
+
+    _cond = [
+        (couple["mother_any_care"].isna()) & (couple["father_any_care"].isna()),
+        (couple["mother_any_care"] == True) | (couple["father_any_care"] == True),
+    ]
+    _val = [np.nan, 1]
+    couple["any_care"] = np.select(_cond, _val, default=0)
+
+    x_couple_with_nans = sm.add_constant(
+        couple[
+            [
+                "mother_age",
+                "mother_age_squared",
+                "father_age",
+                "father_age_squared",
+                "mother_health_medium",
+                "mother_health_bad",
+                "father_health_medium",
+                "father_health_bad",
+            ]
+        ],
+    )
+    x_couple = x_couple_with_nans.dropna()
+    data_couple = couple.dropna(
+        subset=[
+            "mother_age",
+            "mother_age_squared",
+            "father_age",
+            "father_age_squared",
+            "mother_health_medium",
+            "mother_health_bad",
+            "father_health_medium",
+            "father_health_bad",
+        ],
+    )
+
+    x_single_mother_with_nans = sm.add_constant(
+        parent[
+            [
+                "mother_age",
+                "mother_age_squared",
+                "mother_health_medium",
+                "mother_health_bad",
+            ]
+        ],
+    )
+    x_single_mother = x_single_mother_with_nans.dropna()
+    data_single_mother = parent.dropna(
+        subset=[
+            "mother_age",
+            "mother_age_squared",
+            "mother_health_medium",
+            "mother_health_bad",
+        ],
+    )
+
+    x_single_father_with_nans = sm.add_constant(
+        parent[
+            [
+                "father_age",
+                "father_age_squared",
+                "father_health_medium",
+                "father_health_bad",
+            ]
+        ],
+    )
+    x_single_father = x_single_father_with_nans.dropna()
+    data_single_father = parent.dropna(
+        subset=[
+            "father_age",
+            "father_age_squared",
+            "father_health_medium",
+            "father_health_bad",
+        ],
+    )
+
+    # Single father
+
+    x_single_male = x_single_father[
+        (data_single_father["any_care"].notna())
+        & (data_single_father["gender"] == MALE)
+    ]
+    y_single_male = data_single_father["any_care"][
+        (data_single_father["any_care"].notna())
+        & (data_single_father["gender"] == MALE)
     ]
     x_single_male = x_single_male.reset_index(drop=True)
     y_single_male = y_single_male.reset_index(drop=True)
 
-    x_single_female = x[(data["any_care"].notna()) & (data["gender"] == FEMALE)]
-    y_single_female = data["any_care"][
-        (data["any_care"].notna()) & (data["gender"] == FEMALE)
+    # Single mother
+
+    x_single_female = x_single_mother[
+        (data_single_mother["any_care"].notna())
+        & (data_single_mother["gender"] == FEMALE)
+    ]
+    y_single_female = data_single_mother["any_care"][
+        (data_single_mother["any_care"].notna())
+        & (data_single_mother["gender"] == FEMALE)
     ]
     x_single_female = x_single_female.reset_index(drop=True)
     y_single_female = y_single_female.reset_index(drop=True)
 
-    x_couple = x[(data["any_care"].notna()) & (data["gender"].notna())]
-    y_couple = data["any_care"][(data["any_care"].notna()) & (data["gender"].notna())]
+    # Couple
+    x_couple = x_couple[
+        (data_couple["any_care"].notna())
+        & (data_couple["mother_gender"].notna())
+        & (data_couple["father_gender"].notna())
+    ]
+    y_couple = data_couple["any_care"][
+        (data_couple["any_care"].notna())
+        & (data_couple["mother_gender"].notna())
+        & (data_couple["father_gender"].notna())
+    ]
     x_couple = x_couple.reset_index(drop=True)
     y_couple = y_couple.reset_index(drop=True)
 
@@ -190,6 +297,47 @@ def task_create_params_exog_care_demand(
     # care demand is zero if no parent is alive
 
     return logit_single_father.params, logit_single_mother.params, logit_couple.params
+
+
+def _prepare_dependent_variables_care_demand(data):
+    data = data.copy()
+
+    data["father_health_good"] = np.where(
+        data["father_health"] == GOOD_HEALTH,
+        GOOD_HEALTH,
+        np.where(data["father_health"].isna(), np.nan, 0),
+    )
+    data["father_health_medium"] = np.where(
+        data["father_health"] == MEDIUM_HEALTH,
+        MEDIUM_HEALTH,
+        np.where(data["father_health"].isna(), np.nan, 0),
+    )
+    data["father_health_bad"] = np.where(
+        data["father_health"] == BAD_HEALTH,
+        BAD_HEALTH,
+        np.where(data["father_health"].isna(), np.nan, 0),
+    )
+
+    data["mother_health_good"] = np.where(
+        data["mother_health"] == GOOD_HEALTH,
+        GOOD_HEALTH,
+        np.where(data["mother_health"].isna(), np.nan, 0),
+    )
+    data["mother_health_medium"] = np.where(
+        data["mother_health"] == MEDIUM_HEALTH,
+        MEDIUM_HEALTH,
+        np.where(data["mother_health"].isna(), np.nan, 0),
+    )
+    data["mother_health_bad"] = np.where(
+        data["mother_health"] == BAD_HEALTH,
+        BAD_HEALTH,
+        np.where(data["mother_health"].isna(), np.nan, 0),
+    )
+
+    data["mother_age_squared"] = data["mother_age"] ** 2
+    data["father_age_squared"] = data["father_age"] ** 2
+
+    return data
 
 
 def task_create_survival_probabilities(

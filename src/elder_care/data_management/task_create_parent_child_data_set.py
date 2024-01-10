@@ -17,6 +17,9 @@ WAVE_6 = 6
 WAVE_7 = 7
 WAVE_8 = 8
 
+FEMALE = 2
+MALE = 1
+
 MIN_AGE = 68
 MAX_AGE = 105
 
@@ -56,6 +59,7 @@ def count(df_col):
 
 def task_create_parent_child_data(
     path_to_raw_data: Path = BLD / "data" / "data_parent_child_merged.csv",
+    # parent - child
     path_to_main: Annotated[Path, Product] = BLD / "data" / "parent_child_data.csv",
     path_to_design_weight: Annotated[Path, Product] = BLD
     / "data"
@@ -66,6 +70,19 @@ def task_create_parent_child_data(
     path_to_ind_weight: Annotated[Path, Product] = BLD
     / "data"
     / "parent_child_data_ind_weight.csv",
+    # parent couple - child
+    path_to_main_couple: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_couple.csv",
+    path_to_design_weight_couple: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_couple_design_weight.csv",
+    path_to_hh_weight_couple: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_couple_hh_weight.csv",
+    path_to_ind_weight_couple: Annotated[Path, Product] = BLD
+    / "data"
+    / "parent_child_data_couple_ind_weight.csv",
 ) -> None:
     """Create the estimation data set."""
     dat = pd.read_csv(path_to_raw_data)
@@ -87,16 +104,67 @@ def task_create_parent_child_data(
     dat = create_health_variables(dat)
 
     dat = dat.reset_index(drop=True)
-
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
     dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
     dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
+
+    # Create couple data
+    dat_couple = create_couple_data(dat)
+    dat_couple_design_weight = create_couple_data(dat_design_weight)
+    dat_couple_hh_weight = create_couple_data(dat_hh_weight)
+    dat_couple_ind_weight = create_couple_data(dat_ind_weight)
 
     # Save
     dat.to_csv(path_to_main, index=False)
     dat_design_weight.to_csv(path_to_design_weight, index=False)
     dat_hh_weight.to_csv(path_to_hh_weight, index=False)
     dat_ind_weight.to_csv(path_to_ind_weight, index=False)
+
+    dat_couple.to_csv(path_to_main_couple, index=False)
+    dat_couple_design_weight.to_csv(path_to_design_weight_couple, index=False)
+    dat_couple_hh_weight.to_csv(path_to_hh_weight_couple, index=False)
+    dat_couple_ind_weight.to_csv(path_to_ind_weight_couple, index=False)
+
+
+def create_couple_data(data):
+    """Create data set with couple information of both parents."""
+    dat_partner = data.copy()
+    dat_female = data.copy()
+
+    dat_partner["mergeid"] = dat_partner["mergeidp"]
+    columns_to_keep = [
+        "mergeid",
+        "int_year",
+        "gender",
+        "married",
+        "age",
+        "health",
+        "any_care",
+    ]
+    dat_partner = dat_partner[columns_to_keep]
+
+    dat_female = dat_female[dat_female["gender"] == FEMALE]
+    dat_partner_male = dat_partner[dat_partner["gender"] == MALE]
+
+    male_columns = {
+        "gender": "father_gender",
+        "married": "father_married",
+        "age": "father_age",
+        "health": "father_health",
+        "any_care": "father_any_care",
+    }
+    dat_partner_male = dat_partner_male.rename(columns=male_columns)
+
+    female_columns = {
+        "gender": "mother_gender",
+        "married": "mother_married",
+        "age": "mother_age",
+        "health": "mother_health",
+        "any_care": "mother_any_care",
+    }
+    dat_female = dat_female.rename(columns=female_columns)
+
+    return dat_female.merge(dat_partner_male, on=["mergeid", "int_year"], how="inner")
 
 
 def multiply_rows_with_weight(dat, weight):
@@ -105,6 +173,8 @@ def multiply_rows_with_weight(dat, weight):
 
     static_cols = [
         "mergeid",
+        "mergeidp",
+        "coupleid",
         "gender",
         "int_year",
         "int_month",
@@ -175,6 +245,8 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(20, "lagged_no_home_care", dat["lagged_no_home_care"])
     dat_weighted.insert(21, "no_informal_care_child", dat["no_informal_care_child"])
     dat_weighted.insert(22, "no_home_care", dat["no_home_care"])
+    dat_weighted.insert(23, "coupleid", dat["coupleid"])
+    dat_weighted.insert(24, "mergeidp", dat["mergeidp"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
