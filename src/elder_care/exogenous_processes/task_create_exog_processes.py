@@ -157,10 +157,7 @@ def task_create_params_exog_care_demand(
     parent = pd.read_csv(path_to_parent_data)
     couple_raw = pd.read_csv(path_to_parent_couple_data)
     couple = couple_raw[
-        ~(
-            (couple_raw["mother_married"] == False)
-            & (couple_raw["father_married"] == False)
-        )
+        (couple_raw["mother_married"] == True) & (couple_raw["father_married"] == True)
     ]
 
     parent["mother_age"] = parent.loc[parent["gender"] == FEMALE, "age"]
@@ -171,6 +168,9 @@ def task_create_params_exog_care_demand(
 
     parent = _prepare_dependent_variables_care_demand(parent)
     couple = _prepare_dependent_variables_care_demand(couple)
+
+    mother = parent[(parent["married"] == False) & (parent["gender"] == FEMALE)].copy()
+    father = parent[(parent["married"] == False) & (parent["gender"] == MALE)].copy()
 
     _cond = [
         (couple["mother_any_care"].isna()) & (couple["father_any_care"].isna()),
@@ -208,7 +208,7 @@ def task_create_params_exog_care_demand(
     )
 
     x_single_mother_with_nans = sm.add_constant(
-        parent[
+        mother[
             [
                 "mother_age",
                 "mother_age_squared",
@@ -218,7 +218,7 @@ def task_create_params_exog_care_demand(
         ],
     )
     x_single_mother = x_single_mother_with_nans.dropna()
-    data_single_mother = parent.dropna(
+    data_single_mother = mother.dropna(
         subset=[
             "mother_age",
             "mother_age_squared",
@@ -228,7 +228,7 @@ def task_create_params_exog_care_demand(
     )
 
     x_single_father_with_nans = sm.add_constant(
-        parent[
+        father[
             [
                 "father_age",
                 "father_age_squared",
@@ -238,7 +238,7 @@ def task_create_params_exog_care_demand(
         ],
     )
     x_single_father = x_single_father_with_nans.dropna()
-    data_single_father = parent.dropna(
+    data_single_father = father.dropna(
         subset=[
             "father_age",
             "father_age_squared",

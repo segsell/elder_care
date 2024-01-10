@@ -256,7 +256,11 @@ def multiply_rows_with_weight(dat, weight):
 
 
 def create_health_variables(dat):
-    """Create dummy for health status."""
+    """Create dummy for health status.
+
+    Impute missing values!!!
+
+    """
     dat = replace_negative_values_with_nan(dat, "ph003_")
 
     _cond = [
