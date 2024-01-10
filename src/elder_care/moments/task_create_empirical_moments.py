@@ -60,13 +60,6 @@ def task_create_moments(
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
 
-    age_bins = [
-        (AGE_50, AGE_53),
-        (AGE_53, AGE_56),
-        (AGE_56, AGE_59),
-        (AGE_59, AGE_62),
-        (AGE_62, AGE_65),
-    ]
     age_bins_coarse = [
         (AGE_50, AGE_55),
         (AGE_55, AGE_60),
@@ -89,12 +82,6 @@ def task_create_moments(
     )
 
     # income by age, working and non-working?
-    net_income_by_age_bin = get_income_by_age_bin(
-        dat,
-        age_bins=age_bins,
-        moment="real_labor_income",
-        weight=weight,
-    )
     net_income_by_age_bin_coarse = get_income_by_age_bin(
         dat,
         age_bins=age_bins_coarse,
@@ -111,13 +98,6 @@ def task_create_moments(
     # debt minus combined household super,
     # where the components are defined as in Summerfield et al. (2013)
     # We deflate wealth by the consumer price
-    wealth_by_age_bin = get_wealth_by_age_bin(
-        dat,
-        age_bins,
-        moment="real_hnetw",
-        weight=weight,
-    )
-
     wealth_by_age_bin_coarse = get_wealth_by_age_bin(
         dat,
         age_bins_coarse,
@@ -139,8 +119,14 @@ def task_create_moments(
             (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
             weight,
         ].sum()
-        for age_bin in age_bins
+        for age_bin in age_bins_coarse
     ]
+    share_intensive_care_by_age_bin_coarse = pd.Series(
+        {
+            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
+            for i, age_bin in enumerate(age_bins_coarse)
+        },
+    )
 
     # ================================================================================
     # PARENT CHILD DATA
@@ -222,12 +208,13 @@ def task_create_moments(
             employment_by_age,
             net_income_by_age_bin_full_time,
             net_income_by_age_bin_part_time,
-            net_income_by_age_bin,
-            wealth_by_age_bin,
+            # net_income_by_age_bin,
+            # wealth_by_age_bin,
             net_income_by_age_bin_coarse,
             wealth_by_age_bin_coarse,
             #
             employment_by_caregiving_status,
+            share_intensive_care_by_age_bin_coarse,
             caregiving_by_mother_health,
             caregiving_by_father_health,
             #
@@ -641,25 +628,6 @@ def get_caregiving_status_by_mother_health_and_marital_status(
         weight=weight,
     )
 
-    only_informal_care_by_mother_health_couple = (
-        get_caregiving_status_by_parental_health(
-            mother_couple,
-            parent="mother",
-            moment="only_informal_weighted",
-            is_other_parent_alive=True,
-            weight=weight,
-        )
-    )
-    only_informal_care_by_mother_health_single = (
-        get_caregiving_status_by_parental_health(
-            mother_single,
-            parent="mother",
-            moment="only_informal_weighted",
-            is_other_parent_alive=False,
-            weight=weight,
-        )
-    )
-
     combination_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
         mother_couple,
         parent="mother",
@@ -675,33 +643,18 @@ def get_caregiving_status_by_mother_health_and_marital_status(
         weight=weight,
     )
 
-    only_home_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-        mother_couple,
-        parent="mother",
-        moment="only_home_care_weighted",
-        is_other_parent_alive=True,
-        weight=weight,
-    )
-    only_home_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-        mother_single,
-        parent="mother",
-        moment="only_home_care_weighted",
-        is_other_parent_alive=False,
-        weight=weight,
-    )
-
     return pd.concat(
         [
             informal_care_by_mother_health_couple,
             informal_care_by_mother_health_single,
             home_care_by_mother_health_couple,
             home_care_by_mother_health_single,
-            only_informal_care_by_mother_health_couple,
-            only_informal_care_by_mother_health_single,
+            # only_informal_care_by_mother_health_couple,
+            # only_informal_care_by_mother_health_single,
             combination_care_by_mother_health_couple,
             combination_care_by_mother_health_single,
-            only_home_care_by_mother_health_couple,
-            only_home_care_by_mother_health_single,
+            # only_home_care_by_mother_health_couple,
+            # only_home_care_by_mother_health_single,
         ],
         ignore_index=False,
         axis=0,
@@ -744,25 +697,6 @@ def get_caregiving_status_by_father_health_and_marital_status(
         weight=weight,
     )
 
-    only_informal_care_by_father_health_couple = (
-        get_caregiving_status_by_parental_health(
-            father_couple,
-            parent="father",
-            moment="only_informal_weighted",
-            is_other_parent_alive=True,
-            weight=weight,
-        )
-    )
-    only_informal_care_by_father_health_single = (
-        get_caregiving_status_by_parental_health(
-            father_single,
-            parent="father",
-            moment="only_informal_weighted",
-            is_other_parent_alive=False,
-            weight=weight,
-        )
-    )
-
     combination_care_by_father_health_couple = get_caregiving_status_by_parental_health(
         father_couple,
         parent="father",
@@ -778,33 +712,18 @@ def get_caregiving_status_by_father_health_and_marital_status(
         weight=weight,
     )
 
-    only_home_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-        father_couple,
-        moment="only_home_care_weighted",
-        parent="father",
-        is_other_parent_alive=True,
-        weight=weight,
-    )
-    only_home_care_by_father_health_single = get_caregiving_status_by_parental_health(
-        father_single,
-        parent="father",
-        moment="only_home_care_weighted",
-        is_other_parent_alive=False,
-        weight=weight,
-    )
-
     return pd.concat(
         [
             informal_care_by_father_health_couple,
             informal_care_by_father_health_single,
             home_care_by_father_health_couple,
             home_care_by_father_health_single,
-            only_informal_care_by_father_health_couple,
-            only_informal_care_by_father_health_single,
+            # only_informal_care_by_father_health_couple,
+            # only_informal_care_by_father_health_single,
             combination_care_by_father_health_couple,
             combination_care_by_father_health_single,
-            only_home_care_by_father_health_couple,
-            only_home_care_by_father_health_single,
+            #     only_home_care_by_father_health_couple,
+            #     only_home_care_by_father_health_single,
         ],
         ignore_index=False,
         axis=0,
@@ -1055,9 +974,25 @@ def get_care_transition_unweighted(dat, previous_choice, current_choice):
 
 def get_care_transition_weighted(dat, previous_choice, current_choice, weight):
     """Get transition from previous to current caregiving status using weights."""
+    _previous_choice_string = (
+        str(previous_choice)
+        .replace("intensive_care_no_other", "informal_care")
+        .replace("_weighted", "")
+        .replace("_intensive", "")
+        .replace("_child", "")
+    )
+
+    _current_choice_string = (
+        str(current_choice)
+        .replace("intensive_care_no_other", "informal_care")
+        .replace("_weighted", "")
+        .replace("_intensive", "")
+        .replace("_child", "")
+    )
+
     return pd.Series(
         {
-            f"transition_weighted_from_{previous_choice}_to_{current_choice}": dat.loc[
+            f"{_previous_choice_string}_to_{_current_choice_string}": dat.loc[
                 dat[f"lagged_{previous_choice}"] == True,
                 current_choice,
             ].sum()
@@ -1229,9 +1164,10 @@ def get_income_by_employment_by_age_bin(
 
 def get_wealth_by_age_bin(dat, age_bins, moment, weight):
     """Calculate mean wealth by age bin."""
+    moment_string = moment.replace("hnetw", "wealth")
     return pd.Series(
         {
-            f"{moment}_{age_bin[0]}_{age_bin[1]}": dat.loc[
+            f"{moment_string}_{age_bin[0]}_{age_bin[1]}": dat.loc[
                 (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
                 moment,
             ].sum()
@@ -1312,13 +1248,14 @@ def get_caregiving_status_by_parental_health(
     weight,
 ):
     """Get caregiving status by health and marital status of parent."""
+    moment_string = moment.replace("_weighted", "").replace("_child", "")
     parent_status = (
         is_other_parent_alive * "couple" + (1 - is_other_parent_alive) * "single"
     )
 
     return pd.Series(
         {
-            f"{moment}_{parent}_{parent_status}_health_{health}": dat.loc[
+            f"{moment_string}_{parent}_{parent_status}_health_{health}": dat.loc[
                 (dat["married"] == is_other_parent_alive) & (dat["health"] == health),
                 moment,
             ].sum()
