@@ -70,24 +70,19 @@ def task_create_moments(
         dat,
         age_bins_coarse,
         employment_status="part_time",
-        moment="labor_income_monthly",
+        moment="real_labor_income",
         weight=weight,
     )
     net_income_by_age_bin_full_time = get_income_by_employment_by_age_bin(
         dat,
         age_bins_coarse,
         employment_status="full_time",
-        moment="labor_income_monthly",
+        moment="real_labor_income",
         weight=weight,
     )
 
     # income by age, working and non-working?
-    net_income_by_age_bin_coarse = get_income_by_age_bin(
-        dat,
-        age_bins=age_bins_coarse,
-        moment="real_labor_income",
-        weight=weight,
-    )
+    # must condition on working
 
     # total household NET wealth by age bin
     # We calculate wealth using the HILDA wealth model, which is based on
@@ -210,7 +205,6 @@ def task_create_moments(
             net_income_by_age_bin_part_time,
             # net_income_by_age_bin,
             # wealth_by_age_bin,
-            net_income_by_age_bin_coarse,
             wealth_by_age_bin_coarse,
             #
             employment_by_caregiving_status,
@@ -315,32 +309,6 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
         weight=weight,
     )
 
-    no_informal_to_no_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_informal_care_child",
-        current_choice="no_informal_care_child_weighted",
-        weight=weight,
-    )
-    no_informal_to_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_informal_care_child",
-        current_choice="informal_care_child_weighted",
-        weight=weight,
-    )
-
-    informal_to_no_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="informal_care_child",
-        current_choice="no_informal_care_child_weighted",
-        weight=weight,
-    )
-    informal_to_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="informal_care_child",
-        current_choice="informal_care_child_weighted",
-        weight=weight,
-    )
-
     return pd.concat(
         [
             no_formal_to_no_formal_weighted,
@@ -358,10 +326,10 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
             informal_to_no_formal_weighted,
             informal_to_formal_weighted,
             # ?
-            no_informal_to_no_informal_weighted,
-            no_informal_to_informal_weighted,
-            informal_to_no_informal_weighted,
-            informal_to_informal_weighted,
+            # no_informal_to_no_informal_weighted,
+            # no_informal_to_informal_weighted,
+            # informal_to_no_informal_weighted,
+            # informal_to_informal_weighted,
         ],
         ignore_index=False,
         axis=0,
@@ -1312,6 +1280,59 @@ def get_employment_by_age_soep():
     return pd.Series(
         {
             "not_working_age_51": 0.2817563,
+            "not_working_age_52": 0.2896943,
+            "not_working_age_53": 0.2981287,
+            "not_working_age_54": 0.3181575,
+            "not_working_age_55": 0.3224364,
+            "not_working_age_56": 0.3390837,
+            "not_working_age_57": 0.3538098,
+            "not_working_age_58": 0.3940612,
+            "not_working_age_59": 0.4321149,
+            "not_working_age_60": 0.4791804,
+            "not_working_age_61": 0.5618399,
+            "not_working_age_62": 0.6517516,
+            "not_working_age_63": 0.7283603,
+            "not_working_age_64": 0.8322718,
+            "not_working_age_65": 0.8828348,
+            "part_time_age_51": 0.33975112,
+            "part_time_age_52": 0.3316075,
+            "part_time_age_53": 0.31991797,
+            "part_time_age_54": 0.31842528,
+            "part_time_age_55": 0.3246717,
+            "part_time_age_56": 0.31617647,
+            "part_time_age_57": 0.30773774,
+            "part_time_age_58": 0.28889576,
+            "part_time_age_59": 0.26305483,
+            "part_time_age_60": 0.24586913,
+            "part_time_age_61": 0.20272572,
+            "part_time_age_62": 0.15816857,
+            "part_time_age_63": 0.13265306,
+            "part_time_age_64": 0.0831564,
+            "part_time_age_65": 0.06339031,
+            "full_time_age_51": 0.3784926,
+            "full_time_age_52": 0.37869822,
+            "full_time_age_53": 0.38195335,
+            "full_time_age_54": 0.36341725,
+            "full_time_age_55": 0.35289187,
+            "full_time_age_56": 0.34473982,
+            "full_time_age_57": 0.33845245,
+            "full_time_age_58": 0.31704299,
+            "full_time_age_59": 0.30483029,
+            "full_time_age_60": 0.27495043,
+            "full_time_age_61": 0.23543441,
+            "full_time_age_62": 0.19007978,
+            "full_time_age_63": 0.13898663,
+            "full_time_age_64": 0.08457183,
+            "full_time_age_65": 0.05377493,
+        },
+    )
+
+
+def _get_employment_by_age_soep():
+    """Get employment shares by age of females age 51-65."""
+    return pd.Series(
+        {
+            "not_working_age_51": 0.2817563,
             "part_time_age_51": 0.33975112,
             "full_time_age_51": 0.37849260,
             #
@@ -1439,6 +1460,7 @@ def deflate_income_and_wealth(dat, cpi):
         "ydip",
         "yind",
         "labor_income",
+        "labor_income_monthly",
         "hourly_wage",
     ]
 
