@@ -201,8 +201,8 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age,
-            net_income_by_age_bin_full_time,
             net_income_by_age_bin_part_time,
+            net_income_by_age_bin_full_time,
             # net_income_by_age_bin,
             # wealth_by_age_bin,
             wealth_by_age_bin_coarse,
@@ -311,20 +311,20 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
 
     return pd.concat(
         [
-            no_formal_to_no_formal_weighted,
-            no_formal_to_formal_weighted,
-            formal_to_no_formal_weighted,
-            formal_to_formal_weighted,
+            no_informal_to_no_formal_weighted,
+            no_informal_to_formal_weighted,
+            informal_to_no_formal_weighted,
+            informal_to_formal_weighted,
             #
             no_formal_to_no_informal_weighted,
             no_formal_to_informal_weighted,
             formal_to_no_informal_weighted,
             formal_to_informal_weighted,
             #
-            no_informal_to_no_formal_weighted,
-            no_informal_to_formal_weighted,
-            informal_to_no_formal_weighted,
-            informal_to_formal_weighted,
+            no_formal_to_no_formal_weighted,
+            no_formal_to_formal_weighted,
+            formal_to_no_formal_weighted,
+            formal_to_formal_weighted,
             # ?
             # no_informal_to_no_informal_weighted,
             # no_informal_to_informal_weighted,
@@ -614,12 +614,12 @@ def get_caregiving_status_by_mother_health_and_marital_status(
     return pd.concat(
         [
             informal_care_by_mother_health_couple,
-            informal_care_by_mother_health_single,
             home_care_by_mother_health_couple,
-            home_care_by_mother_health_single,
+            combination_care_by_mother_health_couple,
             # only_informal_care_by_mother_health_couple,
             # only_informal_care_by_mother_health_single,
-            combination_care_by_mother_health_couple,
+            informal_care_by_mother_health_single,
+            home_care_by_mother_health_single,
             combination_care_by_mother_health_single,
             # only_home_care_by_mother_health_couple,
             # only_home_care_by_mother_health_single,
@@ -683,12 +683,12 @@ def get_caregiving_status_by_father_health_and_marital_status(
     return pd.concat(
         [
             informal_care_by_father_health_couple,
-            informal_care_by_father_health_single,
+            combination_care_by_father_health_couple,
             home_care_by_father_health_couple,
-            home_care_by_father_health_single,
             # only_informal_care_by_father_health_couple,
             # only_informal_care_by_father_health_single,
-            combination_care_by_father_health_couple,
+            informal_care_by_father_health_single,
+            home_care_by_father_health_single,
             combination_care_by_father_health_single,
             #     only_home_care_by_father_health_couple,
             #     only_home_care_by_father_health_single,
@@ -1264,13 +1264,13 @@ def get_employment_by_caregiving_status_soep():
     """Get employment by caregiving status of females age 51-65."""
     return pd.Series(
         {
-            "not_working_informal_care": 0.4925068,
-            "part_time_informal_care": 0.2897366,
-            "full_time_informal_care": 0.2177566,
-            #
             "not_working_no_informal_care": 0.4313806,
             "part_time_no_informal_care": 0.2589699,
             "full_time_no_informal_care": 0.3096495,
+            #
+            "not_working_informal_care": 0.4925068,
+            "part_time_informal_care": 0.2897366,
+            "full_time_informal_care": 0.2177566,
         },
     )
 
