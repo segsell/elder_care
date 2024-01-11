@@ -93,7 +93,7 @@ def task_create_moments(
     # debt minus combined household super,
     # where the components are defined as in Summerfield et al. (2013)
     # We deflate wealth by the consumer price
-    wealth_by_age_bin_coarse = get_wealth_by_age_bin(
+    wealth_by_age_bin = get_wealth_by_age_bin(
         dat,
         age_bins_coarse,
         moment="real_hnetw",
@@ -201,14 +201,13 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age,
+            share_intensive_care_by_age_bin_coarse,
+            #
             net_income_by_age_bin_part_time,
             net_income_by_age_bin_full_time,
-            # net_income_by_age_bin,
-            # wealth_by_age_bin,
-            wealth_by_age_bin_coarse,
+            wealth_by_age_bin,
             #
             employment_by_caregiving_status,
-            share_intensive_care_by_age_bin_coarse,
             caregiving_by_mother_health,
             caregiving_by_father_health,
             #
