@@ -16,8 +16,8 @@ DONT_KNOW = -1
 ANSWER_YES = 1
 ANSWER_NO = 5
 
-MIN_AGE = 55
-MAX_AGE = 68
+MIN_AGE = 50
+MAX_AGE = 65
 MIN_WORKING_AGE = 14
 
 MIN_YEARS_SCHOOLING = 0
@@ -29,6 +29,11 @@ HOCHSCHUL_DEGREE = 5
 
 MOTHER = 2
 FATHER = 3
+MOTHER_IN_LAW = 4
+FATHER_IN_LAW = 5
+STEP_MOTHER = 6
+STEP_FATHER = 7
+
 GIVEN_HELP_LESS_THAN_DAILY = 2
 GIVEN_HELP_DAILY = 1
 
@@ -62,6 +67,8 @@ CHANGED_ONCE_FULL_TO_PART = 3.0
 CHANGED_ONCE_PART_TO_FULL = 4.0
 CHANGED_MULTIPLE_TIMES = 5.0
 
+HIGH_WAGE_THRESHOLD = 100
+
 FURTHER_EDUC = [
     "dn012d1",
     "dn012d2",
@@ -93,14 +100,22 @@ def table(df_col):
 
 def task_create_estimation_data(
     path_to_raw_data: Path = BLD / "data" / "data_merged.csv",
-    path: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
+    path_to_main: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
+    path_to_design_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "estimation_data_design_weight.csv",
+    path_to_hh_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "estimation_data_hh_weight.csv",
+    path_to_ind_weight: Annotated[Path, Product] = BLD
+    / "data"
+    / "estimation_data_ind_weight.csv",
 ) -> None:
     """Create the estimation data set."""
     # Load the data
     dat = pd.read_csv(path_to_raw_data)
 
     # Filter for females
-    dat = dat[dat["gender"] == FEMALE]
 
     dat = dat.sort_values(by=["mergeid", "int_year"])
     dat["first_int_year"] = dat.groupby("mergeid")["int_year"].transform("first")
@@ -110,7 +125,7 @@ def task_create_estimation_data(
     dat["dn036_"] = np.where(dat["dn036_"] < 0, np.nan, dat["dn036_"])
     dat["dn037_"] = np.where(dat["dn037_"] < 0, np.nan, dat["dn037_"])
 
-    dat["siblings"] = np.select(
+    dat["n_siblings"] = np.select(
         [
             (~dat["dn036_"].isna())
             & (~dat["dn037_"].isna()),  # Both columns are not NaN
@@ -126,6 +141,13 @@ def task_create_estimation_data(
         ],
         default=np.nan,
     )
+    _cond = [dat["n_siblings"] > 0, dat["n_siblings"] == 0]
+    _val = [1, 0]
+    dat["has_sibling"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [dat["dn037_"] > 0, dat["dn037_"] == 0]
+    _val = [1, 0]
+    dat["has_sister"] = np.select(_cond, _val, default=np.nan)
 
     # Make prettier
     dat["age"] = dat.apply(
@@ -178,10 +200,226 @@ def task_create_estimation_data(
     dat = create_years_since_retirement(dat)
     # consider retired if most recent job ended before first interview
 
-    dat.to_csv(path, index=False)
+    dat = create_log_hourly_wage(dat)
+
+    dat = interpolate_missing_values(dat, col="hnetw")
+    dat = compute_spousal_and_other_income(dat, hh_income="thinc")
+
+    # Descriptives
+
+    care_to_mother = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == MOTHER)
+            | (dat["sp009_2"] == MOTHER)
+            | (dat["sp009_3"] == MOTHER)
+        ),
+    ]
+    care_to_father = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == FATHER)
+            | (dat["sp009_2"] == FATHER)
+            | (dat["sp009_3"] == FATHER)
+        ),
+    ]
+
+    dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
+    dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
+
+    dat = dat[dat["gender"] == FEMALE]
+    dat = dat.reset_index(drop=True)
+
+    dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
+    dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
+    dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
+
+    # Save
+    dat.to_csv(path_to_main, index=False)
+    dat_design_weight.to_csv(path_to_design_weight, index=False)
+    dat_hh_weight.to_csv(path_to_hh_weight, index=False)
+    dat_ind_weight.to_csv(path_to_ind_weight, index=False)
 
 
 # =====================================================================================
+
+
+def multiply_rows_with_weight(dat, weight):
+    # Create a DataFrame of weights with the same shape as dat
+    dat = dat.copy()
+    weights = dat[weight].to_numpy().reshape(-1, 1)
+
+    static_cols = [
+        "mergeid",
+        "int_year",
+        "int_month",
+        "age",
+        "care",
+        "any_care",
+        "light_care",
+        "intensive_care",
+        "intensive_care_new",
+        "intensive_care_no_other",
+        "intensive_care_general",
+        "intensive_care_all_parents",
+        "lagged_part_time",
+        "lagged_full_time",
+        "lagged_working_part_or_full_time",
+        "lagged_working",
+        "wave",
+        "no_intensive_informal",
+        "lagged_no_intensive_informal",
+        "lagged_intensive_care_no_other",
+        "lagged_not_working_part_or_full_time",
+        "n_siblings",
+        "has_sibling",
+        "has_sister",
+        weight,
+    ]
+    data_columns = dat.drop(columns=static_cols).to_numpy()
+
+    result = data_columns * weights
+
+    dat_weighted = pd.DataFrame(
+        result,
+        columns=[col for col in dat.columns if col not in static_cols],
+    )
+    dat_weighted.insert(0, "mergeid", dat["mergeid"])
+    dat_weighted.insert(1, "int_year", dat["int_year"])
+    dat_weighted.insert(2, "int_month", dat["int_month"])
+    dat_weighted.insert(3, "age", dat["age"])
+    dat_weighted.insert(4, weight, dat[weight])
+    dat_weighted.insert(5, "care", dat["care"])
+    dat_weighted.insert(6, "any_care", dat["any_care"])
+    dat_weighted.insert(7, "light_care", dat["light_care"])
+    dat_weighted.insert(8, "intensive_care", dat["intensive_care"])
+    dat_weighted.insert(9, "intensive_care_new", dat["intensive_care_new"])
+    dat_weighted.insert(10, "intensive_care_no_other", dat["intensive_care_no_other"])
+    dat_weighted.insert(11, "intensive_care_no_general", dat["intensive_care_general"])
+    dat_weighted.insert(
+        12,
+        "intensive_care_all_parents",
+        dat["intensive_care_all_parents"],
+    )
+    dat_weighted.insert(13, "wave", dat["wave"])
+    dat_weighted.insert(14, "lagged_part_time", dat["lagged_part_time"])
+    dat_weighted.insert(15, "lagged_full_time", dat["lagged_full_time"])
+    dat_weighted.insert(
+        16,
+        "lagged_working_part_or_full_time",
+        dat["lagged_working_part_or_full_time"],
+    )
+    dat_weighted.insert(17, "lagged_working", dat["lagged_working"])
+    dat_weighted.insert(18, "no_intensive_informal", dat["no_intensive_informal"])
+    dat_weighted.insert(
+        19,
+        "lagged_no_intensive_informal",
+        dat["lagged_no_intensive_informal"],
+    )
+    dat_weighted.insert(
+        20,
+        "lagged_intensive_care_no_other",
+        dat["lagged_intensive_care_no_other"],
+    )
+    dat_weighted.insert(
+        21,
+        "lagged_not_working_part_or_full_time",
+        dat["lagged_not_working_part_or_full_time"],
+    )
+    dat_weighted.insert(22, "n_siblings", dat["n_siblings"])
+    dat_weighted.insert(23, "has_sibling", dat["has_sibling"])
+    dat_weighted.insert(24, "has_sister", dat["has_sister"])
+
+    dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
+        "mean",
+    )
+
+    return dat_weighted
+
+
+def create_log_hourly_wage(dat):
+    """Create labor and wage variables.
+
+    EP205_EarningsEmplAT After any taxes and contributions, what was your approximate
+    annual income from employment in the year [FLLastYear]?
+
+    Please include any additional or extra or lump sum payment, such as bonuses, 13th
+    month, Christmas or Summer pays.
+
+    """
+    dat["ydip"] = np.where(dat["ydip"] < 0, np.nan, dat["ydip"])
+    dat["yind"] = np.where(dat["yind"] < 0, np.nan, dat["yind"])
+
+    dat["labor_income"] = dat["ydip"] + dat["yind"]
+    dat["labor_income_monthly"] = dat["labor_income"] / 12
+
+    # Convert weekly working hours to daily working hours
+    # (assuming 5 working days in a week)
+    dat["daily_income"] = dat["labor_income"] / 260
+    dat["daily_working_hours"] = dat["ep013_"] / 5
+    dat["daily_wage"] = dat["daily_income"] / dat["daily_working_hours"]
+
+    _cond = [
+        (dat["part_time"] == True) | (dat["full_time"] == True),
+        (dat["ep013_"] == 0),
+    ]
+    _val = [(1 / (12 * 4.33)) * dat["labor_income"] / (dat["ep013_"]), 0]
+    dat["hourly_wage"] = np.select(_cond, _val, default=np.nan)
+
+    top_20_hourly_wage_part_time = dat.loc[
+        dat["part_time"] > 0,
+        "hourly_wage",
+    ].nlargest(20)
+    mergeids_high_hourly_wage_part_time = dat.loc[
+        dat["hourly_wage"].isin(
+            top_20_hourly_wage_part_time[
+                top_20_hourly_wage_part_time > HIGH_WAGE_THRESHOLD
+            ],
+        ),
+        "mergeid",
+    ]
+
+    return dat.drop(dat[dat["mergeid"].isin(mergeids_high_hourly_wage_part_time)].index)
+
+
+def compute_spousal_and_other_income(dat, hh_income=None):
+    """Compute spousal and other income."""
+    if hh_income is None:
+        hh_income = "thinc_avg"
+        dat["thinc_avg"] = dat[["thinc", "thinc2"]].mean(axis=1)
+
+    _cond = [
+        (dat["ydip"] >= 0) & (dat["yind"] >= 0),
+        (dat["ydip"] >= 0) & (dat["yind"].isna()),
+        (dat["ydip"].isna()) & (dat["yind"] >= 0),
+    ]
+    _val = [
+        dat[hh_income] - dat["ydip"] - dat["yind"],
+        dat[hh_income] - dat["ydip"],
+        dat[hh_income] - dat["yind"],
+    ]
+    dat["other_income"] = np.select(_cond, _val, default=np.nan)
+
+    dat["other_income"] = np.where(dat["other_income"] < 0, 0, dat["other_income"])
+
+    return dat
+
+
+def interpolate_missing_values(dat, col, direction="forward"):
+    """Interpolate missing values via linear interpolation."""
+    dat[col] = dat.groupby("mergeid")[col].transform(
+        lambda x: x.interpolate(method="linear", axis=0, limit_direction=direction),
+    )
+
+    # "DE-000132-01"
+
+    return dat
 
 
 def create_retrospective_work_experience(dat):
@@ -574,7 +812,13 @@ def create_parental_health_status(dat, parent):
 
 
 def create_age_parent_and_parent_alive(dat, parent):
-    """Create age and alive variables for parents."""
+    """Create age and alive variables for parents.
+
+    # Drop all corresponding mergeids? mask = dat[f"{parent}_age"] < (MIN_AGE + 16)
+    filtered_mergeids = dat.loc[mask, "mergeid"] filtered_mergeid_list =
+    filtered_mergeids.tolist()
+
+    """
     if parent == "mother":
         parent_indicator = 1
     elif parent == "father":
@@ -582,6 +826,15 @@ def create_age_parent_and_parent_alive(dat, parent):
 
     dat = dat.sort_values(by=["mergeid", "int_year"])
     dat[f"{parent}_age"] = dat[f"dn028_{parent_indicator}"].copy()
+
+    # ==============================================================================
+
+    # Replace negative values with NaN
+    dat[f"{parent}_age"] = np.where(
+        dat[f"{parent}_age"] < MIN_AGE + 16,
+        np.nan,
+        dat[f"{parent}_age"],
+    )
 
     dat[f"lagged_{parent}_age"] = dat.groupby("mergeid")[f"{parent}_age"].shift(1)
     # Get the first non-NaN value of '{parent}_age'
@@ -783,7 +1036,7 @@ def create_caregving(dat):
     ]
     choices_care = [1, 0]
 
-    dat["care"] = np.select(conditions_care, choices_care, default=np.nan)
+    dat["any_care"] = np.select(conditions_care, choices_care, default=0)
 
     conditions_parents_outside = [
         (dat["sp008_"] == 1)
@@ -817,9 +1070,9 @@ def create_caregving(dat):
     # Create the 'ever_cared_parents' column
     conditions_parents = [
         (dat["care_parents_outside"] == 1) | (dat["care_parents_within"] == 1),
-        (dat["care_parents_within"].isna()) & (dat["care_parents_outside"].isna()),
     ]
     choices_parents = [1, np.nan]
+    choices_parents = [1]
 
     dat["care_parents"] = np.select(conditions_parents, choices_parents, default=0)
 
@@ -868,9 +1121,27 @@ def create_caregving(dat):
         & (dat["sp018_"] != 1)
         & ((dat["sp019d2"] != 1) & (dat["sp019d3"] != 1)),  # to whom in hh
         # no personal care in hh (e.g. to partner, want those excluded)
+        (
+            (
+                (dat["sp011_1"] < GIVEN_HELP_LESS_THAN_DAILY)
+                & (dat["sp011_1"] >= 0)
+                & (~dat["sp009_1"].isin([2, 3]))
+            )
+            | (
+                (dat["sp011_2"] < GIVEN_HELP_LESS_THAN_DAILY)
+                & (dat["sp011_2"] >= 0)
+                & (~dat["sp009_2"].isin([2, 3]))
+            )
+            | (
+                (dat["sp011_3"] < GIVEN_HELP_LESS_THAN_DAILY)
+                & (dat["sp011_3"] >= 0)
+                & (~dat["sp009_3"].isin([2, 3]))
+            )
+        )
+        | ((dat["sp018_"] == 1) & ((dat["sp019d2"] == 1) & (dat["sp019d3"] == 1))),
     ]
-    _choice = [1]
-    dat["light_care"] = np.select(_cond, _choice, default=0)
+    _choice = [1, 0]
+    dat["light_care"] = np.select(_cond, _choice, default=np.nan)
 
     _cond = [
         (
@@ -891,9 +1162,27 @@ def create_caregving(dat):
             (dat["sp018_"] == 1)  # or personal care in hh
             & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
         ),  # include mother and father in law?
+        (
+            (
+                (dat["sp011_1"] != GIVEN_HELP_DAILY)
+                & (dat["sp011_1"] >= 0)
+                & (~dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] != GIVEN_HELP_DAILY)
+                & (dat["sp011_2"] >= 0)
+                & (~dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] != GIVEN_HELP_DAILY)
+                & (dat["sp011_3"] >= 0)
+                & (~dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        )
+        & ((dat["sp019d2"] != 1) & (dat["sp019d3"] != 1)),  # for mother or father
     ]
-    _choice = [1]
-    dat["intensive_care"] = np.select(_cond, _choice, default=0)
+    _choice = [1, 0]
+    dat["intensive_care"] = np.select(_cond, _choice, default=np.nan)
 
     # intensive care dominates light care
     dat["light_care"] = np.where(
@@ -908,6 +1197,15 @@ def create_caregving(dat):
         1,
         0,
     )
+
+    dat = _create_intensive_parental_care(dat)
+    dat = _create_intensive_care_general(dat)
+    dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
+    dat = _create_intensive_parental_care_without_any_other_care(dat)
+
+    dat["no_intensive_informal"] = 1 - dat["intensive_care_no_other"]
+    dat = _create_lagged_var(dat, "no_intensive_informal")
+    dat = _create_lagged_var(dat, "intensive_care_no_other")
 
     # care experience
     dat = dat.sort_values(by=["mergeid", "int_year"], ascending=[True, True])
@@ -925,6 +1223,137 @@ def create_caregving(dat):
     _val = [dat["year_diff"], dat["year_diff"]]
     dat["care_exp_crosssect"] = np.select(_cond, _val, default=0)
     dat["care_experience"] = dat.groupby("mergeid")["care_exp_crosssect"].cumsum()
+
+    return dat
+
+
+def _create_intensive_parental_care(dat):
+    _cond = [
+        (
+            (
+                (dat["sp011_1"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+        ),  # include mother and father in law?
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_new"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_parental_care_without_any_other_care(dat):
+    _cond = [
+        (
+            (
+                (dat["sp011_1"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+        ),  # include mother and father in law?
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0]
+    dat["intensive_care_no_other"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
+    all_parents = [
+        MOTHER,
+        FATHER,
+        MOTHER_IN_LAW,
+        FATHER_IN_LAW,
+        STEP_MOTHER,
+        STEP_FATHER,
+    ]
+
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin(all_parents)))
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin(all_parents))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin(all_parents))
+            )
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+        ),  # include mother and father in law?
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_all_parents"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_care_general(dat):
+    """Create general intensive care to anyone (not only parents)."""
+    _cond = [
+        (
+            (dat["sp011_1"] == GIVEN_HELP_DAILY)
+            | (dat["sp011_2"] == GIVEN_HELP_DAILY)
+            | (dat["sp011_3"] == GIVEN_HELP_DAILY)
+        )
+        | (
+            dat["sp018_"] == 1  # or personal care in hh
+        ),  # include mother and father in law?
+        (dat["sp018_"] == ANSWER_NO)
+        & (dat["sp018_"] == ANSWER_NO),  # or personal care in hh
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_general"] = np.select(_cond, _choice, default=np.nan)
 
     return dat
 
@@ -1007,12 +1436,16 @@ def create_working(dat):
     # 5 Homemaker
     # 97 Other
 
+    # Drop disabled
+
+    # Drop within household care
+
     _cond = [
         (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
-        ((dat["cjs"] < 0) | (dat["cjs"].isna())),
+        (dat["cjs"] > 0) & (dat["cjs"] != EMPLOYED_OR_SELF_EMPLOYED),
     ]
-    _val = [1, np.nan]
-    dat["working"] = np.select(_cond, _val, default=0)
+    _val = [1, 0]
+    dat["working"] = np.select(_cond, _val, default=np.nan)
 
     _cond = [
         (dat["cjs"] == EMPLOYED_OR_SELF_EMPLOYED),
@@ -1042,7 +1475,7 @@ def create_working(dat):
     )
     dat["part_time"] = np.where(
         (dat["working"] == 1)
-        & (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
+        & (dat["ep013_"] >= 0)
         & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
         1,
         0,
@@ -1055,6 +1488,60 @@ def create_working(dat):
         0,
     )
 
+    #
+    dat["ep013_"] = np.where(dat["ep013_"] < 0, np.nan, dat["ep013_"])
+    _cond = [
+        dat["ep013_"] >= WORKING_FULL_TIME_THRESH,
+        (dat["ep013_"] >= 0) & (dat["ep013_"] <= WORKING_FULL_TIME_THRESH),
+    ]
+    _val = [1, 0]
+    dat["full_time"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [
+        (dat["ep013_"] >= WORKING_PART_TIME_THRESH)
+        & (dat["ep013_"] < WORKING_FULL_TIME_THRESH),
+        dat["ep013_"] >= WORKING_FULL_TIME_THRESH,
+        dat["ep013_"] == 0,
+    ]
+    _val = [1, 0, 0]
+    dat["part_time"] = np.select(_cond, _val, default=np.nan)
+
+    #
+    dat.loc[
+        (dat["part_time"].isin([0, 1])) & (dat["full_time"].isna()),
+        "full_time",
+    ] = 0
+    dat.loc[
+        (dat["full_time"].isin([0, 1])) & (dat["part_time"].isna()),
+        "part_time",
+    ] = 0
+
+    _cond = [
+        (dat["full_time"] == True) | (dat["part_time"] == True),
+        (dat["full_time"] == False) & (dat["part_time"] == False),
+        (dat["full_time"].isna()) & (dat["part_time"] == False),
+        (dat["full_time"] == False) & (dat["part_time"].isna()),
+        dat["ep013_"] == 0,
+    ]
+    _val = [1, 0, 0, 0, 0]
+    dat["working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [
+        dat["working_part_or_full_time"] == 1,
+        dat["working_part_or_full_time"] == 0,
+    ]
+    _val = [0, 1]
+    dat["not_working_part_or_full_time"] = np.select(_cond, _val, default=np.nan)
+
+    dat = _create_lagged_var(dat, "part_time")
+    dat = _create_lagged_var(dat, "full_time")
+    dat = _create_lagged_var(dat, "working_part_or_full_time")
+    return _create_lagged_var(dat, "not_working_part_or_full_time")
+
+
+def _create_lagged_var(dat, var):
+    """Create lagged variable by mergeid."""
+    dat[f"lagged_{var}"] = dat.groupby("mergeid")[var].shift(1)
     return dat
 
 
