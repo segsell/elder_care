@@ -125,8 +125,6 @@ def task_create_initial_conditions(
         father_bad_health,
     ) = get_initial_parental_health(
         dat,
-        share_mother_alive=share_mother_alive,
-        share_father_alive=share_father_alive,
         weight=weight,
     )
 
@@ -170,7 +168,9 @@ def task_create_initial_conditions(
     initial_wealth = dat.loc[dat["age"] == MIN_AGE, "hnetw_unweighted"].dropna()
 
     initial_wealth.to_csv(path_wealth, index=False)
-    initial_discrete_conditions.to_csv(path_discrete, mode="a", header=False)
+
+    initial_discrete_conditions.name = "moment"
+    initial_discrete_conditions.to_csv(path_discrete, index=True)
 
 
 # ==============================================================================
@@ -215,6 +215,9 @@ def draw_random_sequence_from_array(seed, arr, n_agents):
     """
     key = jax.random.PRNGKey(seed)
     return jax.random.choice(key, arr, shape=(n_agents,), replace=True)
+
+
+# ==============================================================================
 
 
 def get_inital_parent_age_mean_and_std_dev(dat, age, weight):
@@ -263,13 +266,6 @@ def get_mean_and_std_parental_age(dat, moment, age):
     return mean, var
 
 
-def get_share_age_50_to_55(dat, weight, moment):
-    return (
-        dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < AGE_55), moment].sum()
-        / dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < AGE_55), weight].sum()
-    )
-
-
 def _get_share_at_min_age(dat, weight, moment):
     return (
         dat.loc[(dat["age"] == MIN_AGE), moment].sum()
@@ -298,6 +294,21 @@ def get_share_at_min_age(dat, weight, moment):
     return (
         dat[(dat["age"] == MIN_AGE) & (dat[moment] == True)].shape[0]
         / dat.loc[(dat["age"] == MIN_AGE), weight].shape[0]
+    )
+
+
+def get_share_at_age_interval(dat, weight, moment, age_bottom, age_top):
+    return (
+        dat.loc[
+            (dat["age"] >= age_bottom)
+            & (dat["age"] <= age_top)
+            & (dat[moment] == True),
+            moment,
+        ].sum()
+        / dat.loc[
+            (dat["age"] >= age_bottom) & (dat["age"] <= age_top),
+            weight,
+        ].sum()
     )
 
 
@@ -347,7 +358,7 @@ def _plot_dist(sample):
     plt.show()
 
 
-def get_initial_parental_health(dat, share_mother_alive, share_father_alive, weight):
+def get_initial_parental_health(dat, weight):
     share_mother_good_health = _get_share_parental_health_at_min_age(
         dat,
         weight,
@@ -387,33 +398,23 @@ def get_initial_parental_health(dat, share_mother_alive, share_father_alive, wei
         share_father_good_health + share_father_medium_health + share_father_bad_health
     )
 
-    mother_good_health = (
-        share_mother_good_health / sum_mother_health
-    ) * share_mother_alive
-    mother_medium_health = (
-        share_mother_medium_health / sum_mother_health
-    ) * share_mother_alive
-    mother_bad_health = (
-        share_mother_bad_health / sum_mother_health
-    ) * share_mother_alive
+    mother_good_health = share_mother_good_health / sum_mother_health
+    mother_medium_health = share_mother_medium_health / sum_mother_health
+    mother_bad_health = share_mother_bad_health / sum_mother_health
 
-    father_good_health = (
-        share_father_good_health / sum_father_health
-    ) * share_father_alive
-    father_medium_health = (
-        share_father_medium_health / sum_father_health
-    ) * share_father_alive
-    father_bad_health = (
-        share_father_bad_health / sum_father_health
-    ) * share_father_alive
+    father_good_health = share_father_good_health / sum_father_health
+    father_medium_health = share_father_medium_health / sum_father_health
+    father_bad_health = share_father_bad_health / sum_father_health
 
     assert np.allclose(
         mother_good_health + mother_medium_health + mother_bad_health,
-        share_mother_alive,
+        # share_mother_alive,
+        1,
     )
     assert np.allclose(
         father_good_health + father_medium_health + father_bad_health,
-        share_father_alive,
+        # share_father_alive,
+        1,
     )
 
     return (
