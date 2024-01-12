@@ -132,33 +132,33 @@ import jax.numpy as jnp
 
 
 def is_not_working(lagged_choice):
-    return jnp.any(NO_WORK == lagged_choice)
+    return jnp.any(lagged_choice == NO_WORK)
 
 
 def is_part_time(lagged_choice):
-    return jnp.any(PART_TIME == lagged_choice)
+    return jnp.any(lagged_choice == PART_TIME)
 
 
 def is_full_time(lagged_choice):
-    return jnp.any(FULL_TIME == lagged_choice)
+    return jnp.any(lagged_choice == FULL_TIME)
 
 
 def is_informal_care(lagged_choice):
     # intensive only here
-    return jnp.any(INFORMAL_CARE == lagged_choice)
+    return jnp.any(lagged_choice == INFORMAL_CARE)
 
 
 def is_no_informal_care(lagged_choice):
     # intensive only here
-    return jnp.all(INFORMAL_CARE != lagged_choice)
+    return jnp.all(lagged_choice != INFORMAL_CARE)
 
 
 def is_formal_care(lagged_choice):
-    return jnp.any(FORMAL_CARE == lagged_choice)
+    return jnp.any(lagged_choice == FORMAL_CARE)
 
 
 def is_no_formal_care(lagged_choice):
-    return jnp.all(FORMAL_CARE != lagged_choice)
+    return jnp.all(lagged_choice != FORMAL_CARE)
 
 
 # ==============================================================================
@@ -1095,7 +1095,7 @@ def create_simulation_df(sim_dict, options, params):
     df = pd.DataFrame(
         {key: val.ravel() for key, val in dict_to_df.items()},
         index=pd.MultiIndex.from_product(
-            [np.arange(n_periods), np.arange(n_agents)], names=["period", "agent"]
+            [np.arange(n_periods), np.arange(n_agents)], names=["period", "agent"],
         ),
     )
 
@@ -1437,7 +1437,7 @@ def get_share_by_age(df, lagged_choice):
         period_df = df[df["period"] == period]
         if len(period_df) > 0:
             share = len(
-                period_df[period_df["lagged_choice"].isin(lagged_choice)]
+                period_df[period_df["lagged_choice"].isin(lagged_choice)],
             ) / len(period_df)
         else:
             share = 0  # Avoid division by zero if there are no rows for a period
@@ -1508,7 +1508,7 @@ def get_income_by_age_bin(df, lagged_choice):
 
     return [
         df.loc[
-            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "income"
+            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "income",
         ].mean()
         for age_bin in AGE_BINS
     ]
@@ -1525,7 +1525,7 @@ def get_wealth_beginning_of_period_by_age_bin(df):
     """
     return [
         df.loc[
-            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "wealth"
+            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "wealth",
         ].mean()
         for age_bin in AGE_BINS
     ]
@@ -1551,7 +1551,7 @@ def _get_share_by_informal_care_type_by_age_bin(df, lagged_choice, is_informal_c
                 (df["lagged_choice"].isin(INFORMAL_CARE) * is_informal_care)
                 & (df["period"] > age_bin[0])
                 & (df["period"] <= age_bin[1])
-            ]
+            ],
         )
         for age_bin in AGE_BINS
     ]
@@ -1620,7 +1620,7 @@ def get_share_by_age_bin(df_arr, lagged_choice):
         jnp.mean(
             jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
             & (df_arr[:, ind["period"]] > age_bin[0])
-            & (df_arr[:, ind["period"]] <= age_bin[1])
+            & (df_arr[:, ind["period"]] <= age_bin[1]),
         )
         for age_bin in AGE_BINS
     ]
@@ -1637,7 +1637,7 @@ def get_share_by_informal_care_type_by_age_bin(df_arr, lagged_choice, care_type)
     for period in range(14):
         age_bin_mask = df_arr[:, ind["period"]] == period
         mask = jnp.sum(lagged_choice_mask & care_type_mask & age_bin_mask) / jnp.sum(
-            care_type_mask & age_bin_mask
+            care_type_mask & age_bin_mask,
         )
         # share = jnp.mean(mask) if jnp.any(age_bin_mask) else 0
         # shares.append(share)
