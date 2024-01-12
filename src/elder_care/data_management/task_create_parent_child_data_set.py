@@ -181,6 +181,7 @@ def multiply_rows_with_weight(dat, weight):
         "age",
         "only_informal",
         "combination_care",
+        "combination_care_child",
         "only_home_care",
         "informal_care_child",
         "informal_care_general",
@@ -247,6 +248,7 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(22, "no_home_care", dat["no_home_care"])
     dat_weighted.insert(23, "coupleid", dat["coupleid"])
     dat_weighted.insert(24, "mergeidp", dat["mergeidp"])
+    dat_weighted.insert(25, "combination_care_child", dat["combination_care_child"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -384,6 +386,13 @@ def create_care_variables(dat):
     ]
     _val = [1, np.nan]
     dat["combination_care"] = np.select(_cond, _val, default=0)
+
+    _cond = [
+        (dat["home_care"] == 1) & (dat["informal_care_child"] == 1),
+        (dat["home_care"].isna()) & (dat["informal_care_child"].isna()),
+    ]
+    _val = [1, np.nan]
+    dat["combination_care_child"] = np.select(_cond, _val, default=0)
 
     _cond = [
         (dat["home_care"] == 1) | (dat["informal_care_general"] == 1),
