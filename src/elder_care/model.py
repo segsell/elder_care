@@ -1,12 +1,9 @@
-import numpy as np
-import jax.numpy as jnp
-import jax
-from itertools import product
-import pandas as pd
-
-from typing import Dict
-from typing import Tuple
 from typing import Any
+
+import jax
+import jax.numpy as jnp
+import numpy as np
+import pandas as pd
 
 
 MIN_AGE = 51
@@ -189,7 +186,6 @@ def prob_part_time_offer(period, lagged_choice, options, params):
 
 def prob_full_time_offer(period, lagged_choice, options, params):
     """Compute logit probability of full time offer."""
-
     logit = (
         params["full_time_constant"]
         + params["full_time_not_working_last_period"] * is_not_working(lagged_choice)
@@ -456,7 +452,6 @@ def prob_exog_care_demand(
             no care demand and care demand, respectively.
 
     """
-
     mother_survival_prob = prob_survival_mother(period, options)
     father_survival_prob = prob_survival_father(period, options)
 
@@ -475,13 +470,19 @@ def prob_exog_care_demand(
 
     # single mother
     mother_prob_care_good = _exog_care_demand_mother(
-        period=period, mother_health=0, options=options
+        period=period,
+        mother_health=0,
+        options=options,
     )
     mother_prob_care_medium = _exog_care_demand_mother(
-        period=period, mother_health=1, options=options
+        period=period,
+        mother_health=1,
+        options=options,
     )
     mother_prob_care_bad = _exog_care_demand_mother(
-        period=period, mother_health=2, options=options
+        period=period,
+        mother_health=2,
+        options=options,
     )
 
     _mother_trans_probs_care_demand = jnp.array(
@@ -490,13 +491,19 @@ def prob_exog_care_demand(
 
     # single father
     father_prob_care_good = _exog_care_demand_father(
-        period=period, father_health=0, options=options
+        period=period,
+        father_health=0,
+        options=options,
     )
     father_prob_care_medium = _exog_care_demand_father(
-        period=period, father_health=1, options=options
+        period=period,
+        father_health=1,
+        options=options,
     )
     father_prob_care_bad = _exog_care_demand_father(
-        period=period, father_health=2, options=options
+        period=period,
+        father_health=2,
+        options=options,
     )
 
     _father_trans_probs_care_demand = jnp.array(
@@ -652,7 +659,6 @@ def _exog_care_demand_couple(period, mother_health, father_health, options):
         float: Probability of needing care given health state.
 
     """
-
     mother_age = period + options["mother_min_age"]
     father_age = period + options["father_min_age"]
 
@@ -702,7 +708,11 @@ def update_endog_state(
 
 
 def get_state_specific_feasible_choice_set(
-    part_time_offer, full_time_offer, mother_alive, father_alive, options
+    part_time_offer,
+    full_time_offer,
+    mother_alive,
+    father_alive,
+    options,
 ):
     # formal_care = choice % 2 == 1  # uneven numbers mark formal care
     # light_informal_care = [2, 3, 8, 9, 14, 15]
@@ -739,7 +749,11 @@ def get_state_specific_feasible_choice_set(
 
 
 def utility_func(
-    consumption: jnp.array, period, choice: int, options: dict, params: dict
+    consumption: jnp.array,
+    period,
+    choice: int,
+    options: dict,
+    params: dict,
 ) -> jnp.array:
     """Computes the agent's current utility based on a CRRA utility function.
 
@@ -815,8 +829,8 @@ def utility_final_consume_all(
     choice: int,
     period: int,
     resources: jnp.array,
-    params: Dict[str, float],
-    options: Dict[str, Any],
+    params: dict[str, float],
+    options: dict[str, Any],
 ):
     age = period + options["min_age"]
 
@@ -861,7 +875,10 @@ def utility_final_consume_all(
 
 
 def marginal_utility_final_consume_all(
-    choice, resources: jnp.array, params: Dict[str, float], options: Dict[str, Any]
+    choice,
+    resources: jnp.array,
+    params: dict[str, float],
+    options: dict[str, Any],
 ) -> jnp.array:
     """Computes marginal utility of CRRA utility function.
 
@@ -889,8 +906,8 @@ def budget_constraint(
     lagged_choice: int,
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
-    options: Dict[str, Any],
-    params: Dict[str, float],
+    options: dict[str, Any],
+    params: dict[str, float],
 ) -> float:
     # already done in preprocessing
     # model_params = options["model_params"]
@@ -921,7 +938,8 @@ def budget_constraint(
 
     # needed at all?
     wealth_beginning_of_period = jnp.maximum(
-        wealth_beginning_of_period, options["consumption_floor"]
+        wealth_beginning_of_period,
+        options["consumption_floor"],
     )
 
     return wealth_beginning_of_period
@@ -933,7 +951,7 @@ def calc_stochastic_wage(
     lagged_choice: int,
     wage_shock: float,
     min_age: int,
-    params: Dict[str, float],
+    params: dict[str, float],
 ) -> float:
     """Computes the current level of deterministic and stochastic income.
 
@@ -1101,25 +1119,21 @@ def create_simulation_df(sim_dict, options, params):
 
 
 def simulate_moments(df):
-    """
+    """Df has multiindex ["period", "agent"] necessary?
 
-    df has multiindex ["period", "agent"]
-    necessary?
-
-    or "agent", "period" as columns.
-    "age" is also a column
+    or "agent", "period" as columns. "age" is also a column
 
     .loc needed below?!
 
     """
-
     # share working by age
     share_not_working_by_age = get_share_by_age(df, lagged_choice=NO_WORK)  # 15
     share_working_part_time_by_age = get_share_by_age(df, lagged_choice=PART_TIME)  # 15
     share_working_full_time_by_age = get_share_by_age(df, lagged_choice=FULL_TIME)  # 15
 
     share_informal_care_by_age_bin = get_share_by_age_bin(
-        df, lagged_choice=INFORMAL_CARE
+        df,
+        lagged_choice=INFORMAL_CARE,
     )
 
     # yearly net income
@@ -1132,78 +1146,126 @@ def simulate_moments(df):
     # share working by caregiving type (and age bin) --> to be checked
     share_not_working_no_informal_care_by_age_bin = (
         get_share_by_informal_care_type_by_age_bin(
-            df, lagged_choice=NO_WORK, care_type=NO_INFORMAL_CARE
+            df,
+            lagged_choice=NO_WORK,
+            care_type=NO_INFORMAL_CARE,
         )
     )
     share_part_time_no_informal_care_by_age_bin = (
         get_share_by_informal_care_type_by_age_bin(
-            df, lagged_choice=PART_TIME, care_type=NO_INFORMAL_CARE
+            df,
+            lagged_choice=PART_TIME,
+            care_type=NO_INFORMAL_CARE,
         )
     )
     share_full_time_no_informal_care_by_age_bin = (
         get_share_by_informal_care_type_by_age_bin(
-            df, lagged_choice=FULL_TIME, care_type=NO_INFORMAL_CARE
+            df,
+            lagged_choice=FULL_TIME,
+            care_type=NO_INFORMAL_CARE,
         )
     )
 
     share_not_working_informal_care_by_age_bin = (
         get_share_by_informal_care_type_by_age_bin(
-            df, lagged_choice=NO_WORK, care_type=INFORMAL_CARE
+            df,
+            lagged_choice=NO_WORK,
+            care_type=INFORMAL_CARE,
         )
     )
     share_part_time_informal_care_by_age_bin = (
         get_share_by_informal_care_type_by_age_bin(
-            df, lagged_choice=PART_TIME, care_type=INFORMAL_CARE
+            df,
+            lagged_choice=PART_TIME,
+            care_type=INFORMAL_CARE,
         )
     )
     share_full_time_informal_care_by_age_bin = (
         get_share_by_informal_care_type_by_age_bin(
-            df, lagged_choice=FULL_TIME, care_type=INFORMAL_CARE
+            df,
+            lagged_choice=FULL_TIME,
+            care_type=INFORMAL_CARE,
         )
     )
 
-    # # parent child: mother
-    # informal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-    #     df, care_choice=INFORMAL_CARE, parent="mother", is_other_parent_alive=True
-    # )
-    # formal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-    #     df, care_choice=FORMAL_CARE, parent="mother", is_other_parent_alive=True
-    # )
-    # combination_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-    #     df, care_choice=COMBINATION_CARE, parent="mother", is_other_parent_alive=True
-    # )
+    # parent child: mother
+    informal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=INFORMAL_CARE,
+        parent="mother",
+        is_other_parent_alive=True,
+    )
+    formal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=FORMAL_CARE,
+        parent="mother",
+        is_other_parent_alive=True,
+    )
+    combination_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=COMBINATION_CARE,
+        parent="mother",
+        is_other_parent_alive=True,
+    )
 
-    # informal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-    #     df, care_choice=INFORMAL_CARE, parent="mother", is_other_parent_alive=False
-    # )
-    # formal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-    #     df, care_choice=FORMAL_CARE, parent="mother", is_other_parent_alive=False
-    # )
+    informal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=INFORMAL_CARE,
+        parent="mother",
+        is_other_parent_alive=False,
+    )
+    formal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=FORMAL_CARE,
+        parent="mother",
+        is_other_parent_alive=False,
+    )
 
-    # combination_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-    #     df, care_choice=COMBINATION_CARE, parent="mother", is_other_parent_alive=False
-    # )
+    combination_care_by_mother_health_single = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=COMBINATION_CARE,
+        parent="mother",
+        is_other_parent_alive=False,
+    )
 
-    # # parent child: father
-    # informal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-    #     df, care_choice=INFORMAL_CARE, parent="father", is_other_parent_alive=True
-    # )
-    # formal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-    #     df, care_choice=FORMAL_CARE, parent="father", is_other_parent_alive=True
-    # )
-    # combination_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-    #     df, care_choice=COMBINATION_CARE, parent="father", is_other_parent_alive=True
-    # )
+    # parent child: father
+    informal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=INFORMAL_CARE,
+        parent="father",
+        is_other_parent_alive=True,
+    )
+    formal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=FORMAL_CARE,
+        parent="father",
+        is_other_parent_alive=True,
+    )
+    combination_care_by_father_health_couple = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=COMBINATION_CARE,
+        parent="father",
+        is_other_parent_alive=True,
+    )
 
-    # informal_care_by_father_health_single = get_caregiving_status_by_parental_health(
-    #     df, care_choice=INFORMAL_CARE, parent="father", is_other_parent_alive=False
-    # )
-    # formal_care_by_father_health_single = get_caregiving_status_by_parental_health(
-    #     df, care_choice=FORMAL_CARE, parent="father", is_other_parent_alive=False
-    # )
-    # combination_care_by_father_health_single = get_caregiving_status_by_parental_health(
-    #     df, care_choice=COMBINATION_CARE, parent="father", is_other_parent_alive=False
-    # )
+    informal_care_by_father_health_single = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=INFORMAL_CARE,
+        parent="father",
+        is_other_parent_alive=False,
+    )
+    formal_care_by_father_health_single = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=FORMAL_CARE,
+        parent="father",
+        is_other_parent_alive=False,
+    )
+    combination_care_by_father_health_single = get_caregiving_status_by_parental_health(
+        df,
+        care_choice=COMBINATION_CARE,
+        parent="father",
+        is_other_parent_alive=False,
+    )
 
     # work transitions
     no_work_to_no_work = get_work_transition(df, NO_WORK, NO_WORK)
@@ -1220,46 +1282,68 @@ def simulate_moments(df):
 
     # caregiving transitions
     no_informal_care_to_no_informal_care = get_work_transition(
-        df, NO_INFORMAL_CARE, NO_INFORMAL_CARE
+        df,
+        NO_INFORMAL_CARE,
+        NO_INFORMAL_CARE,
     )
     no_informal_care_to_informal_care = get_work_transition(
-        df, NO_INFORMAL_CARE, INFORMAL_CARE
+        df,
+        NO_INFORMAL_CARE,
+        INFORMAL_CARE,
     )
 
     informal_care_to_no_informal_care = get_work_transition(
-        df, INFORMAL_CARE, NO_INFORMAL_CARE
+        df,
+        INFORMAL_CARE,
+        NO_INFORMAL_CARE,
     )
     informal_care_to_informal_care = get_work_transition(
-        df, INFORMAL_CARE, INFORMAL_CARE
+        df,
+        INFORMAL_CARE,
+        INFORMAL_CARE,
     )
 
     no_informal_care_to_no_formal_care = get_work_transition(
-        df, NO_INFORMAL_CARE, NO_FORMAL_CARE
+        df,
+        NO_INFORMAL_CARE,
+        NO_FORMAL_CARE,
     )
     no_informal_care_to_formal_care = get_work_transition(
-        df, NO_INFORMAL_CARE, FORMAL_CARE
+        df,
+        NO_INFORMAL_CARE,
+        FORMAL_CARE,
     )
 
     informal_care_to_no_formal_care = get_work_transition(
-        df, INFORMAL_CARE, NO_FORMAL_CARE
+        df,
+        INFORMAL_CARE,
+        NO_FORMAL_CARE,
     )
     informal_care_to_formal_care = get_work_transition(df, INFORMAL_CARE, FORMAL_CARE)
 
     #
     no_formal_care_to_no_informal_care = get_work_transition(
-        df, NO_FORMAL_CARE, NO_INFORMAL_CARE
+        df,
+        NO_FORMAL_CARE,
+        NO_INFORMAL_CARE,
     )
     no_formal_care_to_informal_care = get_work_transition(
-        df, NO_FORMAL_CARE, INFORMAL_CARE
+        df,
+        NO_FORMAL_CARE,
+        INFORMAL_CARE,
     )
 
     formal_care_to_no_informal_care = get_work_transition(
-        df, FORMAL_CARE, NO_INFORMAL_CARE
+        df,
+        FORMAL_CARE,
+        NO_INFORMAL_CARE,
     )
     formal_care_to_informal_care = get_work_transition(df, FORMAL_CARE, INFORMAL_CARE)
 
     no_formal_care_to_no_formal_care = get_work_transition(
-        df, NO_FORMAL_CARE, NO_FORMAL_CARE
+        df,
+        NO_FORMAL_CARE,
+        NO_FORMAL_CARE,
     )
     no_formal_care_to_formal_care = get_work_transition(df, NO_FORMAL_CARE, FORMAL_CARE)
 
@@ -1326,7 +1410,7 @@ def simulate_moments(df):
             no_formal_care_to_formal_care,
             formal_care_to_no_formal_care,
             formal_care_to_formal_care,
-        ]
+        ],
     )
 
 
@@ -1368,7 +1452,7 @@ def get_share_by_age_bin(df, lagged_choice):
                 (df["period"] > age_bin[0])
                 & (df["period"] <= age_bin[1])
                 & (df["lagged_choice"].isin(lagged_choice))
-            ]
+            ],
         )
         / len(df[(df["period"] > age_bin[0]) & (df["period"] <= age_bin[1])])
         for age_bin in AGE_BINS
@@ -1377,7 +1461,6 @@ def get_share_by_age_bin(df, lagged_choice):
 
 def get_share_by_informal_care_type_by_age_bin(df, lagged_choice, care_type):
     """Really lagged choice or rather current (end of period) choice?"""
-
     return [
         len(
             df[
@@ -1385,14 +1468,14 @@ def get_share_by_informal_care_type_by_age_bin(df, lagged_choice, care_type):
                 & (df["period"] <= age_bin[1])
                 & (df["lagged_choice"].isin(care_type))
                 & (df["lagged_choice"].isin(lagged_choice))
-            ]
+            ],
         )
         / len(
             df[
                 (df["period"] > age_bin[0])
                 & (df["period"] <= age_bin[1])
                 & (df["lagged_choice"].isin(care_type))
-            ]
+            ],
         )
         for age_bin in AGE_BINS
     ]
@@ -1400,24 +1483,23 @@ def get_share_by_informal_care_type_by_age_bin(df, lagged_choice, care_type):
 
 def _get_share_by_informal_care_type(df, lagged_choice, care_type):
     """Really lagged choice or rather current (end of period) choice?"""
-
     return [
         len(
             df[
                 (df["lagged_choice"].isin(care_type))
                 & (df["lagged_choice"].isin(lagged_choice))
-            ]
+            ],
         )
-        / len(df[(df["lagged_choice"].isin(care_type))])
+        / len(df[(df["lagged_choice"].isin(care_type))]),
     ]
 
 
 def get_income_by_age_bin(df, lagged_choice):
-    """Net income in absolute (non-log) terms
+    """Net income in absolute (non-log) terms.
 
     After taxes and transfers as reported in SHARE.
-    """
 
+    """
     df["working_hours"] = (
         df[(df["lagged_choice"].isin(PART_TIME))] * PART_TIME_HOURS
         + df[(df["lagged_choice"].isin(FULL_TIME))] * FULL_TIME_HOURS
@@ -1441,7 +1523,6 @@ def get_wealth_beginning_of_period_by_age_bin(df):
     matter of whether consumption is included or not (part of income that is consumed)
 
     """
-
     return [
         df.loc[
             (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "wealth"
@@ -1451,7 +1532,11 @@ def get_wealth_beginning_of_period_by_age_bin(df):
 
 
 def _get_share_by_informal_care_type_by_age_bin(df, lagged_choice, is_informal_care):
-    """Duplicate? What's the difference?"""
+    """Duplicate?
+
+    What's the difference?
+
+    """
     return [
         len(
             df[
@@ -1459,7 +1544,7 @@ def _get_share_by_informal_care_type_by_age_bin(df, lagged_choice, is_informal_c
                 & (df["period"] > age_bin[0])
                 & (df["period"] <= age_bin[1])
                 & (df["lagged_choice"].isin(lagged_choice))
-            ]
+            ],
         )
         / len(
             df[
@@ -1473,7 +1558,10 @@ def _get_share_by_informal_care_type_by_age_bin(df, lagged_choice, is_informal_c
 
 
 def get_caregiving_status_by_parental_health(
-    df, care_choice, parent, is_other_parent_alive
+    df,
+    care_choice,
+    parent,
+    is_other_parent_alive,
 ):
     other_parent = ("father") * (parent == "mother") + ("mother") * (parent == "father")
 
@@ -1483,32 +1571,29 @@ def get_caregiving_status_by_parental_health(
                 (df[f"{parent}_health"] == health)
                 & (df[f"{other_parent}_alive"] == is_other_parent_alive)
                 & (df["choice"].isin(care_choice))
-            ]
+            ],
         )
         for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
     ]
 
 
 def get_work_transition(df, lagged_choice, current_choice):
-    """
-    df[(df["lagged_choice"].isin(NO_WORK)) & (df["choice"].isin(NO_WORK))]
-
-    """
+    """df[(df["lagged_choice"].isin(NO_WORK)) & (df["choice"].isin(NO_WORK))]"""
     return len(
         df[
             (df["lagged_choice"].isin(lagged_choice))
             & (df["choice"].isin(current_choice))
-        ]
+        ],
     ) / len(df[(df["lagged_choice"].isin(lagged_choice))])
 
 
 def get_care_transition(df, lagged_choice, current_choice):
-    """ """
+    """"""
     return len(
         df[
             (df["lagged_choice"].isin(lagged_choice))
             & (df["choice"].isin(current_choice))
-        ]
+        ],
     ) / len(df[(df["lagged_choice"].isin(lagged_choice))])
 
 
