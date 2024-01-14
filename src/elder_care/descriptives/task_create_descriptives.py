@@ -1,12 +1,9 @@
 """Descriptives from SHARE data."""
 from pathlib import Path
-from typing import Annotated
-import numpy as np
 
+import numpy as np
 import pandas as pd
 from elder_care.config import BLD
-from pytask import Product
-
 from elder_care.moments.task_create_empirical_moments import (
     deflate_income_and_wealth,
 )
