@@ -27,12 +27,18 @@ HIGH_EDUC_INDICATOR_WAVE_FOUR = 3
 HIGH_EDUC_INDICATOR_WAVE_FIVE = 10
 HOCHSCHUL_DEGREE = 5
 
+SPOUSE = 1
 MOTHER = 2
 FATHER = 3
 MOTHER_IN_LAW = 4
 FATHER_IN_LAW = 5
 STEP_MOTHER = 6
 STEP_FATHER = 7
+
+CHILD = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+FRIEND = 29
+NEIGHBOR = 31
 
 GIVEN_HELP_LESS_THAN_DAILY = 2
 GIVEN_HELP_DAILY = 1
@@ -110,6 +116,10 @@ def task_create_estimation_data(
     path_to_ind_weight: Annotated[Path, Product] = BLD
     / "data"
     / "estimation_data_ind_weight.csv",
+    #
+    path_hh_weight_all: Annotated[Path, Product] = BLD
+    / "data"
+    / "data_hh_weight_all.csv",
 ) -> None:
     """Create the estimation data set."""
     # Load the data
@@ -157,9 +167,6 @@ def task_create_estimation_data(
         axis=1,
     )
 
-    # Keep only those aged 55 to 68
-    dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
-
     # !!! Still not 0.35 share high educ... rahter 0.25
     dat = create_high_educ(dat)
 
@@ -171,7 +178,6 @@ def task_create_estimation_data(
     dat = create_married(dat)
 
     dat = create_caregving(dat)
-    dat = _drop_spousal_and_other_within_household_care(dat)
 
     dat = create_parental_health_status(dat, parent="mother")
     dat = create_parental_health_status(dat, parent="father")
@@ -230,17 +236,24 @@ def task_create_estimation_data(
         ),
     ]
 
+    dat = dat.reset_index(drop=True)
     dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
     dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
-
-    dat = dat[dat["gender"] == FEMALE]
-    dat = dat.reset_index(drop=True)
 
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
     dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
     dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
 
-    # Save
+    # save general
+    dat_design_weight.to_csv(path_hh_weight_all, index=False)
+
+    # prepare estimation data
+    dat = _drop_spousal_and_other_within_household_care(dat)
+    dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
+    dat = dat[dat["gender"] == FEMALE]
+    dat = dat.reset_index(drop=True)
+
+    # Save estimation data set
     dat.to_csv(path_to_main, index=False)
     dat_design_weight.to_csv(path_to_design_weight, index=False)
     dat_hh_weight.to_csv(path_to_hh_weight, index=False)
@@ -259,6 +272,7 @@ def multiply_rows_with_weight(dat, weight):
         "mergeid",
         "int_year",
         "int_month",
+        "gender",
         "age",
         "care",
         "any_care",
@@ -268,6 +282,9 @@ def multiply_rows_with_weight(dat, weight):
         "intensive_care_no_other",
         "intensive_care_general",
         "intensive_care_all_parents",
+        "intensive_care_spouse",
+        "intensive_care_child",
+        "intensive_care_neighbor",
         "lagged_part_time",
         "lagged_full_time",
         "lagged_working_part_or_full_time",
@@ -301,7 +318,7 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(8, "intensive_care", dat["intensive_care"])
     dat_weighted.insert(9, "intensive_care_new", dat["intensive_care_new"])
     dat_weighted.insert(10, "intensive_care_no_other", dat["intensive_care_no_other"])
-    dat_weighted.insert(11, "intensive_care_no_general", dat["intensive_care_general"])
+    dat_weighted.insert(11, "intensive_care_general", dat["intensive_care_general"])
     dat_weighted.insert(
         12,
         "intensive_care_all_parents",
@@ -335,6 +352,10 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(22, "n_siblings", dat["n_siblings"])
     dat_weighted.insert(23, "has_sibling", dat["has_sibling"])
     dat_weighted.insert(24, "has_sister", dat["has_sister"])
+    dat_weighted.insert(25, "intensive_care_spouse", dat["intensive_care_spouse"])
+    dat_weighted.insert(26, "intensive_care_child", dat["intensive_care_child"])
+    dat_weighted.insert(27, "intensive_care_neighbor", dat["intensive_care_neighbor"])
+    dat_weighted.insert(28, "gender", dat["gender"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -1202,6 +1223,9 @@ def create_caregving(dat):
     dat = _create_intensive_care_general(dat)
     dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
     dat = _create_intensive_parental_care_without_any_other_care(dat)
+    dat = _create_intensive_care_spouse(dat)
+    dat = _create_intensive_care_child(dat)
+    dat = _create_intensive_care_neighbor(dat)
 
     dat["no_intensive_informal"] = 1 - dat["intensive_care_no_other"]
     dat = _create_lagged_var(dat, "no_intensive_informal")
@@ -1262,6 +1286,74 @@ def _create_intensive_parental_care(dat):
     return dat
 
 
+def _create_intensive_care_child(dat):
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([CHILD])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([CHILD])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([CHILD])))
+        )
+        | ((dat["sp018_"] == 1) & (dat["sp019d19"] == 1)),  # or personal care in hh
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_child"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_care_spouse(dat):
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([SPOUSE])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([SPOUSE])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([SPOUSE])))
+        )
+        | ((dat["sp018_"] == 1) & (dat["sp019d1"] == 1)),  # or personal care in hh
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_spouse"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_care_neighbor(dat):
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([NEIGHBOR])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([NEIGHBOR])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([NEIGHBOR])))
+        ),  # or  & (dat["sp019d31"] == 1)) personal care in hh
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_neighbor"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
 def _create_intensive_parental_care_without_any_other_care(dat):
     _cond = [
         (
@@ -1314,7 +1406,14 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
         )
         | (
             (dat["sp018_"] == 1)  # or personal care in hh
-            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+            & (
+                (dat["sp019d2"] == 1)
+                | (dat["sp019d3"] == 1)
+                | (dat["sp019d4"] == 1)
+                | (dat["sp019d5"] == 1)
+                | (dat["sp019d6"] == 1)
+                | (dat["sp019d7"] == 1)
+            )  # for mother or father
         ),  # include mother and father in law?
         (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
         (dat["sp008_"] == ANSWER_YES)
@@ -1334,14 +1433,13 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
 def _create_intensive_care_general(dat):
     """Create general intensive care to anyone (not only parents)."""
     _cond = [
+        # outside hh
         (
             (dat["sp011_1"] == GIVEN_HELP_DAILY)
             | (dat["sp011_2"] == GIVEN_HELP_DAILY)
             | (dat["sp011_3"] == GIVEN_HELP_DAILY)
         )
-        | (
-            dat["sp018_"] == 1  # or personal care in hh
-        ),  # include mother and father in law?
+        | (dat["sp018_"] == 1),  # or personal care in hh
         (dat["sp018_"] == ANSWER_NO)
         & (dat["sp018_"] == ANSWER_NO),  # or personal care in hh
         (dat["sp008_"] == ANSWER_YES)
