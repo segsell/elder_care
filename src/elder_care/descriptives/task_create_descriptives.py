@@ -599,7 +599,8 @@ def plot_share_by_age():
     bottom_for_next = shares_stacked[0] + shares_stacked[1]
 
     for i, (category, color) in enumerate(
-        zip(["Spouse", "Child", "Neighbor", "Other"], colors[2:], strict=False), start=2,
+        zip(["Spouse", "Child", "Neighbor", "Other"], colors[2:], strict=False),
+        start=2,
     ):
         plt.bar(
             age_bins_5yr,
