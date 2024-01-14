@@ -1,8 +1,8 @@
 """Descriptives from SHARE data."""
 from pathlib import Path
-from typing import Annotated
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from elder_care.config import BLD
 from elder_care.moments.task_create_empirical_moments import (
@@ -195,7 +195,7 @@ def task_create_ltc_by_children(
     )
 
     share_intensive_informal_parents_in_law_by_age_bin_coarse = np.array(
-        share_intensive_informal_parents_by_age_bin_coarse
+        share_intensive_informal_parents_by_age_bin_coarse,
     ) - np.array(share_intensive_informal_own_parents_by_age_bin_coarse)
     share_intensive_informal_other_by_age_bin_coarse = (
         np.array(share_intensive_informal_general_by_age_bin_coarse)
@@ -205,29 +205,29 @@ def task_create_ltc_by_children(
         - np.array(share_intensive_informal_neighbor_by_age_bin_coarse)
     )
     share_intensive_informal_own_parents_by_age_bin_coarse = np.array(
-        share_intensive_informal_own_parents_by_age_bin_coarse
+        share_intensive_informal_own_parents_by_age_bin_coarse,
     )
     share_intensive_informal_child_by_age_bin_coarse = np.array(
-        share_intensive_informal_child_by_age_bin_coarse
+        share_intensive_informal_child_by_age_bin_coarse,
     )
     share_intensive_informal_spouse_by_age_bin_coarse = np.array(
-        share_intensive_informal_spouse_by_age_bin_coarse
+        share_intensive_informal_spouse_by_age_bin_coarse,
     )
     share_intensive_informal_neighbor_by_age_bin_coarse = np.array(
-        share_intensive_informal_neighbor_by_age_bin_coarse
+        share_intensive_informal_neighbor_by_age_bin_coarse,
     )
 
     mean_share_of_own_parental_intensive = np.mean(
         np.array(share_intensive_informal_own_parents_by_age)
-        / np.array(share_intensive_informal_general_by_age)
+        / np.array(share_intensive_informal_general_by_age),
     )
     mean_share_of_parental_intensive = np.mean(
         np.array(share_intensive_informal_parents_by_age)
-        / np.array(share_intensive_informal_general_by_age)
+        / np.array(share_intensive_informal_general_by_age),
     )
     mean_share_of_pspousal_intensive = np.mean(
         np.array(share_intensive_informal_spouse_by_age)
-        / np.array(share_intensive_informal_general_by_age)
+        / np.array(share_intensive_informal_general_by_age),
     )
 
     l = [
@@ -573,7 +573,7 @@ def plot_share_by_age():
             share_child,
             share_neighbor,
             share_other,
-        )
+        ),
     )
 
     # Colors for each category
@@ -599,7 +599,7 @@ def plot_share_by_age():
     bottom_for_next = shares_stacked[0] + shares_stacked[1]
 
     for i, (category, color) in enumerate(
-        zip(["Spouse", "Child", "Neighbor", "Other"], colors[2:]), start=2
+        zip(["Spouse", "Child", "Neighbor", "Other"], colors[2:], strict=False), start=2,
     ):
         plt.bar(
             age_bins_5yr,
