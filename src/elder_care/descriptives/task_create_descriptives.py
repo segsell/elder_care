@@ -683,7 +683,8 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
         label="Parents In-Law",
         # color="sandybrown",
         # color="green",
-        color="moccasin",
+        # color="moccasin",
+        color="khaki",
     )
     plt.bar(
         age_bins_coarse,
@@ -703,7 +704,7 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
     )
 
     plt.xlabel("Age Bins")
-    plt.ylabel("Share of Intensive Informal Caregiving")
+    plt.ylabel("Share of (Daily) Informal Caregivers")
     plt.ylim(0, 0.13)  # Set y-axis range from 0 to 15%
     plt.grid(axis="y")
 
