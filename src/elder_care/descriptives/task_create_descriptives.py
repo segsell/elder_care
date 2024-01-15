@@ -570,9 +570,6 @@ def _get_share_by_age_bin(dat, moment, age_lower, age_upper, weight, age_bins):
 def _get_share_by_age_bin_unweighted(
     dat,
     moment,
-    age_lower,
-    age_upper,
-    weight,
     age_bins,
 ):
     return [
