@@ -601,6 +601,9 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
     dat["intensive_care_all_parents_weighted"] = (
         dat["intensive_care_all_parents"] * dat["hh_weight"]
     )
+    dat["intensive_care_in_laws_weighted"] = (
+        dat["intensive_care_in_laws"] * dat["hh_weight"]
+    )
     dat["intensive_care_new_weighted"] = dat["intensive_care_new"] * dat["hh_weight"]
     dat["intensive_care_spouse_weighted"] = (
         dat["intensive_care_spouse"] * dat["hh_weight"]
@@ -608,9 +611,17 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
 
     # general
 
-    parents = _get_share_by_age_bin(
+    all_parents = _get_share_by_age_bin(
         dat,
         moment="intensive_care_all_parents_weighted",
+        age_lower=50,
+        age_upper=65,
+        weight=weight,
+        age_bins=AGE_BINS_COARSE,
+    )
+    in_laws = _get_share_by_age_bin(
+        dat,
+        moment="intensive_care_in_laws_weighted",
         age_lower=50,
         age_upper=65,
         weight=weight,
@@ -633,19 +644,24 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
         weight=weight,
         age_bins=AGE_BINS_COARSE,
     )
+    own_parents = (np.asarray(all_parents) - np.asarray(in_laws)).tolist()
 
     if gender == FEMALE:
         share_gender = 0.071
     elif gender == MALE:
         share_gender = 0.065
 
-    _sum = general[-1] + parents[-1] + spouse[-1]
+    _sum = general[-1] + own_parents[-1] + in_laws[-1] + spouse[-1]
     general[-1] = share_gender
-    parents[-1] = (parents[-1] / _sum) * share_gender
+    own_parents[-1] = (own_parents[-1] / _sum) * share_gender
+    in_laws[-1] = (in_laws[-1] / _sum) * share_gender
     spouse[-1] = (spouse[-1] / _sum) * share_gender
 
     # Calculate the remaining share for 'other' caregiving
-    other = [g - p - s for g, p, s in zip(general, parents, spouse, strict=False)]
+    other = [
+        g - p - i - s
+        for g, p, i, s in zip(general, own_parents, in_laws, spouse, strict=False)
+    ]
 
     # Age bins
     age_bins_coarse = ["50-54", "55-59", "60-64", "65-69", "70+"]
@@ -654,32 +670,51 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
     plt.figure(figsize=(12, 8))
     plt.bar(
         age_bins_coarse,
-        parents,
-        label="Informal Caregiving to Parents",
+        own_parents,
+        label="Own Parents",
         # color="sandybrown",
         color="palegreen",
         # color="moccasin",
     )
     plt.bar(
         age_bins_coarse,
+        in_laws,
+        bottom=own_parents,
+        label="Parents In-Law",
+        # color="sandybrown",
+        # color="green",
+        color="moccasin",
+    )
+    plt.bar(
+        age_bins_coarse,
         spouse,
-        bottom=parents,
-        label="Informal Caregiving to Spouse",
+        bottom=[i + j for i, j in zip(own_parents, in_laws, strict=False)],
+        label="Spouse",
         color="lightcoral",
     )
     plt.bar(
         age_bins_coarse,
         other,
-        bottom=[i + j for i, j in zip(parents, spouse, strict=False)],
-        label="Other Informal Caregiving",
+        bottom=[
+            i + j + k for i, j, k in zip(own_parents, in_laws, spouse, strict=False)
+        ],
+        label="Other",
         color="lightblue",
     )
 
     plt.xlabel("Age Bins")
     plt.ylabel("Share of Intensive Informal Caregiving")
-    plt.legend()
     plt.ylim(0, 0.13)  # Set y-axis range from 0 to 15%
     plt.grid(axis="y")
+
+    # get handles and labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # specify order of items in legend
+    order = [3, 2, 1, 0]
+
+    # add legend to plot
+    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
 
     # Save plot
     plt.savefig(save_path)

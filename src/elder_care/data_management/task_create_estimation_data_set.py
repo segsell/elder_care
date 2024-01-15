@@ -287,6 +287,7 @@ def multiply_rows_with_weight(dat, weight):
         "intensive_care_no_other",
         "intensive_care_general",
         "intensive_care_all_parents",
+        "intensive_care_in_laws",
         "intensive_care_spouse",
         "intensive_care_child",
         "intensive_care_neighbor",
@@ -361,6 +362,7 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(26, "intensive_care_child", dat["intensive_care_child"])
     dat_weighted.insert(27, "intensive_care_neighbor", dat["intensive_care_neighbor"])
     dat_weighted.insert(28, "gender", dat["gender"])
+    dat_weighted.insert(29, "intensive_care_in_laws", dat["intensive_care_in_laws"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -1475,7 +1477,7 @@ def _create_intensive_parental_care_in_laws(dat):
         & (dat["sp018_"] == ANSWER_NO),
     ]
     _choice = [1, 0, 0]
-    dat["intensive_care_all_parents"] = np.select(_cond, _choice, default=np.nan)
+    dat["intensive_care_in_laws"] = np.select(_cond, _choice, default=np.nan)
 
     return dat
 
