@@ -14,8 +14,6 @@ import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
 
-import numpy as np
-
 BASE_YEAR = 2015
 
 MALE = 1
@@ -1226,7 +1224,9 @@ def get_income_by_caregiving_status_and_age_bin(
     care_type,
     weight,
 ):
-    """Calculate mean and weighted variance of income by caregiving status and age bin."""
+    """Calculate mean and weighted variance of income by caregiving status and age
+    bin.
+    """
     is_care = (1 - is_caregiver) * "no_" + "informal_care"
 
     dat = dat.copy()

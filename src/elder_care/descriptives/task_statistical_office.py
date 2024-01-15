@@ -8,11 +8,7 @@ import numpy as np
 import pandas as pd
 from elder_care.config import BLD
 from elder_care.config import SRC
-from elder_care.moments.task_create_empirical_moments import (
-    deflate_income_and_wealth,
-)
 from pytask import Product
-import re
 
 
 def task_create_type_of_care_by_age_group(
@@ -24,16 +20,16 @@ def task_create_type_of_care_by_age_group(
     / "descriptives"
     / "type_of_care_by_age_group.png",
 ):
-    """
-    Function to process and modify the dataset as per the specified requirements and extend it with additional rows.
+    """Function to process and modify the dataset as per the specified requirements and
+    extend it with additional rows.
 
     Args:
     path (str): Path to the dataset file.
 
     Returns:
     DataFrame: The processed and extended dataset.
-    """
 
+    """
     # Load the dataset with appropriate encoding
     df_wide = pd.read_csv(path_to_data, encoding="utf-8")
 
@@ -130,8 +126,8 @@ def task_create_type_of_care_by_age_group(
 
 
 def plot_numbers_by_age_group(dat, sex, year, save_path):
-    """
-    Function to plot the numbers in the 'number' column by age group for a given sex and year.
+    """Function to plot the numbers in the 'number' column by age group for a given sex
+    and year.
 
     Args:
     df (DataFrame): The dataset containing the data.
@@ -140,8 +136,8 @@ def plot_numbers_by_age_group(dat, sex, year, save_path):
 
     Returns:
     None (Displays the plot).
-    """
 
+    """
     age_bins = [
         "<5",
         "5-10",
@@ -244,7 +240,7 @@ def plot_numbers_by_age_group(dat, sex, year, save_path):
         bottom=[
             i + j + k
             for i, j, k in zip(
-                _only_informal, _combination_care, _only_home_care, strict=False
+                _only_informal, _combination_care, _only_home_care, strict=False,
             )
         ],
         label="Nursing Home",
@@ -275,9 +271,8 @@ def plot_numbers_by_age_group(dat, sex, year, save_path):
 
 
 def check_age_group_sums(df, year, sex, type_of_care):
-    """
-    Function to check if the numbers of different age groups (excluding 'total') sum to the 'total' age group for a given year,
-    sex, and 'type_of_care' category.
+    """Function to check if the numbers of different age groups (excluding 'total') sum
+    to the 'total' age group for a given year, sex, and 'type_of_care' category.
 
     Args:
     df (DataFrame): The dataset containing the data.
@@ -287,6 +282,7 @@ def check_age_group_sums(df, year, sex, type_of_care):
 
     Returns:
     bool: True if the sums match, False otherwise.
+
     """
     # Filter the DataFrame based on the provided year, sex, and type_of_care
     filtered_df = df[
