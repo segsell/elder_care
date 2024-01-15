@@ -240,18 +240,23 @@ def task_create_estimation_data(
     dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
     dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
 
-    dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
-    dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
-    dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
+    dat_design_weight_all = multiply_rows_with_weight(dat, weight="design_weight")
+    dat_hh_weight_all = multiply_rows_with_weight(dat, weight="hh_weight")
+    dat_ind_weight_all = multiply_rows_with_weight(dat, weight="ind_weight")
 
     # save general
-    dat_design_weight.to_csv(path_hh_weight_all, index=False)
+    dat_hh_weight_all.to_csv(path_hh_weight_all, index=False)
 
     # prepare estimation data
+    dat = dat.copy()
     dat = _drop_spousal_and_other_within_household_care(dat)
     dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
     dat = dat[dat["gender"] == FEMALE]
     dat = dat.reset_index(drop=True)
+
+    dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
+    dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
+    dat_ind_weight = multiply_rows_with_weight(dat, weight="ind_weight")
 
     # Save estimation data set
     dat.to_csv(path_to_main, index=False)
@@ -428,6 +433,10 @@ def compute_spousal_and_other_income(dat, hh_income=None):
     dat["other_income"] = np.select(_cond, _val, default=np.nan)
 
     dat["other_income"] = np.where(dat["other_income"] < 0, 0, dat["other_income"])
+
+    _cond = [(dat["hnetw"] > 0), (dat["hnetw"] == 0), dat["hnetw"].isna()]
+    _val = [(dat["slti"] / dat["hnetw"]), 0, np.nan]
+    dat["savings_rate"] = np.select(_cond, _val, default=np.nan)
 
     return dat
 
@@ -1222,6 +1231,7 @@ def create_caregving(dat):
     dat = _create_intensive_parental_care(dat)
     dat = _create_intensive_care_general(dat)
     dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
+    dat = _create_intensive_parental_care_in_laws(dat)
     dat = _create_intensive_parental_care_without_any_other_care(dat)
     dat = _create_intensive_care_spouse(dat)
     dat = _create_intensive_care_child(dat)
@@ -1413,6 +1423,46 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
                 | (dat["sp019d5"] == 1)
                 | (dat["sp019d6"] == 1)
                 | (dat["sp019d7"] == 1)
+            )  # for mother or father
+        ),  # include mother and father in law?
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_all_parents"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_parental_care_in_laws(dat):
+    all_parents = [
+        MOTHER_IN_LAW,
+        FATHER_IN_LAW,
+    ]
+
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin(all_parents)))
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin(all_parents))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin(all_parents))
+            )
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & (
+                (dat["sp019d4"] == 1)  # mother-in-law
+                | (dat["sp019d5"] == 1)  # father-in-law
             )  # for mother or father
         ),  # include mother and father in law?
         (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),

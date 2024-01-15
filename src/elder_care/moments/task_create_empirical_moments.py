@@ -55,16 +55,19 @@ def task_create_moments(
     cpi_data = pd.read_csv(path_to_cpi)
 
     dat = dat_hh_weight.copy()
+    # dat =
     dat = deflate_income_and_wealth(dat, cpi_data)
 
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
+    intensive_care_all_parents = "intensive_care_all_parents"
 
     age_bins_coarse = [
         (AGE_50, AGE_55),
         (AGE_55, AGE_60),
         (AGE_60, AGE_65),
     ]
+    age_sample = [(AGE_50, AGE_65)]
 
     net_income_by_age_bin_part_time = get_income_by_employment_by_age_bin(
         dat,
@@ -97,6 +100,32 @@ def task_create_moments(
         dat,
         age_bins_coarse,
         moment="real_hnetw",
+        weight=weight,
+    )
+
+    savings_rate_by_age_bin = get_wealth_by_age_bin(
+        dat,
+        age_bins_coarse,
+        moment="real_savings_rate",
+        weight=weight,
+    )
+
+    savings_rate_no_informal_care_by_age_bin = (
+        get_income_by_caregiving_status_and_age_bin(
+            dat,
+            age_bins_coarse,
+            moment="real_savings_rate",
+            is_caregiver=False,
+            care_type=intensive_care_all_parents,
+            weight=weight,
+        )
+    )
+    savings_rate_informal_care_by_age_bin = get_income_by_caregiving_status_and_age_bin(
+        dat,
+        age_bins_coarse,
+        moment="real_savings_rate",
+        is_caregiver=True,
+        care_type=intensive_care_all_parents,
         weight=weight,
     )
 
@@ -206,6 +235,9 @@ def task_create_moments(
             net_income_by_age_bin_part_time,
             net_income_by_age_bin_full_time,
             wealth_by_age_bin,
+            savings_rate_by_age_bin,
+            savings_rate_no_informal_care_by_age_bin,
+            savings_rate_informal_care_by_age_bin,
             #
             employment_by_caregiving_status,
             caregiving_by_mother_health,
@@ -1156,7 +1188,7 @@ def get_income_by_caregiving_status_and_age_bin(
     weight,
 ):
     """Calculate mean income by caregiving status and age bin."""
-    is_care = (1 - is_caregiver) * "no" + "informal_care"
+    is_care = (1 - is_caregiver) * "no_" + "informal_care"
 
     return pd.Series(
         {
@@ -1453,7 +1485,9 @@ def deflate_income_and_wealth(dat, cpi):
     dat_with_cpi = dat.merge(cpi, on="int_year")
 
     vars_to_deflate = [
+        "slti",
         "hnetw",
+        "savings_rate",
         "thinc",
         "thinc2",
         "ydip",

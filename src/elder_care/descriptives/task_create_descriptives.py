@@ -1,6 +1,7 @@
 """Descriptives from SHARE data."""
 from pathlib import Path
 from typing import Annotated
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -283,7 +284,7 @@ def task_create_ltc_by_children(
         save_path=path_to_save_males,
     )
 
-    breakpoint()
+    # breakpoint()
 
 
 def task_create_ltc_by_parent_age(
@@ -567,7 +568,12 @@ def _get_share_by_age_bin(dat, moment, age_lower, age_upper, weight, age_bins):
 
 
 def _get_share_by_age_bin_unweighted(
-    dat, moment, age_lower, age_upper, weight, age_bins
+    dat,
+    moment,
+    age_lower,
+    age_upper,
+    weight,
+    age_bins,
 ):
     return [
         dat.loc[
@@ -580,16 +586,15 @@ def _get_share_by_age_bin_unweighted(
 
 
 def create_and_save_caregiving_plot(dat, gender, save_path):
-    """
-    Creates and saves a stacked bar chart of intensive informal caregiving shares.
+    """Creates and saves a stacked bar chart of intensive informal caregiving shares.
 
     Parameters:
     general (list): Share of general intensive informal caregiving by age bin.
     parents (list): Share of intensive informal caregiving to parents by age bin.
     spouse (list): Share of intensive informal caregiving to spouse by age bin.
     save_path (str): Path to save the generated plot.
-    """
 
+    """
     dat = dat[dat["gender"] == gender]
     weight = "hh_weight"
 
@@ -643,7 +648,7 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
     spouse[-1] = (spouse[-1] / _sum) * share_gender
 
     # Calculate the remaining share for 'other' caregiving
-    other = [g - p - s for g, p, s in zip(general, parents, spouse)]
+    other = [g - p - s for g, p, s in zip(general, parents, spouse, strict=False)]
 
     # Age bins
     age_bins_coarse = ["50-54", "55-59", "60-64", "65-69", "70+"]
@@ -668,7 +673,7 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
     plt.bar(
         age_bins_coarse,
         other,
-        bottom=[i + j for i, j in zip(parents, spouse)],
+        bottom=[i + j for i, j in zip(parents, spouse, strict=False)],
         label="Other Informal Caregiving",
         color="lightblue",
     )
