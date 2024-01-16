@@ -123,10 +123,163 @@ def task_create_type_of_care_by_age_group(
     # save
     df.to_csv(path_to_save, index=False)
 
-    plot_numbers_by_age_group(df, 0, 2017, path_to_save_fig)
+    # plot_numbers_by_age_group(df, 0, 2017, path_to_save_fig)
+    plot_share_by_age_group(df, 0, 2017, path_to_save_fig)
 
 
 # ==============================================================================
+
+
+def plot_share_by_age_group(dat, sex, year, save_path):
+    """
+    Function to plot the percentage share in the 'number' column by age group for a given sex and year.
+
+    Args:
+    df (DataFrame): The dataset containing the data.
+    sex (int): Sex category (0 for 'Insgesamt', 1 for 'männlich', 2 for 'weiblich').
+    year (int): The year for which to plot the data.
+
+    Returns:
+    None (Displays and saves the plot).
+    """
+
+    age_bins = [
+        "<5",
+        "5-10",
+        "10-15",
+        "15-20",
+        "20-25",
+        "25-30",
+        "30-35",
+        "35-40",
+        "40-45",
+        "45-50",
+        "50-55",
+        "55-60",
+        "60-65",
+        "65-70",
+        "70-75",
+        "75-80",
+        "80-85",
+        "85-90",
+        "90-95",
+        "95+",
+    ]
+
+    # Filter the DataFrame based on the provided sex and year
+    df = dat[(dat["sex"] == sex) & (dat["year"] == year)]
+    df = df[
+        ~df["type_of_care"].isin(["total", "care_degree_one_a", "care_degree_one_b"])
+    ]
+    df["number"] = df["number"].astype(int)
+
+    df["age_group"] = pd.Categorical(df["age_group"], ordered=True)
+    df = df[df["age_group"] != 99]  # Filter out the "all" age group
+    df = df.sort_values("age_group")
+
+    # Create subsets
+    only_informal = df[(df["type_of_care"] == "only_informal")]
+    informal_and_home_care = df[(df["type_of_care"] == "informal_and_home_care")]
+    nursing_home = df[(df["type_of_care"] == "nursing_home")]
+
+    share_combination_care_in_home_care = [
+        0.4026772102524974,
+        0.4990651870170441,
+        0.5113503611840557,
+        0.5425971988562102,
+        0.5952632679491388,
+        0.44028522574716733,
+    ]
+
+    _only_informal = only_informal["number"].tolist()
+    _informal_and_home_care = informal_and_home_care["number"].tolist()
+    _nursing_home = nursing_home["number"].tolist()
+
+    _combination_care = 0.4 * np.array(_informal_and_home_care)
+    _only_home_care = 0.6 * np.array(_informal_and_home_care)
+
+    for val in [14, 15, 16, 17, 18, 19]:
+        i = val - 14
+        _combination_care[val] = (
+            share_combination_care_in_home_care[i] * _informal_and_home_care[val]
+        )
+        _only_home_care[val] = (
+            1 - share_combination_care_in_home_care[i]
+        ) * _informal_and_home_care[val]
+
+    _only_home_care = _only_home_care.tolist()
+    _combination_care = _combination_care.tolist()
+
+    # Calculate total for each age group
+    total_by_age_group = df.groupby("age_group")["number"].sum()
+
+    # Calculate percentage share for each category
+    def calculate_percentage_share(numbers, total):
+        return [
+            n / total[i] * 100 if total[i] > 0 else 0 for i, n in enumerate(numbers)
+        ]
+
+    _only_informal = calculate_percentage_share(_only_informal, total_by_age_group)
+    _combination_care = calculate_percentage_share(
+        _combination_care, total_by_age_group
+    )
+    _only_home_care = calculate_percentage_share(_only_home_care, total_by_age_group)
+    _nursing_home = calculate_percentage_share(_nursing_home, total_by_age_group)
+
+    # Plotting
+    plt.figure(figsize=(12, 8))
+    plt.bar(
+        age_bins,
+        _only_informal,
+        label="Pure Informal Care",
+        color="lightgreen",
+    )
+    plt.bar(
+        age_bins,
+        _combination_care,
+        bottom=_only_informal,
+        label="Combination Care",
+        color="khaki",
+    )
+    plt.bar(
+        age_bins,
+        _only_home_care,
+        bottom=[i + j for i, j in zip(_only_informal, _combination_care, strict=False)],
+        label="Formal Home Care",
+        color="lightcoral",
+    )
+    plt.bar(
+        age_bins,
+        _nursing_home,
+        bottom=[
+            i + j + k
+            for i, j, k in zip(
+                _only_informal, _combination_care, _only_home_care, strict=False
+            )
+        ],
+        label="Nursing Home",
+        color="steelblue",
+    )
+
+    plt.xlabel("Age Bin")
+    plt.ylabel("Percentage of Care-Dependent People (%)")
+    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+    plt.tight_layout()  # Adjust layout for better display
+    plt.grid(axis="y")
+    ax = plt.gca()
+    ax.get_yaxis().set_major_formatter(mtick.PercentFormatter())
+
+    # get handles and labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # specify order of items in legend
+    order = [3, 2, 1, 0]
+
+    # add legend to plot
+    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+
+    # Save plot
+    plt.savefig(save_path)
 
 
 def plot_numbers_by_age_group(dat, sex, year, save_path):

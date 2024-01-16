@@ -806,11 +806,17 @@ def create_parents_live_close(dat):
     )
     dat["dist_father"] = np.where(dat["father_alive"] == 0, np.nan, dat["dist_father"])
 
+    # conditions_distance = [
+    #     (dat["dist_father"] <= BETWEEN_5_AND_25_KM_AWAY)
+    #     | (dat["dist_mother"] <= BETWEEN_5_AND_25_KM_AWAY),
+    #     (dat["dist_father"] > BETWEEN_5_AND_25_KM_AWAY)
+    #     | (dat["dist_mother"] > BETWEEN_5_AND_25_KM_AWAY),
+    # ]
     conditions_distance = [
-        (dat["dist_father"] <= BETWEEN_5_AND_25_KM_AWAY)
-        | (dat["dist_mother"] <= BETWEEN_5_AND_25_KM_AWAY),
-        (dat["dist_father"] > BETWEEN_5_AND_25_KM_AWAY)
-        | (dat["dist_mother"] > BETWEEN_5_AND_25_KM_AWAY),
+        (dat["dist_father"] <= BETWEEN_1_AND_5_KM_AWAY)
+        | (dat["dist_mother"] <= BETWEEN_1_AND_5_KM_AWAY),
+        (dat["dist_father"] > BETWEEN_1_AND_5_KM_AWAY)
+        | (dat["dist_mother"] > BETWEEN_1_AND_5_KM_AWAY),
     ]
     choices_distance = [1, 0]
 

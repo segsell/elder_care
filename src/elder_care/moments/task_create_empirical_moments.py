@@ -266,6 +266,157 @@ def task_create_moments(
     employment_by_age = get_employment_by_age_soep()
     employment_by_caregiving_status = get_employment_by_caregiving_status_soep()
 
+    # ================================================================================
+
+    dat["age_weighted"] = dat["age"] * dat[weight]
+    dat["has_sister_weighted"] = dat["has_sister"] * dat[weight]
+    dat["has_sibling_weighted"] = dat["has_sibling"] * dat[weight]
+
+    dat["married_unweighted"] = dat["married"] / dat[weight]
+    dat["high_educ_unweighted"] = dat["high_educ"] / dat[weight]
+    dat["parents_live_close_unweighted"] = dat["parents_live_close"] / dat[weight]
+
+    parents_live_close_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "parents_live_close"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_parents_live_close_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="parents_live_close_unweighted",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    parents_live_close_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "parents_live_close"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_parents_live_close_informal_care = _get_weighted_variance(
+        dat,
+        moment="parents_live_close_unweighted",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    mean_age_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "age_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_age_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="age",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    mean_age_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "age_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_age_informal_care = _get_weighted_variance(
+        dat,
+        moment="age",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    # standard deviation
+
+    married_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "married"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_married_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="married_unweighted",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    married_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "married"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_married_informal_care = _get_weighted_variance(
+        dat,
+        moment="married_unweighted",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    has_sister_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "has_sister_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_has_sister_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sister",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    has_sister_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "has_sister_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_has_sister_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sister",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    has_sibling_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "has_sibling_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_has_sibling_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sibling",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    has_sibling_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "has_sibling_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_has_sibling_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sibling",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    share_high_educ_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "high_educ"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_share_high_educ_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="high_educ_unweighted",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    share_high_educ_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "high_educ"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_share_high_educ_informal_care = _get_weighted_variance(
+        dat,
+        moment="high_educ_unweighted",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
     all_moments = pd.concat(
         [
             employment_by_age,
@@ -289,6 +440,8 @@ def task_create_moments(
         ignore_index=False,
         axis=0,
     )
+
+    breakpoint()
 
     all_moments.to_csv(path_to_save)
 
@@ -1255,8 +1408,29 @@ def get_income_by_caregiving_status_and_age_bin(
         # Store the results
         results[f"{moment}_mean_{is_care}_{age_bin[0]}_{age_bin[1]}"] = weighted_mean
         results[f"{moment}_var_{is_care}_{age_bin[0]}_{age_bin[1]}"] = weighted_variance
+        results[f"{moment}_sd_{is_care}_{age_bin[0]}_{age_bin[1]}"] = np.sqrt(
+            weighted_variance
+        )
 
     return pd.Series(results)
+
+
+def _get_weighted_variance(dat, moment, is_caregiver, care_type, weight):
+    subset = dat.loc[
+        (dat[care_type] == is_caregiver),
+        [moment, weight],
+    ]
+
+    # Calculate the weighted mean
+    total_weight = subset[weight].sum()
+    weighted_mean = (subset[moment] * subset[weight]).sum() / total_weight
+
+    # Calculate the weighted variance
+    weighted_variance = (
+        (subset[moment] - weighted_mean) ** 2 * subset[weight]
+    ).sum() / total_weight
+
+    return np.sqrt(weighted_variance)
 
 
 def get_wealth_by_caregiving_status_and_age_bin(
