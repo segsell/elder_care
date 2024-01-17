@@ -13,6 +13,7 @@ from typing import Annotated
 import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
+import numpy as np
 
 BASE_YEAR = 2015
 
@@ -438,8 +439,6 @@ def task_create_moments(
         ignore_index=False,
         axis=0,
     )
-
-    breakpoint()
 
     all_moments.to_csv(path_to_save)
 
