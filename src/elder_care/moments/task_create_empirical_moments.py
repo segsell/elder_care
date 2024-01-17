@@ -1408,7 +1408,7 @@ def get_income_by_caregiving_status_and_age_bin(
         results[f"{moment}_mean_{is_care}_{age_bin[0]}_{age_bin[1]}"] = weighted_mean
         results[f"{moment}_var_{is_care}_{age_bin[0]}_{age_bin[1]}"] = weighted_variance
         results[f"{moment}_sd_{is_care}_{age_bin[0]}_{age_bin[1]}"] = np.sqrt(
-            weighted_variance
+            weighted_variance,
         )
 
     return pd.Series(results)
