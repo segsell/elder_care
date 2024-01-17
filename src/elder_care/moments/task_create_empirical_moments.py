@@ -10,10 +10,10 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
+import numpy as np
 import pandas as pd
 from elder_care.config import BLD
 from pytask import Product
-import numpy as np
 
 BASE_YEAR = 2015
 
