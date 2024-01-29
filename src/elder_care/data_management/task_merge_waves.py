@@ -1,4 +1,5 @@
 """Merge all SHARE waves and modules."""
+
 from pathlib import Path
 from typing import Annotated
 
@@ -860,9 +861,11 @@ def process_gv_imputations(wave, args):
 
 def filter_nested_dict(original_dict, keys_to_remove):
     return {
-        key: [value for value in values if value not in keys_to_remove.get(key, [])]
-        if key in keys_to_remove
-        else values
+        key: (
+            [value for value in values if value not in keys_to_remove.get(key, [])]
+            if key in keys_to_remove
+            else values
+        )
         for key, values in original_dict.items()
     }
 

@@ -1,4 +1,5 @@
 """Merge parent information."""
+
 from pathlib import Path
 from typing import Annotated
 

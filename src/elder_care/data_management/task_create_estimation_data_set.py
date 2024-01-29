@@ -1,4 +1,5 @@
 """Create the estimation data set of females between 50 and 68."""
+
 import re
 from pathlib import Path
 from typing import Annotated
@@ -151,9 +152,11 @@ def task_create_estimation_data(
 
     # Make prettier
     dat["age"] = dat.apply(
-        lambda row: row["int_year"] - row["yrbirth"]
-        if row["int_month"] >= row["mobirth"]
-        else row["int_year"] - row["yrbirth"] - 1,
+        lambda row: (
+            row["int_year"] - row["yrbirth"]
+            if row["int_month"] >= row["mobirth"]
+            else row["int_year"] - row["yrbirth"] - 1
+        ),
         axis=1,
     )
 

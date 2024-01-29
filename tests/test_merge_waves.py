@@ -1,4 +1,5 @@
 """Tests for data mergeing and preparation of the estimation data set."""
+
 # def test_merge_waves();
 # def is_weakly_increasing(series):
 # # Group the data by mergeid and apply the is_weakly_increasing function
