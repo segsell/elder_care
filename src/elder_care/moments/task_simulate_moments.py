@@ -22,6 +22,6 @@ def task_create_simulated_moments(
     sim = pd.read_csv(path_to_one)
     df2 = pd.read_csv(path_to_two)
 
-    df2["income"] = df2["working_hours"] * sim["wage"]
+    df2["income"] = df2["working_hours"] * df2["wage"]
 
     simulate_moments(sim)

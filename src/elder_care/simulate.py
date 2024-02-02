@@ -1,5 +1,7 @@
 """Module to create simulated moments."""
 import jax.numpy as jnp
+import numpy as np
+import pandas as pd
 
 MIN_AGE = 51
 MAX_AGE = MIN_AGE + 14  # + 14
@@ -422,6 +424,52 @@ def simulate_moments(sim):
         + formal_care_to_no_formal_care
         + formal_care_to_formal_care,
     )
+
+
+def create_simulation_df(sim_dict, options, params):
+    n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
+
+    keys_to_drop = ["taste_shocks"]
+    dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
+
+    dat = pd.DataFrame(
+        {key: val.ravel() for key, val in dict_to_df.items()},
+        index=pd.MultiIndex.from_product(
+            [np.arange(n_periods), np.arange(n_agents)],
+            names=["period", "agent"],
+        ),
+    )
+
+    dat["wealth"] = dat["savings"] + dat["consumption"]
+    #
+    dat["age"] = dat["period"] + options["model_params"]["min_age"]
+
+    dat["log_wage"] = (
+        params["wage_constant"]
+        + params["wage_age"] * dat["age"]
+        + params["wage_age_squared"] * dat["age"] ** 2
+        + params["wage_part_time"] * (dat["lagged_choice"].isin(PART_TIME))
+        + params["wage_not_working"] * (dat["lagged_choice"].isin(FULL_TIME))
+    )
+
+    dat["wage"] = np.exp(dat["log_wage"] + dat["income_shock"])
+    dat["working_hours"] = dat["lagged_choice"].apply(_assign_working_hours)
+    dat["income"] = dat["working_hours"] * dat["wage"]
+
+    return dat
+
+
+def _assign_working_hours(choice):
+    if choice in NO_WORK:
+        hours = 0
+    elif choice in PART_TIME:
+        hours = 20
+    elif choice in FULL_TIME:
+        hours = 40
+    else:
+        hours = None
+
+    return hours
 
 
 # ==============================================================================
