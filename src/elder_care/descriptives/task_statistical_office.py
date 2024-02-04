@@ -227,7 +227,8 @@ def plot_share_by_age_group_width(dat, sex, year, save_path):
 
     _only_informal = calculate_percentage_share(_only_informal, total_by_age_group)
     _combination_care = calculate_percentage_share(
-        _combination_care, total_by_age_group,
+        _combination_care,
+        total_by_age_group,
     )
     _only_home_care = calculate_percentage_share(_only_home_care, total_by_age_group)
     _nursing_home = calculate_percentage_share(_nursing_home, total_by_age_group)
@@ -264,7 +265,9 @@ def plot_share_by_age_group_width(dat, sex, year, save_path):
         plt.bar(
             current_position,
             _only_home_care[i],
-            bottom=[i + j for i, j in zip(_only_informal, _combination_care, strict=False)][i],
+            bottom=[
+                i + j for i, j in zip(_only_informal, _combination_care, strict=False)
+            ][i],
             width=widths[i],
             label="Formal Home Care" if i == 0 else "",
             color="lightcoral",
@@ -275,7 +278,9 @@ def plot_share_by_age_group_width(dat, sex, year, save_path):
             _nursing_home[i],
             bottom=[
                 i + j + k
-                for i, j, k in zip(_only_informal, _combination_care, _only_home_care, strict=False)
+                for i, j, k in zip(
+                    _only_informal, _combination_care, _only_home_care, strict=False,
+                )
             ][i],
             width=widths[i],
             label="Nursing Home" if i == 0 else "",
