@@ -292,7 +292,7 @@ def process_module(module, wave, args):
     module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
     data = pd.read_stata(module_file, convert_categoricals=False)
 
-    data.columns = [col[:-2] if col.endswith("sp") else col for col in data.columns]
+    data.columns = [col.removesuffix("sp") for col in data.columns]
 
     # Filter the data based on the "country" column
     data = data[data["country"] == GERMANY]
