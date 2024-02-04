@@ -1,5 +1,4 @@
 """Create the parent child data set of people older than 65."""
-
 from pathlib import Path
 from typing import Annotated
 

@@ -1,5 +1,4 @@
 """Create the estimation data set of females between 50 and 68."""
-
 import re
 from pathlib import Path
 from typing import Annotated

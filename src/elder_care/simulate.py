@@ -1,5 +1,4 @@
 """Module to create simulated moments."""
-
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd

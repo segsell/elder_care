@@ -7,7 +7,6 @@ The SHARE data sets on
 are used.
 
 """
-
 from pathlib import Path
 from typing import Annotated
 

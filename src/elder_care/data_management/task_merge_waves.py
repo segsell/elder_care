@@ -1,5 +1,4 @@
 """Merge all SHARE waves and modules."""
-
 from pathlib import Path
 from typing import Annotated
 
@@ -875,6 +874,6 @@ def load_and_rename_wave_data(wave):
     module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
 
     data = pd.read_stata(module_file, convert_categoricals=False)
-    data.columns = [col[:-2] if col.endswith("sp") else col for col in data.columns]
+    data.columns = [col.removesuffix("sp") for col in data.columns]
 
     return data
