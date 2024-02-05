@@ -27,6 +27,7 @@ dependencies:
   - scipy
   - seaborn
   - statsmodels
+  - tranquilo>=0.0.4
 
   # Misc
   - black
@@ -51,6 +52,7 @@ dependencies:
   - jupyter_server_terminals=0.4.4
 
   - pip:
+    - DFO-LS
     - jupyter==1.0.0
     - jupyter-console==6.6.3
     - jupyter-contrib-core==0.4.2

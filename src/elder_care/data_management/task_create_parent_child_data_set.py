@@ -89,9 +89,11 @@ def task_create_parent_child_data(
 
     # Make prettier
     dat["age"] = dat.apply(
-        lambda row: row["int_year"] - row["yrbirth"]
-        if row["int_month"] >= row["mobirth"]
-        else row["int_year"] - row["yrbirth"] - 1,
+        lambda row: (
+            row["int_year"] - row["yrbirth"]
+            if row["int_month"] >= row["mobirth"]
+            else row["int_year"] - row["yrbirth"] - 1
+        ),
         axis=1,
     )
 
