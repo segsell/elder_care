@@ -116,6 +116,45 @@ def simulate_moments(sim):
 
     .loc needed below?!
 
+
+    share_not_working_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        lagged_choice=NO_WORK,
+        care_type=NO_INFORMAL_CARE,
+    )
+    share_part_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        lagged_choice=PART_TIME,
+        care_type=NO_INFORMAL_CARE,
+    )
+    share_full_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        lagged_choice=FULL_TIME,
+        care_type=NO_INFORMAL_CARE,
+    )
+
+    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        lagged_choice=NO_WORK,
+        care_type=INFORMAL_CARE,
+    )
+    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        lagged_choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+    )
+    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        lagged_choice=FULL_TIME,
+        care_type=INFORMAL_CARE,
+    )
+
     """
     column_indices = {col: idx for idx, col in enumerate(sim.columns)}
     idx = column_indices.copy()
@@ -171,38 +210,40 @@ def simulate_moments(sim):
     )
 
     # share working by caregiving type (and age bin) --> to be checked
-    share_not_working_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+
+    #
+    share_not_working_no_informal_care = get_share_by_type(
         arr,
         ind=idx,
         lagged_choice=NO_WORK,
         care_type=NO_INFORMAL_CARE,
     )
-    share_part_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_part_time_no_informal_care = get_share_by_type(
         arr,
         ind=idx,
         lagged_choice=PART_TIME,
         care_type=NO_INFORMAL_CARE,
     )
-    share_full_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_full_time_no_informal_care = get_share_by_type(
         arr,
         ind=idx,
         lagged_choice=FULL_TIME,
         care_type=NO_INFORMAL_CARE,
     )
 
-    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_not_working_informal_care = get_share_by_type(
         arr,
         ind=idx,
         lagged_choice=NO_WORK,
         care_type=INFORMAL_CARE,
     )
-    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_part_time_informal_care = get_share_by_type(
         arr,
         ind=idx,
         lagged_choice=PART_TIME,
         care_type=INFORMAL_CARE,
     )
-    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_full_time_informal_care = get_share_by_type(
         arr,
         ind=idx,
         lagged_choice=FULL_TIME,
@@ -386,12 +427,12 @@ def simulate_moments(sim):
         + wealth_by_age_bin
         +
         #
-        share_not_working_no_informal_care_by_age_bin
-        + share_part_time_no_informal_care_by_age_bin
-        + share_full_time_no_informal_care_by_age_bin
-        + share_not_working_informal_care_by_age_bin
-        + share_part_time_informal_care_by_age_bin
-        + share_full_time_informal_care_by_age_bin
+        [share_not_working_no_informal_care]
+        + [share_part_time_no_informal_care]
+        + [share_full_time_no_informal_care]
+        + [share_not_working_informal_care]
+        + [share_part_time_informal_care]
+        + [share_full_time_informal_care]
         +
         #
         no_work_to_no_work
@@ -479,7 +520,7 @@ def get_share_by_age(df_arr, ind, lagged_choice):
     """Get share of agents choosing lagged choice by age bin."""
     lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
     shares = []
-    for period in range(14):
+    for period in range(MAX_AGE - MIN_AGE + 1):
         period_mask = df_arr[:, ind["period"]] == period
 
         share = jnp.sum(period_mask & lagged_choice_mask) / jnp.sum(period_mask)
@@ -531,6 +572,14 @@ def get_share_by_type_by_age_bin(df_arr, ind, lagged_choice, care_type):
         shares.append(share)
 
     return shares
+
+
+def get_share_by_type(df_arr, ind, lagged_choice, care_type):
+    """Get share of agents of given care type choosing lagged choice by age bin."""
+    lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
+    care_type_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], care_type)
+
+    return jnp.sum(lagged_choice_mask & care_type_mask) / jnp.sum(care_type_mask)
 
 
 def get_share_care_type_by_parental_health(
