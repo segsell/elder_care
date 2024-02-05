@@ -149,6 +149,140 @@ def task_create_params_exog_other_income(
     return model.params
 
 
+def task_create_params_exog_care_demand_basic(
+    path_to_parent_data: Path = BLD / "data" / "parent_child_data.csv",
+    path_to_parent_couple_data: Path = BLD / "data" / "parent_child_data_couple.csv",
+) -> None:
+    """Create exogenous care demand probabilities."""
+    parent = pd.read_csv(path_to_parent_data)
+    couple_raw = pd.read_csv(path_to_parent_couple_data)
+    couple = couple_raw[
+        (couple_raw["mother_married"] == True) & (couple_raw["father_married"] == True)
+    ]
+
+    parent["mother_age"] = parent.loc[parent["gender"] == FEMALE, "age"]
+    parent["father_age"] = parent.loc[parent["gender"] == MALE, "age"]
+
+    parent["mother_health"] = parent.loc[parent["gender"] == FEMALE, "health"]
+    parent["father_health"] = parent.loc[parent["gender"] == MALE, "health"]
+
+    parent = _prepare_dependent_variables_care_demand(parent)
+    couple = _prepare_dependent_variables_care_demand(couple)
+
+    mother = parent[(parent["married"] == False) & (parent["gender"] == FEMALE)].copy()
+    father = parent[(parent["married"] == False) & (parent["gender"] == MALE)].copy()
+
+    _cond = [
+        (couple["mother_any_care"].isna()) & (couple["father_any_care"].isna()),
+        (couple["mother_any_care"] == True) | (couple["father_any_care"] == True),
+    ]
+    _val = [np.nan, 1]
+    couple["any_care"] = np.select(_cond, _val, default=0)
+
+    x_couple_with_nans = sm.add_constant(
+        couple[
+            [
+                "mother_age",
+                "mother_age_squared",
+                "father_age",
+                "father_age_squared",
+            ]
+        ],
+    )
+    x_couple = x_couple_with_nans.dropna()
+    data_couple = couple.dropna(
+        subset=[
+            "mother_age",
+            "mother_age_squared",
+            "father_age",
+            "father_age_squared",
+        ],
+    )
+
+    x_single_mother_with_nans = sm.add_constant(
+        mother[
+            [
+                "mother_age",
+                "mother_age_squared",
+            ]
+        ],
+    )
+    x_single_mother = x_single_mother_with_nans.dropna()
+    data_single_mother = mother.dropna(
+        subset=[
+            "mother_age",
+            "mother_age_squared",
+        ],
+    )
+
+    x_single_father_with_nans = sm.add_constant(
+        father[
+            [
+                "father_age",
+                "father_age_squared",
+            ]
+        ],
+    )
+    x_single_father = x_single_father_with_nans.dropna()
+    data_single_father = father.dropna(
+        subset=[
+            "father_age",
+            "father_age_squared",
+        ],
+    )
+
+    # Single father
+
+    x_single_male = x_single_father[
+        (data_single_father["any_care"].notna())
+        & (data_single_father["gender"] == MALE)
+    ]
+    y_single_male = data_single_father["any_care"][
+        (data_single_father["any_care"].notna())
+        & (data_single_father["gender"] == MALE)
+    ]
+    x_single_male = x_single_male.reset_index(drop=True)
+    y_single_male = y_single_male.reset_index(drop=True)
+
+    # Single mother
+
+    x_single_female = x_single_mother[
+        (data_single_mother["any_care"].notna())
+        & (data_single_mother["gender"] == FEMALE)
+    ]
+    y_single_female = data_single_mother["any_care"][
+        (data_single_mother["any_care"].notna())
+        & (data_single_mother["gender"] == FEMALE)
+    ]
+    x_single_female = x_single_female.reset_index(drop=True)
+    y_single_female = y_single_female.reset_index(drop=True)
+
+    # Couple
+    x_couple = x_couple[
+        (data_couple["any_care"].notna())
+        & (data_couple["mother_gender"].notna())
+        & (data_couple["father_gender"].notna())
+    ]
+    y_couple = data_couple["any_care"][
+        (data_couple["any_care"].notna())
+        & (data_couple["mother_gender"].notna())
+        & (data_couple["father_gender"].notna())
+    ]
+    x_couple = x_couple.reset_index(drop=True)
+    y_couple = y_couple.reset_index(drop=True)
+
+    # regress dummy for any care on age and age squared
+    # distance to parents?
+    # any care in previous period
+
+    logit_single_father = sm.Logit(y_single_male, x_single_male).fit()
+    logit_single_mother = sm.Logit(y_single_female, x_single_female).fit()
+    logit_couple = sm.Logit(y_couple, x_couple).fit()
+    # care demand is zero if no parent is alive
+
+    return logit_single_father.params, logit_single_mother.params, logit_couple.params
+
+
 def task_create_params_exog_care_demand(
     path_to_parent_data: Path = BLD / "data" / "parent_child_data.csv",
     path_to_parent_couple_data: Path = BLD / "data" / "parent_child_data_couple.csv",
