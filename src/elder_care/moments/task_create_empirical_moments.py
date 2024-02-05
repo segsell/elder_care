@@ -220,6 +220,7 @@ def task_create_moments(
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
+            # parent child data
             care_transitions_parent_child_data,
         ],
         ignore_index=False,
@@ -234,13 +235,32 @@ def task_create_moments(
 # ================================================================================
 
 
-def task_calcualte_variance_covariance_matrix():
+def task_calcualte_variance_covariance_matrix(
+    path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
+    path_to_parent_child_hh_weight: Path = BLD
+    / "data"
+    / "parent_child_data_hh_weight.csv",
+    path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
+):
     """Calculate variance-covariance matrix of moments.
 
     moments_cov = em.get_moments_cov(     data, calculate_moments,
     bootstrap_kwargs={"n_draws": 5_000, "seed": 0} )
 
     """
+    dat_hh_weight = pd.read_csv(path_to_hh_weight)
+    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    cpi_data = pd.read_csv(path_to_cpi)
+
+    dat = dat_hh_weight.copy()
+    dat = deflate_income_and_wealth(dat, cpi_data)
+
+    parent = parent_hh_weight.copy()
+
+    dat["data"] = "estimation"
+    parent["data"] = "parent_child"
+
+    return pd.concat([dat, parent], ignore_index=True)
 
 
 # ================================================================================
