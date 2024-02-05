@@ -49,7 +49,36 @@ def task_create_moments(
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
-    """Create empirical moments for SHARE data."""
+    """Create empirical moments for SHARE data.
+
+    mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
+    mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
+
+    father_couple = parent[(parent["gender"] == MALE) & (parent["married"] == True)]
+    father_single = parent[(parent["gender"] == MALE) & (parent["married"] == False)]
+
+    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
+
+    # care mix by health status of parent
+    caregiving_by_mother_health = (
+        get_caregiving_status_by_mother_health_and_marital_status(
+            mother_couple,
+            mother_single,
+            weight=weight,
+        )
+    )
+    caregiving_by_father_health = (
+        get_caregiving_status_by_father_health_and_marital_status(
+            father_couple,
+            father_single,
+            weight=weight,
+        )
+    )
+
+    """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
     cpi_data = pd.read_csv(path_to_cpi)
@@ -145,31 +174,9 @@ def task_create_moments(
     )
     intensive_care_var_weighted = "intensive_care_no_other_weighted"
 
-    mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
-    mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
-
-    father_couple = parent[(parent["gender"] == MALE) & (parent["married"] == True)]
-    father_single = parent[(parent["gender"] == MALE) & (parent["married"] == False)]
-
     parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
     parent["no_informal_care_child_weighted"] = (
         parent["no_informal_care_child"] * parent[weight]
-    )
-
-    # care mix by health status of parent
-    caregiving_by_mother_health = (
-        get_caregiving_status_by_mother_health_and_marital_status(
-            mother_couple,
-            mother_single,
-            weight=weight,
-        )
-    )
-    caregiving_by_father_health = (
-        get_caregiving_status_by_father_health_and_marital_status(
-            father_couple,
-            father_single,
-            weight=weight,
-        )
     )
 
     # labor and caregiving transitions
@@ -208,8 +215,8 @@ def task_create_moments(
             wealth_by_age_bin,
             #
             employment_by_caregiving_status,
-            caregiving_by_mother_health,
-            caregiving_by_father_health,
+            # caregiving_by_mother_health,
+            # caregiving_by_father_health,
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
@@ -220,6 +227,20 @@ def task_create_moments(
     )
 
     all_moments.to_csv(path_to_save)
+
+
+# ================================================================================
+# Variance-Covariance matrix
+# ================================================================================
+
+
+def task_calcualte_variance_covariance_matrix():
+    """Calculate variance-covariance matrix of moments.
+
+    moments_cov = em.get_moments_cov(     data, calculate_moments,
+    bootstrap_kwargs={"n_draws": 5_000, "seed": 0} )
+
+    """
 
 
 # ================================================================================
