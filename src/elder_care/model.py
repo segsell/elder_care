@@ -1095,7 +1095,8 @@ def create_simulation_df(sim_dict, options, params):
     df = pd.DataFrame(
         {key: val.ravel() for key, val in dict_to_df.items()},
         index=pd.MultiIndex.from_product(
-            [np.arange(n_periods), np.arange(n_agents)], names=["period", "agent"],
+            [np.arange(n_periods), np.arange(n_agents)],
+            names=["period", "agent"],
         ),
     )
 
@@ -1508,7 +1509,8 @@ def get_income_by_age_bin(df, lagged_choice):
 
     return [
         df.loc[
-            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "income",
+            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]),
+            "income",
         ].mean()
         for age_bin in AGE_BINS
     ]
@@ -1525,7 +1527,8 @@ def get_wealth_beginning_of_period_by_age_bin(df):
     """
     return [
         df.loc[
-            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]), "wealth",
+            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]),
+            "wealth",
         ].mean()
         for age_bin in AGE_BINS
     ]
