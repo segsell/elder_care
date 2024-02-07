@@ -1,6 +1,5 @@
 from typing import Any
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -1115,57 +1114,3 @@ def calc_stochastic_wage(
     )
 
     return jnp.exp(log_wage + wage_shock)
-
-
-# ==============================================================================
-# Initial conditions
-# ==============================================================================
-
-
-def get_initial_share_three(initial_conditions, shares):
-    return jnp.asarray(initial_conditions.loc[shares]).ravel()
-
-
-def get_initial_share_two(initial_conditions, var):
-    share_yes = initial_conditions.loc[var]
-    return jnp.asarray([1 - share_yes, share_yes]).ravel()
-
-
-def draw_random_sequence_from_array(seed, arr, n_agents):
-    """Draw a random sequence from an array.
-
-    rand = draw_random_sequence_from_array(     seed=2024,     n_agents=10_000,
-    arr=jnp.array(initial_wealth), )
-
-    """
-    key = jax.random.PRNGKey(seed)
-    return jax.random.choice(key, arr, shape=(n_agents,), replace=True)
-
-
-def draw_random_array(seed, n_agents, values, probabilities):
-    """Draw a random array with given probabilities.
-
-    Usage:
-
-    seed = 2024
-    n_agents = 10_000
-
-    # Parameters
-    values = jnp.array([-1, 0, 1, 2])  # Values to choose from
-    probabilities = jnp.array([0.3, 0.3, 0.2, 0.2])  # Corresponding probabilities
-
-    table(pd.DataFrame(random_array)[0]) / 1000
-
-    """
-    key = jax.random.PRNGKey(seed)
-    return jax.random.choice(key, values, shape=(n_agents,), p=probabilities)
-
-
-def draw_parental_age(seed, n_agents, mean, std_dev):
-    """Draw discrete parental age."""
-    key = jax.random.PRNGKey(seed)
-
-    sample_standard_normal = jax.random.normal(key, (n_agents,))
-
-    # Scaling and shifting to get the desired mean and standard deviation, then rounding
-    return jnp.round(mean + std_dev * sample_standard_normal).astype(jnp.int32)
