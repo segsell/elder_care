@@ -6,6 +6,8 @@ Original file is located at
 https://colab.research.google.com/drive/13cQ9wmw7q-mY5Jt7jegkjF4E3V564obh
 
 """
+import math
+
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,8 +32,9 @@ from elder_care.model import utility_func
 
 
 def _plot_dist(sample):
+    """Plot distribution."""
     sns.histplot(sample, bins=40, kde=True, color="purple")
-    # plt.xlabel("Age")
+    plt.xlabel("Age")
     plt.ylabel("Frequency")
     plt.title("Distribution")
     plt.show()
@@ -66,22 +69,27 @@ WEEKLY_INTENSIVE_INFORMAL_HOURS = 14  # (21 + 7) / 2
 
 
 def is_not_working(lagged_choice):
+    """Check if not working."""
     return lagged_choice in NO_WORK
 
 
 def is_part_time(lagged_choice):
+    """Check if part time."""
     return lagged_choice in PART_TIME
 
 
 def is_full_time(lagged_choice):
+    """Check if full time."""
     return lagged_choice in FULL_TIME
 
 
 def is_formal_care(lagged_choice):
+    """Check if formal care."""
     return lagged_choice in FORMAL_CARE
 
 
 def is_informal_care(lagged_choice):
+    """Check if informal care."""
     # intensive only here
     return lagged_choice in INFORMAL_CARE
 
@@ -144,7 +152,6 @@ model_params = {
         "bad_health_lagged_bad_health": 3.067,
         "bad_health_constant": -11.89,
     },
-    # TODO: care demand
     "exog_care_single_mother_constant": 27.894895,
     "exog_care_single_mother_age": -0.815882,
     "exog_care_single_mother_age_squared": 0.005773,
@@ -243,8 +250,6 @@ params_test = {
 
 options["model_params"] = model_params
 
-options
-
 utility_functions = {
     "utility": utility_func,
     "marginal_utility": marginal_utility,
@@ -265,7 +270,7 @@ state_space_functions = {
 def logspace(start, stop, n_points):
     start_lin = jnp.log(start)
     stop_lin = jnp.log(stop)
-    return jnp.logspace(start_lin, stop_lin, n_points, base=2.718281828459045)
+    return jnp.logspace(start_lin, stop_lin, n_points, base=math.e)
 
 
 start_lin = 0
@@ -290,8 +295,6 @@ _plot_dist(exog_savings_grid)
     n_exog_states,
     exog_state_space,
 ) = create_state_space(options)
-
-state_space.shape
 
 solve_func = get_solve_function(
     options=options,
