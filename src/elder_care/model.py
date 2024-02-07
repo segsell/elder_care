@@ -3,12 +3,10 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pandas as pd
 
 
 MIN_AGE = 51
-# MAX_AGE = 65
-MAX_AGE = MIN_AGE + 14  # + 14
+MAX_AGE = MIN_AGE + 14  # 65
 
 AGE_50 = 50
 AGE_53 = 53
@@ -38,23 +36,6 @@ BAD_HEALTH = 2
 
 ALL = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
-
-# NO_WORK = [0, 1, 2, 3]
-# PART_TIME = [4, 5, 6, 7]
-# FULL_TIME = [8, 9, 10, 11]
-# WORK = PART_TIME + FULL_TIME
-
-# NO_CARE = [0, 4, 8]
-# FORMAL_CARE = [1, 3, 5, 7, 9, 11]  # % 2 == 1
-# INFORMAL_CARE = [2, 3, 6, 7, 10, 11]
-# CARE = FORMAL_CARE + INFORMAL_CARE
-
-# COMBINATION_CARE = [3, 7, 11]
-
-# # NO_INFORMAL_CARE = [0, 1, 4, 5, 8, 9] # check!
-# # NO_FORMAL_CARE = [0, 2, 4, 6, 8, 10]
-# NO_INFORMAL_CARE = list(set(ALL) - (set(INFORMAL_CARE)))
-# NO_FORMAL_CARE = list(set(ALL) - (set(FORMAL_CARE)))
 
 TOTAL_WEEKLY_HOURS = 80
 WEEKLY_HOURS_PART_TIME = 20
@@ -87,7 +68,8 @@ CARE = jnp.concatenate([FORMAL_CARE, INFORMAL_CARE])
 
 COMBINATION_CARE = jnp.array([3, 7, 11])
 
-# For NO_INFORMAL_CARE and NO_FORMAL_CARE, we need to perform set operations before converting to JAX arrays.
+# For NO_INFORMAL_CARE and NO_FORMAL_CARE, we need to perform set operations before
+# converting to JAX arrays.
 # This is because JAX doesn't support direct set operations.
 # Convert the results of set operations to lists, then to JAX arrays.
 NO_INFORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(INFORMAL_CARE.tolist())))
@@ -97,38 +79,6 @@ NO_FORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(FORMAL_CARE.tolist())))
 # ==============================================================================
 # Model
 # ==============================================================================
-
-
-# def is_not_working(lagged_choice):
-#     return lagged_choice in NO_WORK
-
-
-# def is_part_time(lagged_choice):
-#     return lagged_choice in PART_TIME
-
-
-# def is_full_time(lagged_choice):
-#     return lagged_choice in FULL_TIME
-
-
-# def is_informal_care(lagged_choice):
-#     # intensive only here
-#     return lagged_choice in INFORMAL_CARE
-
-
-# def is_no_informal_care(lagged_choice):
-#     # intensive only here
-#     return lagged_choice not in INFORMAL_CARE
-
-
-# def is_formal_care(lagged_choice):
-#     return lagged_choice in FORMAL_CARE
-
-
-# def is_no_formal_care(lagged_choice):
-#     return lagged_choice not in FORMAL_CARE
-
-import jax.numpy as jnp
 
 
 def is_not_working(lagged_choice):
@@ -165,7 +115,11 @@ def is_no_formal_care(lagged_choice):
 # Exogenous processes
 # ==============================================================================
 def prob_part_time_offer(period, lagged_choice, options, params):
-    """Compute logit probability of part time offer."""
+    """Compute logit probability of part time offer.
+
+    + params["part_time_high_education"] * high_educ
+
+    """
     logit = (
         params["part_time_constant"]
         + params["part_time_not_working_last_period"] * is_not_working(lagged_choice)
@@ -173,7 +127,7 @@ def prob_part_time_offer(period, lagged_choice, options, params):
         * is_full_time(lagged_choice)
         + params["part_time_above_retirement_age"]
         * (period + options["min_age"] >= RETIREMENT_AGE)
-        # + params["part_time_high_education"] * high_educ
+        #
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))
 
@@ -185,7 +139,13 @@ def prob_part_time_offer(period, lagged_choice, options, params):
 
 
 def prob_full_time_offer(period, lagged_choice, options, params):
-    """Compute logit probability of full time offer."""
+    """Compute logit probability of full time offer.
+
+    + params["full_time_high_education"] * high_educ
+
+    _prob = jnp.exp(logit) / (1 + jnp.exp(logit))
+
+    """
     logit = (
         params["full_time_constant"]
         + params["full_time_not_working_last_period"] * is_not_working(lagged_choice)
@@ -193,9 +153,9 @@ def prob_full_time_offer(period, lagged_choice, options, params):
         * is_part_time(lagged_choice)
         + params["full_time_above_retirement_age"]
         * (period + options["min_age"] >= RETIREMENT_AGE)
-        # + params["full_time_high_education"] * high_educ
+        #
     )
-    # _prob = jnp.exp(logit) / (1 + jnp.exp(logit))
+
     prob_logit = 1 / (1 + jnp.exp(-logit))
 
     full_time = (
@@ -423,6 +383,11 @@ def _softmax(lc):
     return e_lc / e_lc.sum(axis=0)
 
 
+# =====================================================================================
+# Care demand
+# =====================================================================================
+
+
 def prob_exog_care_demand(
     period,
     mother_alive,
@@ -440,12 +405,18 @@ def prob_exog_care_demand(
     - First, a parent's health state is determined by their age and lagged health state.
 
     Args:
+        period (int): Current period.
         parental_age (int): Age of parent.
         parent_alive (int): Binary indicator of whether parent is alive.
         good_health (int): Binary indicator of good health.
         medium_health (int): Binary indicator of medium health.
         bad_health (int): Binary indicator of bad health.
         params (dict): Dictionary of parameters.
+        mother_alive (int): Binary indicator of whether mother is alive.
+        mother_health (int): Binary indicator of mother's health state.
+        father_alive (int): Binary indicator of whether father is alive.
+        father_health (int): Binary indicator of father's health state.
+        options (dict): Dictionary of options.
 
     Returns:
         jnp.ndarray: Array of shape (2,) representing the probabilities of
@@ -629,7 +600,7 @@ def _exog_care_demand_mother(period, mother_health, options):
         * (mother_health == MEDIUM_HEALTH)
         + options["exog_care_single_mother_bad_health"] * (mother_health == BAD_HEALTH)
     )
-    return 1 / (1 + np.exp(-logit))
+    return 1 / (1 + jnp.exp(-logit))
 
 
 def _exog_care_demand_father(period, father_health, options):
@@ -675,7 +646,149 @@ def _exog_care_demand_couple(period, mother_health, father_health, options):
         * (father_health == MEDIUM_HEALTH)
         + options["exog_care_couple_father_bad_health"] * (father_health == BAD_HEALTH)
     )
-    return 1 / (1 + np.exp(-logit))
+    return 1 / (1 + jnp.exp(-logit))
+
+
+# =====================================================================================
+# Care demand basic
+# =====================================================================================
+
+
+def prob_exog_care_demand_basic(
+    period,
+    mother_alive,
+    father_alive,
+    options,
+):
+    """Create nested exogenous care demand probabilities.
+
+    Compute based on parent alive. Otherwise zero.
+    Done outside?!
+
+    Nested exogenous transitions:
+    - First, a parent's health state is determined by their age and lagged health state.
+
+    Args:
+        period (int): Current period.
+        mother_alive (int): Binary indicator of whether mother is alive.
+        father_alive (int): Binary indicator of whether father is alive.
+        parental_age (int): Age of parent.
+        parent_alive (int): Binary indicator of whether parent is alive.
+        good_health (int): Binary indicator of good health.
+        medium_health (int): Binary indicator of medium health.
+        bad_health (int): Binary indicator of bad health.
+        params (dict): Dictionary of parameters.
+        options (dict): Dictionary of options.
+
+    Returns:
+        jnp.ndarray: Array of shape (2,) representing the probabilities of
+            no care demand and care demand, respectively.
+
+    """
+    mother_survival_prob = prob_survival_mother(period, options)
+    father_survival_prob = prob_survival_father(period, options)
+
+    # ===============================================================
+
+    # single mother
+    prob_care_single_mother = _exog_care_demand_mother_basic(
+        period=period,
+        options=options,
+    )
+
+    _mother_trans_probs_care_demand = jnp.array(prob_care_single_mother)
+
+    # single father
+    prob_care_single_father = _exog_care_demand_father_basic(
+        period=period,
+        options=options,
+    )
+
+    _father_trans_probs_care_demand = jnp.array(prob_care_single_father)
+
+    # couple
+    prob_care_couple = _exog_care_demand_couple_basic(
+        period=period,
+        options=options,
+    )
+
+    _couple_trans_probs_care_demand = jnp.array(prob_care_couple)
+
+    # Non-zero probability of care demand only if parent is alive,
+    # weighted by the parent's survival probability
+    mother_single_prob_care_demand = (
+        mother_survival_prob * mother_alive * (1 - father_alive)
+    ) * _mother_trans_probs_care_demand
+
+    father_single_prob_care_demand = (
+        father_survival_prob * father_alive * (1 - mother_alive)
+    ) * _father_trans_probs_care_demand
+
+    couple_prob_care_demand = (
+        father_survival_prob * father_alive * mother_survival_prob * mother_alive
+    ) * _couple_trans_probs_care_demand
+
+    prob_care_demand = (
+        mother_single_prob_care_demand[1]
+        + father_single_prob_care_demand[1]
+        + couple_prob_care_demand[1]
+    )
+
+    return jnp.array([1 - prob_care_demand, prob_care_demand])
+
+
+def _exog_care_demand_mother_basic(period, options):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    mother_age = period + options["mother_min_age"]
+
+    logit = (
+        options["exog_care_single_mother_constant"]
+        + options["exog_care_single_mother_age"] * mother_age
+        + options["exog_care_single_mother_age_squared"] * (mother_age**2)
+    )
+    return 1 / (1 + jnp.exp(-logit))
+
+
+def _exog_care_demand_father_basic(period, options):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    father_age = period + options["father_min_age"]
+
+    logit = (
+        options["exog_care_single_father_constant"]
+        + options["exog_care_single_father_age"] * father_age
+        + options["exog_care_single_father_age_squared"] * (father_age**2)
+    )
+    return 1 / (1 + jnp.exp(-logit))
+
+
+def _exog_care_demand_couple_basic(period, options):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    mother_age = period + options["mother_min_age"]
+    father_age = period + options["father_min_age"]
+
+    logit = (
+        options["exog_care_couple_constant"]
+        + options["exog_care_couple_mother_age"] * mother_age
+        + options["exog_care_couple_mother_age_squared"] * (mother_age**2)
+        + options["exog_care_couple_father_age"] * father_age
+        + options["exog_care_couple_father_age_squared"] * (father_age**2)
+    )
+    return 1 / (1 + jnp.exp(-logit))
 
 
 # ==============================================================================
@@ -688,8 +801,15 @@ def update_endog_state(
     choice,
     married,
     has_sibling,
-    options,
 ):
+    """Update endogenous state variables.
+
+    next_state["mother_age"] = options["mother_min_age"] + mother_age + 1
+    next_state["father_age"] = options["father_min_age"] + father_age + 1
+
+    alive based on exog state health based on exog state
+
+    """
     next_state = {}
 
     next_state["period"] = period + 1
@@ -698,33 +818,21 @@ def update_endog_state(
     next_state["married"] = married
     next_state["has_sibling"] = has_sibling
 
-    # next_state["mother_age"] = options["mother_min_age"] + mother_age + 1
-    # next_state["father_age"] = options["father_min_age"] + father_age + 1
-
-    # alive based on exog state
-    # health based on exog state
-
     return next_state
 
 
 def get_state_specific_feasible_choice_set(
     part_time_offer,
     full_time_offer,
-    mother_alive,
-    father_alive,
+    care_demand,
     options,
 ):
-    # formal_care = choice % 2 == 1  # uneven numbers mark formal care
-    # light_informal_care = [2, 3, 8, 9, 14, 15]
-    # intensive_informal_care =[4, 5, 10, 11, 16, 17]
-    # NO_CARE = NO_CARE
-    # CARE = [choice for choice in all_choices if choice not in NO_CARE]
-
     # state_vec including exog?
     feasible_choice_set = list(np.arange(options["n_choices"]))
 
     # care demand
-    if mother_alive or father_alive:
+    # if mother_alive or father_alive:
+    if care_demand:
         feasible_choice_set = [i for i in feasible_choice_set if i in CARE]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_CARE]
@@ -737,7 +845,6 @@ def get_state_specific_feasible_choice_set(
     elif (full_time_offer == False) & (part_time_offer == False):
         feasible_choice_set = [i for i in feasible_choice_set if i in FULL_TIME]
     else:
-        # (full_time_offer == False) & (part_time_offer == False)
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
     return np.array(feasible_choice_set)
@@ -758,6 +865,7 @@ def utility_func(
     """Computes the agent's current utility based on a CRRA utility function.
 
     Args:
+        period (int): Current period.
         consumption (jnp.array): Level of the agent's consumption.
             Array of shape (i) (n_quad_stochastic * n_grid_wealth,)
             when called by :func:`~dcgm.call_egm_step.map_exog_to_endog_grid`
@@ -767,6 +875,7 @@ def utility_func(
         choice (int): Choice of the agent, e.g. 0 = "retirement", 1 = "working".
         params (dict): Dictionary containing model parameters.
             Relevant here is the CRRA coefficient theta.
+        options (dict): Dictionary containing model options.
 
     Returns:
         utility (jnp.array): Agent's utility . Array of shape
@@ -875,18 +984,20 @@ def utility_final_consume_all(
 
 
 def marginal_utility_final_consume_all(
-    choice,
     resources: jnp.array,
     params: dict[str, float],
-    options: dict[str, Any],
 ) -> jnp.array:
     """Computes marginal utility of CRRA utility function.
 
     Args:
+        choice (int): Choice of the agent, e.g. 0 = "retirement", 1 = "working".
+        resources (jnp.array): The agent's financial resources.
+            Array of shape (n_quad_stochastic * n_grid_wealth,).
         consumption (jnp.array): Level of the agent's consumption.
             Array of shape (n_quad_stochastic * n_grid_wealth,).
         params (dict): Dictionary containing model parameters.
             Relevant here is the CRRA coefficient theta.
+        options (dict): Dictionary containing model options.
 
     Returns:
         marginal_utility (jnp.array): Marginal utility of CRRA consumption
@@ -909,9 +1020,13 @@ def budget_constraint(
     options: dict[str, Any],
     params: dict[str, float],
 ) -> float:
-    # already done in preprocessing
-    # model_params = options["model_params"]
+    """Budget constraint.
 
+    + non_labor_income(age, high_educ, options)
+
+    + spousal_income(period, high_educ, options) * married
+
+    """
     # monthly
     working_hours = (
         is_part_time(lagged_choice) * 20 * 4.33 * 12  # week month year
@@ -928,8 +1043,6 @@ def budget_constraint(
 
     wealth_beginning_of_period = (
         wage_from_previous_period * working_hours
-        # + non_labor_income(age, high_educ, options)
-        # + spousal_income(period, high_educ, options) * married
         + options["unemployment_benefits"] * is_not_working(lagged_choice)
         + options["informal_care_benefits"] * is_informal_care(lagged_choice)
         - options["formal_care_costs"] * is_formal_care(lagged_choice)
@@ -937,15 +1050,12 @@ def budget_constraint(
     )
 
     # needed at all?
-    wealth_beginning_of_period = jnp.maximum(
+    return jnp.maximum(
         wealth_beginning_of_period,
         options["consumption_floor"],
     )
 
-    return wealth_beginning_of_period
 
-
-# @jax.jit
 def calc_stochastic_wage(
     period: int,
     lagged_choice: int,
@@ -965,16 +1075,27 @@ def calc_stochastic_wage(
     They include a constant as well as two coefficients on age and age squared,
     respectively. Note that the last one (alpha_2) typically has a negative sign.
 
+
+    Determinisctic component of income depending on experience:
+    constant + alpha_1 * age + alpha_2 * age**2
+    exp_coeffs = jnp.array([constant, exp, exp_squared])
+    labor_income = exp_coeffs @ (age ** jnp.arange(len(exp_coeffs)))
+    working_income = jnp.exp(labor_income + wage_shock)
+
+
     Args:
+        period (int): Current period.
         state (jnp.ndarray): 1d array of shape (n_state_variables,) denoting
             the current child state.
         wage_shock (float): Stochastic shock on labor income;
             may or may not be normally distributed. This float represents one
             particular realization of the income_shock_draws carried over from
             the previous period.
+        lagged_choice (int): The lagged choice of the agent.
         params (dict): Dictionary containing model parameters.
             Relevant here are the coefficients of the wage equation.
         options (dict): Options dictionary.
+        min_age (int): Minimum age of the agent.
 
     Returns:
         stochastic_income (float): The potential end of period income. It consists of a
@@ -985,25 +1106,16 @@ def calc_stochastic_wage(
     # For simplicity, assume current_age - min_age = experience
     age = period + min_age
 
-    # Determinisctic component of income depending on experience:
-    # constant + alpha_1 * age + alpha_2 * age**2
-    # exp_coeffs = jnp.array([constant, exp, exp_squared])
-    # labor_income = exp_coeffs @ (age ** jnp.arange(len(exp_coeffs)))
-    # working_income = jnp.exp(labor_income + wage_shock)
-
     log_wage = (
         params["wage_constant"]
         + params["wage_age"] * age
         + params["wage_age_squared"] * age**2
-        # + params["wage_high_educ"] * high_educ
         + params["wage_part_time"] * is_part_time(lagged_choice)
         + params["wage_not_working"] * is_not_working(lagged_choice)
     )
 
     return jnp.exp(log_wage + wage_shock)
 
-
-# ==============================================================================
 
 # ==============================================================================
 # Initial conditions
@@ -1057,604 +1169,3 @@ def draw_parental_age(seed, n_agents, mean, std_dev):
 
     # Scaling and shifting to get the desired mean and standard deviation, then rounding
     return jnp.round(mean + std_dev * sample_standard_normal).astype(jnp.int32)
-
-
-# ==============================================================================
-# Simulation
-# ==============================================================================
-
-
-# def create_simulation_df(sim_dict, options, params):
-#     n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
-
-#     keys_to_drop = ["taste_shocks"]
-#     dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
-
-#     df = pd.DataFrame(
-#         {key: val.ravel() for key, val in dict_to_df.items()},
-#         index=pd.MultiIndex.from_product(
-#             [np.arange(n_agents)],
-#             names=["id"],
-#         ),
-#     )
-
-#     df["wealth"] = df["savings"] + df["consumption"]
-#     df["wage"] = calc_stochastic_wage(
-#         df["period"], df["lagged_choice"], df["wage_shock"], options["min_age"], params
-#     )
-
-#     return df
-
-
-def create_simulation_df(sim_dict, options, params):
-    n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
-
-    keys_to_drop = ["taste_shocks"]
-    dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
-
-    df = pd.DataFrame(
-        {key: val.ravel() for key, val in dict_to_df.items()},
-        index=pd.MultiIndex.from_product(
-            [np.arange(n_periods), np.arange(n_agents)],
-            names=["period", "agent"],
-        ),
-    )
-
-    df["wealth"] = df["savings"] + df["consumption"]
-    #
-    df["age"] = df["period"] + options["model_params"]["min_age"]
-
-    df["log_wage"] = (
-        params["wage_constant"]
-        + params["wage_age"] * df["age"]
-        + params["wage_age_squared"] * df["age"] ** 2
-        # + params["wage_high_educ"] * high_educ
-        + params["wage_part_time"] * (df["lagged_choice"].isin(PART_TIME))
-        + params["wage_not_working"] * (df["lagged_choice"].isin(FULL_TIME))
-    )
-
-    df["wage"] = np.exp(df["log_wage"] + df["income_shock"])
-    df["working_hours"] = df["lagged_choice"].apply(assign_working_hours)
-
-    return df
-
-
-def simulate_moments(df):
-    """Df has multiindex ["period", "agent"] necessary?
-
-    or "agent", "period" as columns. "age" is also a column
-
-    .loc needed below?!
-
-    """
-    # share working by age
-    share_not_working_by_age = get_share_by_age(df, lagged_choice=NO_WORK)  # 15
-    share_working_part_time_by_age = get_share_by_age(df, lagged_choice=PART_TIME)  # 15
-    share_working_full_time_by_age = get_share_by_age(df, lagged_choice=FULL_TIME)  # 15
-
-    share_informal_care_by_age_bin = get_share_by_age_bin(
-        df,
-        lagged_choice=INFORMAL_CARE,
-    )
-
-    # yearly net income
-    income_part_time_by_age_bin = get_income_by_age_bin(df, lagged_choice=PART_TIME)
-    income_full_time_by_age_bin = get_income_by_age_bin(df, lagged_choice=FULL_TIME)
-
-    # wealth
-    wealth_by_age_bin = get_wealth_beginning_of_period_by_age_bin(df)
-
-    # share working by caregiving type (and age bin) --> to be checked
-    share_not_working_no_informal_care_by_age_bin = (
-        get_share_by_informal_care_type_by_age_bin(
-            df,
-            lagged_choice=NO_WORK,
-            care_type=NO_INFORMAL_CARE,
-        )
-    )
-    share_part_time_no_informal_care_by_age_bin = (
-        get_share_by_informal_care_type_by_age_bin(
-            df,
-            lagged_choice=PART_TIME,
-            care_type=NO_INFORMAL_CARE,
-        )
-    )
-    share_full_time_no_informal_care_by_age_bin = (
-        get_share_by_informal_care_type_by_age_bin(
-            df,
-            lagged_choice=FULL_TIME,
-            care_type=NO_INFORMAL_CARE,
-        )
-    )
-
-    share_not_working_informal_care_by_age_bin = (
-        get_share_by_informal_care_type_by_age_bin(
-            df,
-            lagged_choice=NO_WORK,
-            care_type=INFORMAL_CARE,
-        )
-    )
-    share_part_time_informal_care_by_age_bin = (
-        get_share_by_informal_care_type_by_age_bin(
-            df,
-            lagged_choice=PART_TIME,
-            care_type=INFORMAL_CARE,
-        )
-    )
-    share_full_time_informal_care_by_age_bin = (
-        get_share_by_informal_care_type_by_age_bin(
-            df,
-            lagged_choice=FULL_TIME,
-            care_type=INFORMAL_CARE,
-        )
-    )
-
-    # parent child: mother
-    informal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=INFORMAL_CARE,
-        parent="mother",
-        is_other_parent_alive=True,
-    )
-    formal_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=FORMAL_CARE,
-        parent="mother",
-        is_other_parent_alive=True,
-    )
-    combination_care_by_mother_health_couple = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=COMBINATION_CARE,
-        parent="mother",
-        is_other_parent_alive=True,
-    )
-
-    informal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=INFORMAL_CARE,
-        parent="mother",
-        is_other_parent_alive=False,
-    )
-    formal_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=FORMAL_CARE,
-        parent="mother",
-        is_other_parent_alive=False,
-    )
-
-    combination_care_by_mother_health_single = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=COMBINATION_CARE,
-        parent="mother",
-        is_other_parent_alive=False,
-    )
-
-    # parent child: father
-    informal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=INFORMAL_CARE,
-        parent="father",
-        is_other_parent_alive=True,
-    )
-    formal_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=FORMAL_CARE,
-        parent="father",
-        is_other_parent_alive=True,
-    )
-    combination_care_by_father_health_couple = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=COMBINATION_CARE,
-        parent="father",
-        is_other_parent_alive=True,
-    )
-
-    informal_care_by_father_health_single = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=INFORMAL_CARE,
-        parent="father",
-        is_other_parent_alive=False,
-    )
-    formal_care_by_father_health_single = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=FORMAL_CARE,
-        parent="father",
-        is_other_parent_alive=False,
-    )
-    combination_care_by_father_health_single = get_caregiving_status_by_parental_health(
-        df,
-        care_choice=COMBINATION_CARE,
-        parent="father",
-        is_other_parent_alive=False,
-    )
-
-    # work transitions
-    no_work_to_no_work = get_work_transition(df, NO_WORK, NO_WORK)
-    no_work_to_part_time = get_work_transition(df, NO_WORK, PART_TIME)
-    no_work_to_full_time = get_work_transition(df, NO_WORK, FULL_TIME)
-
-    part_time_to_no_work = get_work_transition(df, PART_TIME, NO_WORK)
-    part_time_to_part_time = get_work_transition(df, PART_TIME, PART_TIME)
-    part_time_to_full_time = get_work_transition(df, PART_TIME, FULL_TIME)
-
-    full_time_to_no_work = get_work_transition(df, FULL_TIME, NO_WORK)
-    full_time_to_part_time = get_work_transition(df, FULL_TIME, PART_TIME)
-    full_time_to_full_time = get_work_transition(df, FULL_TIME, FULL_TIME)
-
-    # caregiving transitions
-    no_informal_care_to_no_informal_care = get_work_transition(
-        df,
-        NO_INFORMAL_CARE,
-        NO_INFORMAL_CARE,
-    )
-    no_informal_care_to_informal_care = get_work_transition(
-        df,
-        NO_INFORMAL_CARE,
-        INFORMAL_CARE,
-    )
-
-    informal_care_to_no_informal_care = get_work_transition(
-        df,
-        INFORMAL_CARE,
-        NO_INFORMAL_CARE,
-    )
-    informal_care_to_informal_care = get_work_transition(
-        df,
-        INFORMAL_CARE,
-        INFORMAL_CARE,
-    )
-
-    no_informal_care_to_no_formal_care = get_work_transition(
-        df,
-        NO_INFORMAL_CARE,
-        NO_FORMAL_CARE,
-    )
-    no_informal_care_to_formal_care = get_work_transition(
-        df,
-        NO_INFORMAL_CARE,
-        FORMAL_CARE,
-    )
-
-    informal_care_to_no_formal_care = get_work_transition(
-        df,
-        INFORMAL_CARE,
-        NO_FORMAL_CARE,
-    )
-    informal_care_to_formal_care = get_work_transition(df, INFORMAL_CARE, FORMAL_CARE)
-
-    #
-    no_formal_care_to_no_informal_care = get_work_transition(
-        df,
-        NO_FORMAL_CARE,
-        NO_INFORMAL_CARE,
-    )
-    no_formal_care_to_informal_care = get_work_transition(
-        df,
-        NO_FORMAL_CARE,
-        INFORMAL_CARE,
-    )
-
-    formal_care_to_no_informal_care = get_work_transition(
-        df,
-        FORMAL_CARE,
-        NO_INFORMAL_CARE,
-    )
-    formal_care_to_informal_care = get_work_transition(df, FORMAL_CARE, INFORMAL_CARE)
-
-    no_formal_care_to_no_formal_care = get_work_transition(
-        df,
-        NO_FORMAL_CARE,
-        NO_FORMAL_CARE,
-    )
-    no_formal_care_to_formal_care = get_work_transition(df, NO_FORMAL_CARE, FORMAL_CARE)
-
-    formal_care_to_no_formal_care = get_work_transition(df, FORMAL_CARE, NO_FORMAL_CARE)
-    formal_care_to_formal_care = get_work_transition(df, FORMAL_CARE, FORMAL_CARE)
-
-    return jnp.array(
-        [
-            share_not_working_by_age,
-            share_working_part_time_by_age,
-            share_working_full_time_by_age,
-            #
-            share_informal_care_by_age_bin,
-            #
-            income_part_time_by_age_bin,
-            income_full_time_by_age_bin,
-            wealth_by_age_bin,
-            #
-            share_not_working_no_informal_care_by_age_bin,
-            share_part_time_no_informal_care_by_age_bin,
-            share_full_time_no_informal_care_by_age_bin,
-            share_not_working_informal_care_by_age_bin,
-            share_part_time_informal_care_by_age_bin,
-            share_full_time_informal_care_by_age_bin,
-            #
-            # informal_care_by_mother_health_couple,
-            # formal_care_by_mother_health_couple,
-            # combination_care_by_mother_health_couple,
-            # informal_care_by_mother_health_single,
-            # formal_care_by_mother_health_single,
-            # combination_care_by_mother_health_single,
-            # #
-            # informal_care_by_father_health_couple,
-            # formal_care_by_father_health_couple,
-            # combination_care_by_father_health_couple,
-            # informal_care_by_father_health_single,
-            # formal_care_by_father_health_single,
-            # combination_care_by_father_health_single,
-            # work transitions
-            no_work_to_no_work,
-            no_work_to_part_time,
-            no_work_to_full_time,
-            part_time_to_no_work,
-            part_time_to_part_time,
-            part_time_to_full_time,
-            full_time_to_no_work,
-            full_time_to_part_time,
-            full_time_to_full_time,
-            # caregiving transitions
-            no_informal_care_to_no_informal_care,
-            no_informal_care_to_informal_care,
-            informal_care_to_no_informal_care,
-            informal_care_to_informal_care,
-            no_informal_care_to_no_formal_care,
-            no_informal_care_to_formal_care,
-            informal_care_to_no_formal_care,
-            informal_care_to_formal_care,
-            #
-            no_formal_care_to_no_informal_care,
-            no_formal_care_to_informal_care,
-            formal_care_to_no_informal_care,
-            formal_care_to_informal_care,
-            no_formal_care_to_no_formal_care,
-            no_formal_care_to_formal_care,
-            formal_care_to_no_formal_care,
-            formal_care_to_formal_care,
-        ],
-    )
-
-
-# ==============================================================================
-
-
-# def get_share_by_age(df, lagged_choice):
-#     shares = []
-#     for period in range(14):
-#         period_df = df[df["period"] == period]
-
-#         share = len(period_df[period_df["lagged_choice"].isin(lagged_choice)]) / len(
-#             period_df
-#         )
-
-#         shares += [share]
-
-#     return shares
-
-
-def get_share_by_age(df, lagged_choice):
-    shares = []
-    for period in range(14):
-        period_df = df[df["period"] == period]
-        if len(period_df) > 0:
-            share = len(
-                period_df[period_df["lagged_choice"].isin(lagged_choice)],
-            ) / len(period_df)
-        else:
-            share = 0  # Avoid division by zero if there are no rows for a period
-        shares.append(share)
-    return shares
-
-
-def get_share_by_age_bin(df, lagged_choice):
-    return [
-        len(
-            df[
-                (df["period"] > age_bin[0])
-                & (df["period"] <= age_bin[1])
-                & (df["lagged_choice"].isin(lagged_choice))
-            ],
-        )
-        / len(df[(df["period"] > age_bin[0]) & (df["period"] <= age_bin[1])])
-        for age_bin in AGE_BINS
-    ]
-
-
-def get_share_by_informal_care_type_by_age_bin(df, lagged_choice, care_type):
-    """Really lagged choice or rather current (end of period) choice?"""
-    return [
-        len(
-            df[
-                (df["period"] > age_bin[0])
-                & (df["period"] <= age_bin[1])
-                & (df["lagged_choice"].isin(care_type))
-                & (df["lagged_choice"].isin(lagged_choice))
-            ],
-        )
-        / len(
-            df[
-                (df["period"] > age_bin[0])
-                & (df["period"] <= age_bin[1])
-                & (df["lagged_choice"].isin(care_type))
-            ],
-        )
-        for age_bin in AGE_BINS
-    ]
-
-
-def _get_share_by_informal_care_type(df, lagged_choice, care_type):
-    """Really lagged choice or rather current (end of period) choice?"""
-    return [
-        len(
-            df[
-                (df["lagged_choice"].isin(care_type))
-                & (df["lagged_choice"].isin(lagged_choice))
-            ],
-        )
-        / len(df[(df["lagged_choice"].isin(care_type))]),
-    ]
-
-
-def get_income_by_age_bin(df, lagged_choice):
-    """Net income in absolute (non-log) terms.
-
-    After taxes and transfers as reported in SHARE.
-
-    """
-    df["working_hours"] = (
-        df[(df["lagged_choice"].isin(PART_TIME))] * PART_TIME_HOURS
-        + df[(df["lagged_choice"].isin(FULL_TIME))] * FULL_TIME_HOURS
-    )
-    df["income"] = df["working_hours"] * df["wage"]
-
-    return [
-        df.loc[
-            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]),
-            "income",
-        ].mean()
-        for age_bin in AGE_BINS
-    ]
-
-
-def get_wealth_beginning_of_period_by_age_bin(df):
-    """savings_current_period = resources_beginning_of_period - consumption
-
-    beginning or end of period wealth?
-    end of period wealth = savings
-
-    matter of whether consumption is included or not (part of income that is consumed)
-
-    """
-    return [
-        df.loc[
-            (df["period"] > age_bin[0]) & (df["period"] <= age_bin[1]),
-            "wealth",
-        ].mean()
-        for age_bin in AGE_BINS
-    ]
-
-
-def _get_share_by_informal_care_type_by_age_bin(df, lagged_choice, is_informal_care):
-    """Duplicate?
-
-    What's the difference?
-
-    """
-    return [
-        len(
-            df[
-                (df["lagged_choice"].isin(INFORMAL_CARE) * is_informal_care)
-                & (df["period"] > age_bin[0])
-                & (df["period"] <= age_bin[1])
-                & (df["lagged_choice"].isin(lagged_choice))
-            ],
-        )
-        / len(
-            df[
-                (df["lagged_choice"].isin(INFORMAL_CARE) * is_informal_care)
-                & (df["period"] > age_bin[0])
-                & (df["period"] <= age_bin[1])
-            ],
-        )
-        for age_bin in AGE_BINS
-    ]
-
-
-def get_caregiving_status_by_parental_health(
-    df,
-    care_choice,
-    parent,
-    is_other_parent_alive,
-):
-    other_parent = ("father") * (parent == "mother") + ("mother") * (parent == "father")
-
-    return [
-        len(
-            df[
-                (df[f"{parent}_health"] == health)
-                & (df[f"{other_parent}_alive"] == is_other_parent_alive)
-                & (df["choice"].isin(care_choice))
-            ],
-        )
-        for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
-    ]
-
-
-def get_work_transition(df, lagged_choice, current_choice):
-    """df[(df["lagged_choice"].isin(NO_WORK)) & (df["choice"].isin(NO_WORK))]"""
-    return len(
-        df[
-            (df["lagged_choice"].isin(lagged_choice))
-            & (df["choice"].isin(current_choice))
-        ],
-    ) / len(df[(df["lagged_choice"].isin(lagged_choice))])
-
-
-def get_care_transition(df, lagged_choice, current_choice):
-    """"""
-    return len(
-        df[
-            (df["lagged_choice"].isin(lagged_choice))
-            & (df["choice"].isin(current_choice))
-        ],
-    ) / len(df[(df["lagged_choice"].isin(lagged_choice))])
-
-
-# ==============================================================================
-# JAX Numpy
-# ==============================================================================
-
-
-def get_share_by_age(df_arr, lagged_choice):
-    lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-    shares = []
-    for period in range(14):
-        period_mask = df_arr[:, ind["period"]] == period
-
-        share = jnp.sum(period_mask & lagged_choice_mask) / jnp.sum(period_mask)
-        # period count is always larger than 0! otherwise error
-        shares.append(share)
-
-    return shares
-
-
-def get_share_by_age_bin(df_arr, lagged_choice):
-    return [
-        jnp.mean(
-            jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-            & (df_arr[:, ind["period"]] > age_bin[0])
-            & (df_arr[:, ind["period"]] <= age_bin[1]),
-        )
-        for age_bin in AGE_BINS
-    ]
-
-
-def get_share_by_informal_care_type_by_age_bin(df_arr, lagged_choice, care_type):
-    # Pre-compute masks that are independent of the age bins
-    lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-    care_type_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], care_type)
-    combined_mask = lagged_choice_mask & care_type_mask
-
-    # Compute shares within each age bin
-    shares = []
-    for period in range(14):
-        age_bin_mask = df_arr[:, ind["period"]] == period
-        mask = jnp.sum(lagged_choice_mask & care_type_mask & age_bin_mask) / jnp.sum(
-            care_type_mask & age_bin_mask,
-        )
-        # share = jnp.mean(mask) if jnp.any(age_bin_mask) else 0
-        # shares.append(share)
-
-    return shares
-
-
-def get_share_caregiving_by_age(df, lagged_choice):
-    lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-    shares = []
-    for period in range(14):
-        age_bin_mask = df_arr[:, ind["period"]] == period
-        mask = jnp.sum(lagged_choice_mask & age_bin_mask) / jnp.sum(age_bin_mask)
-        # share = jnp.mean(mask) if jnp.any(age_bin_mask) else 0
-        # shares.append(share)
-
-    return shares
