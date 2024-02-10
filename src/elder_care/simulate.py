@@ -1,4 +1,5 @@
 """Module to create simulated moments."""
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -633,7 +634,7 @@ def get_mean_by_age_bin_for_lagged_choice(df_arr, ind, var, lagged_choice):
         age_bin_mask = (df_arr[:, ind["period"]] > age_bin[0]) & (
             df_arr[:, ind["period"]] <= age_bin[1]
         )
-        means += [jnp.mean(df_arr[lagged_choice_mask & age_bin_mask, ind[var]])]
+        means.append([jnp.mean(df_arr[lagged_choice_mask & age_bin_mask, ind[var]])])
 
     return means
 

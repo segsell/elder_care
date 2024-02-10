@@ -1,4 +1,5 @@
 """Merge all SHARE waves and modules."""
+
 from pathlib import Path
 from typing import Annotated
 
@@ -505,6 +506,7 @@ GV_VARS = [
     "ypen5",  # Annual payment from social assistance
     "yreg1",  # Other regular payments from private pensions
     "yreg2",  # Other regular payment from private transfer
+    "slti",  # Savings for long-term investments: AS021, AS023, AS27, AS030
     "thinc",  # Total household net income - version A
     "thinc2",  # Total household net income - version B
     "hnetw",  # Household net worth (hnfass + hrass)

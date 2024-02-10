@@ -1,4 +1,5 @@
 """Create the estimation data set of females between 50 and 68."""
+
 import re
 from pathlib import Path
 from typing import Annotated
@@ -409,6 +410,10 @@ def compute_spousal_and_other_income(dat, hh_income=None):
     dat["other_income"] = np.select(_cond, _val, default=np.nan)
 
     dat["other_income"] = np.where(dat["other_income"] < 0, 0, dat["other_income"])
+
+    _cond = [(dat["hnetw"] > 0), (dat["hnetw"] == 0), dat["hnetw"].isna()]
+    _val = [(dat["slti"] / dat["hnetw"]), 0, np.nan]
+    dat["savings_rate"] = np.select(_cond, _val, default=np.nan)
 
     return dat
 
