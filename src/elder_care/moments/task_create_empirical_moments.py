@@ -7,7 +7,6 @@ The SHARE data sets on
 are used.
 
 """
-
 from pathlib import Path
 from typing import Annotated
 
@@ -123,7 +122,7 @@ def task_create_moments(
     # debt minus combined household super,
     # where the components are defined as in Summerfield et al. (2013)
     # We deflate wealth by the consumer price
-    
+
     savings_rate_no_informal_care_by_age_bin = (
         get_income_by_caregiving_status_and_age_bin(
             dat,
@@ -226,8 +225,8 @@ def task_create_moments(
             #
             # net_income_by_age_bin_part_time,
             # net_income_by_age_bin_full_time,
-            savings_rate_no_informal_care_by_age_bin,
-            savings_rate_informal_care_by_age_bin,
+            # savings_rate_no_informal_care_by_age_bin,
+            # savings_rate_informal_care_by_age_bin,
             #
             employment_by_caregiving_status,
             # caregiving_by_mother_health,
