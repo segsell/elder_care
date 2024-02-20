@@ -1,4 +1,5 @@
 """Get Consumper Price Index for Germany from 1991 to 2020."""
+
 from pathlib import Path
 from typing import Annotated
 

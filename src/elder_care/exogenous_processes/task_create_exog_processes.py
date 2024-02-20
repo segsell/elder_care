@@ -1,4 +1,5 @@
 """Create exogenous transition probabilities."""
+
 from pathlib import Path
 
 import jax.numpy as jnp

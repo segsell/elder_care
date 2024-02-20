@@ -1,4 +1,5 @@
 """Merge all SHARE waves and modules."""
+
 from pathlib import Path
 from typing import Annotated
 
