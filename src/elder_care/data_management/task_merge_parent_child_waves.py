@@ -1,12 +1,13 @@
 """Merge parent information."""
+
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
-from elder_care.config import SRC
 from pytask import Product
+
+from elder_care.config import BLD, SRC
 
 GERMANY = 12
 MISSING_VALUE = -9

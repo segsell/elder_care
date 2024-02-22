@@ -1,12 +1,13 @@
 """Module to create simulated moments."""
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 
-
 MIN_AGE = 51
 MAX_AGE = MIN_AGE + 14  # + 14
+
 
 AGE_50 = 50
 AGE_53 = 53

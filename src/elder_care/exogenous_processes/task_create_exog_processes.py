@@ -1,13 +1,14 @@
 """Create exogenous transition probabilities."""
+
 from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-from elder_care.config import BLD
-from elder_care.config import SRC
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+from elder_care.config import BLD, SRC
 
 FEMALE = 2
 MALE = 1

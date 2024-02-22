@@ -3,7 +3,6 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-
 MIN_AGE = 51
 MAX_AGE = MIN_AGE + 14  # 65
 

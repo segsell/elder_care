@@ -78,3 +78,9 @@ extend-ignore = [
 
 [tool.ruff.pydocstyle]
 convention = "google"
+
+
+[tool.yamlfix]
+line_length = 88
+sequence_style = "block_style"
+none_representation = "null"

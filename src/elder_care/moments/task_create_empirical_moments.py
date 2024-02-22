@@ -7,12 +7,14 @@ The SHARE data sets on
 are used.
 
 """
+
 from pathlib import Path
 from typing import Annotated
 
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
+
+from elder_care.config import BLD
 
 BASE_YEAR = 2015
 

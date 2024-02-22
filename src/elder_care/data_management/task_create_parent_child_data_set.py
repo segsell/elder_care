@@ -1,12 +1,13 @@
 """Create the parent child data set of people older than 65."""
+
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
 
+from elder_care.config import BLD
 
 WAVE_1 = 1
 WAVE_2 = 2
