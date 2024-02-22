@@ -1,7 +1,8 @@
+from numpy.testing import assert_almost_equal as aaae
+
 from elder_care.exogenous_processes.task_create_exog_processes import (
     exog_health_transition,
 )
-from numpy.testing import assert_almost_equal as aaae
 
 
 def test_exog_health_transition():
