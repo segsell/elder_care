@@ -765,7 +765,7 @@ def task_debug():
         seed=seed,
     )
     for key, value in initial_states.items():
-        initial_states[key] = value.astype(np.int16)
+        initial_states[key] = value.astype(np.int32)
 
     (
         model_funcs,
@@ -853,7 +853,7 @@ def task_debug():
         get_next_period_state=update_endog_state_by_state_and_choice,
     )
 
-    exog_state_space = exog_state_space.astype(np.int16)
+    # exog_state_space = exog_state_space.astype(np.int16)
     exog_mapping = create_exog_mapping(exog_state_space, exog_state_names)
 
     result = simulate_all_periods(
@@ -871,8 +871,8 @@ def task_debug():
         policy_right_solved=policy_right,
         #
         map_state_choice_to_index=jnp.array(map_state_choice_to_index),
-        choice_range=jnp.arange(map_state_choice_to_index.shape[-1], dtype=jnp.int16),
-        # choice_range=jnp.arange(map_state_choice_to_index.shape[-1], dtype=jnp.int32),
+        # choice_range=jnp.arange(map_state_choice_to_index.shape[-1], dtype=jnp.int16),
+        choice_range=jnp.arange(map_state_choice_to_index.shape[-1], dtype=jnp.int32),
         compute_exog_transition_vec=model_funcs["compute_exog_transition_vec"],
         compute_utility=model_funcs["compute_utility"],
         compute_beginning_of_period_resources=model_funcs[
@@ -883,9 +883,10 @@ def task_debug():
         compute_utility_final_period=model_funcs["compute_utility_final"],
     )
 
-    np.save(BLD / "moments" / "result.npy", result)
+    # np.save(BLD / "moments" / "result.npy", result)
 
 
+@pytask.mark.skip()
 def task_debug_simulate():
     seed = 2024
     n_choices = 12
