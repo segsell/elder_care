@@ -35,7 +35,7 @@ repos:
     hooks:
     -   id: isort
         name: isort
-        args: ["--force-single-line", "--line-length=100", "--profile=black"]
+        args: ["--profile=black"]
 -   repo: https://github.com/asottile/setup-cfg-fmt
     rev: v2.5.0
     hooks:

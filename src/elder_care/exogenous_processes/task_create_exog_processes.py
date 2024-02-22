@@ -8,8 +8,7 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-from elder_care.config import BLD
-from elder_care.config import SRC
+from elder_care.config import BLD, SRC
 
 FEMALE = 2
 MALE = 1
