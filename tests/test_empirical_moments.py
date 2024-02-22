@@ -1,4 +1,5 @@
 """Tests for creation of empirical moments."""
+
 import numpy as np
 from elder_care.moments.task_create_empirical_moments import (
     get_employment_transitions_soep,
