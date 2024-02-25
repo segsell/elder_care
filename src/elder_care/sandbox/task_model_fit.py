@@ -8,29 +8,32 @@ from dcegm.pre_processing.model_functions import process_model_functions
 from dcegm.pre_processing.state_space import create_state_space_and_choice_objects
 from dcegm.simulation.simulate import simulate_all_periods
 from dcegm.solve import get_solve_function
+
 from elder_care.config import BLD
-from elder_care.model import budget_constraint
-from elder_care.model import get_state_specific_feasible_choice_set
-from elder_care.model import inverse_marginal_utility
-from elder_care.model import marginal_utility
-from elder_care.model import marginal_utility_final_consume_all
-from elder_care.model import prob_exog_care_demand_basic
-from elder_care.model import prob_full_time_offer
-from elder_care.model import prob_part_time_offer
-from elder_care.model import prob_survival_father
-from elder_care.model import prob_survival_mother
-from elder_care.model import update_endog_state
-from elder_care.model import utility_final_consume_all
-from elder_care.model import utility_func
-from elder_care.simulate import draw_initial_states
-from elder_care.simulate import get_share_by_age
-from elder_care.simulate import get_share_by_type
-from elder_care.simulate import get_share_by_type_by_age_bin
-from elder_care.simulate import get_transition
-from elder_care.simulate import simulate_moments
-
-from elder_care.model import calc_stochastic_wage
-
+from elder_care.model import (
+    budget_constraint,
+    calc_stochastic_wage,
+    get_state_specific_feasible_choice_set,
+    inverse_marginal_utility,
+    marginal_utility,
+    marginal_utility_final_consume_all,
+    prob_exog_care_demand_basic,
+    prob_full_time_offer,
+    prob_part_time_offer,
+    prob_survival_father,
+    prob_survival_mother,
+    update_endog_state,
+    utility_final_consume_all,
+    utility_func,
+)
+from elder_care.simulate import (
+    draw_initial_states,
+    get_share_by_age,
+    get_share_by_type,
+    get_share_by_type_by_age_bin,
+    get_transition,
+    simulate_moments,
+)
 
 MIN_AGE = 51
 MAX_AGE = 80
@@ -943,7 +946,7 @@ def task_debug_simulate():
     }
 
     wage = calc_stochastic_wage(
-        period=0, lagged_choice=8, wage_shock=0, min_age=50, params=params
+        period=0, lagged_choice=8, wage_shock=0, min_age=50, params=params,
     )
     breakpoint()
 
