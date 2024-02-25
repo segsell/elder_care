@@ -30,7 +30,6 @@ dependencies:
   - tranquilo>=0.0.4
 
   # Misc
-  - black
   - nb_black
   - pdbpp
   - pre-commit
@@ -52,7 +51,7 @@ dependencies:
   - jupyter_server_terminals=0.4.4
 
   - pip:
-    - DFO-LS
+    - black
     - jupyter==1.0.0
     - jupyter-console==6.6.3
     - jupyter-contrib-core==0.4.2

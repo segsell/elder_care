@@ -15,12 +15,14 @@ ignore-nested-functions = true
 exclude = ["setup.py", "docs", "bld"]
 ignore-regex = ["task_*"]
 
+[tool.black]
+line-length = 88
 
 [tool.ruff]
 target-version = "py311"
 fix = true
-select = ["ALL"]
-extend-ignore = [
+lint.select = ["ALL"]
+lint.extend-ignore = [
     # missing type annotation
     "ANN001",
 
@@ -70,13 +72,13 @@ extend-ignore = [
     "E712"
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
 "docs/source/conf.py" = ["INP001"]
 "src/elder_care/sandbox/run.py" = ["INP001"]
 
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 
