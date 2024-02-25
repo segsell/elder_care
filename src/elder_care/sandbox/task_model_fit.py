@@ -29,6 +29,8 @@ from elder_care.simulate import get_share_by_type_by_age_bin
 from elder_care.simulate import get_transition
 from elder_care.simulate import simulate_moments
 
+from elder_care.model import calc_stochastic_wage
+
 
 MIN_AGE = 51
 MAX_AGE = 80
@@ -251,30 +253,31 @@ def simulate_moments(arr, idx):
     # yearly net income
     # Caution: Some bug here!! Zero income, althouh working (full-time),
     # so people have to live off of their initial wealth
-    # income_part_time_by_age_bin = get_mean_by_age_bin_for_lagged_choice(
-    #    arr,
-    #    ind=idx,
-    #    var="income",
-    #    lagged_choice=PART_TIME,
-    # )
-    # income_full_time_by_age_bin = get_mean_by_age_bin_for_lagged_choice(
-    #    arr,
-    #    ind=idx,
-    #    var="income",
-    #    lagged_choice=FULL_TIME,
-    # )
+    income_part_time_by_age_bin = get_mean_by_age_bin_for_lagged_choice(
+        arr,
+        ind=idx,
+        var="income",
+        lagged_choice=PART_TIME,
+    )
+    income_full_time_by_age_bin = get_mean_by_age_bin_for_lagged_choice(
+        arr,
+        ind=idx,
+        var="income",
+        lagged_choice=FULL_TIME,
+    )
+    breakpoint()
 
     # savings rate
     # savings_rate_no_informal_care_by_age_bin = get_savings_rate_by_age_bin(
-    #    arr,
-    #   ind=idx,
-    #    care_type=NO_INFORMAL_CARE,
+    #     arr,
+    #     ind=idx,
+    #     care_type=NO_INFORMAL_CARE,
     # )
 
     # savings_rate_informal_care_by_age_bin = get_savings_rate_by_age_bin(
-    #    arr,
-    #    ind=idx,
-    #    care_type=INFORMAL_CARE,
+    #     arr,
+    #     ind=idx,
+    #     care_type=INFORMAL_CARE,
     # )
 
     # share working by caregiving type (and age bin) --> to be checked
@@ -482,7 +485,9 @@ def simulate_moments(arr, idx):
     )
 
     return jnp.asarray(
-        share_not_working_by_age
+        income_part_time_by_age_bin
+        + income_full_time_by_age_bin
+        + share_not_working_by_age
         + share_working_part_time_by_age
         + share_working_full_time_by_age
         +
@@ -745,6 +750,7 @@ exog_savings_grid = jnp.concatenate(
 pytask.mark.skip()
 
 
+@pytask.mark.skip()
 def task_debug():
     seed = 2024
     n_choices = 12
@@ -883,14 +889,16 @@ def task_debug():
         compute_utility_final_period=model_funcs["compute_utility_final"],
     )
 
-    # np.save(BLD / "moments" / "result.npy", result)
+    np.save(BLD / "moments" / "result.npy", result)
 
 
-@pytask.mark.skip()
+# @pytask.mark.skip()
 def task_debug_simulate():
     seed = 2024
     n_choices = 12
     n_agents = 10_000
+
+    options["model_params"] = model_params
 
     idx = {
         "agent": 0,
@@ -916,8 +924,8 @@ def task_debug_simulate():
         "full_time_working_part_time_last_period": 3.6164929716663443,
         "full_time_above_retirement_age": -3.2105565169713763,
         "wage_constant": 2.6858232962606876,
-        "wage_age": 1.074908693723371,
-        "wage_age_squared": -3.3287973353563896,
+        "wage_age": 1.074908693723371 + 0.6,
+        "wage_age_squared": -3.3287973353563896 * 0.01,
         "wage_part_time": 0.4729857370437544,
         "wage_not_working": 1.272419411564533,
         "utility_leisure_constant": -4.435797729688349,
@@ -934,6 +942,11 @@ def task_debug_simulate():
         "interest_rate": 0.04,
     }
 
+    wage = calc_stochastic_wage(
+        period=0, lagged_choice=8, wage_shock=0, min_age=50, params=params
+    )
+    breakpoint()
+
     arr = create_simulation_array(
         result,
         options=options,
@@ -942,3 +955,4 @@ def task_debug_simulate():
     )
 
     out_arr = simulate_moments(arr, idx)
+    breakpoint()
