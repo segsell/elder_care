@@ -1,12 +1,13 @@
 """Merge all SHARE waves and modules."""
+
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
-from elder_care.config import SRC
 from pytask import Product
+
+from elder_care.config import BLD, SRC
 
 GERMANY = 12
 MISSING_VALUE = -9
@@ -891,9 +892,11 @@ def process_gv_imputations(wave, args):
 
 def filter_nested_dict(original_dict, keys_to_remove):
     return {
-        key: [value for value in values if value not in keys_to_remove.get(key, [])]
-        if key in keys_to_remove
-        else values
+        key: (
+            [value for value in values if value not in keys_to_remove.get(key, [])]
+            if key in keys_to_remove
+            else values
+        )
         for key, values in original_dict.items()
     }
 
@@ -903,6 +906,6 @@ def load_and_rename_wave_data(wave):
     module_file = SRC / f"data/sharew{wave}/sharew{wave}_rel8-0-0_{module}.dta"
 
     data = pd.read_stata(module_file, convert_categoricals=False)
-    data.columns = [col[:-2] if col.endswith("sp") else col for col in data.columns]
+    data.columns = [col.removesuffix("sp") for col in data.columns]
 
     return data

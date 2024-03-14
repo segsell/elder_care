@@ -1,4 +1,5 @@
 """Tasks for merging the data."""
+
 # @pytask.mark.depends_on(
 #     },
 # @pytask.mark.produces(BLD / "data" / "data_merged.csv")

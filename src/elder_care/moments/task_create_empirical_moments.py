@@ -7,13 +7,15 @@ The SHARE data sets on
 are used.
 
 """
+
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
+
+from elder_care.config import BLD
 
 BASE_YEAR = 2015
 
@@ -60,7 +62,42 @@ def task_create_moments(
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
-    """Create empirical moments for SHARE data."""
+    """Create empirical moments for SHARE data.
+
+    mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
+    mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
+
+    father_couple = parent[(parent["gender"] == MALE) & (parent["married"] == True)]
+    father_single = parent[(parent["gender"] == MALE) & (parent["married"] == False)]
+
+    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
+
+    # care mix by health status of parent
+    caregiving_by_mother_health = (
+        get_caregiving_status_by_mother_health_and_marital_status(
+            mother_couple,
+            mother_single,
+            weight=weight,
+        )
+    )
+    caregiving_by_father_health = (
+        get_caregiving_status_by_father_health_and_marital_status(
+            father_couple,
+            father_single,
+            weight=weight,
+        )
+    )
+
+    caregiving_by_mother_couple_health_sample_sizes = table(mother_couple["health"])
+    caregiving_by_mother_single_health_sample_sizes = table(mother_single["health"])
+
+    caregiving_by_father_couple_health_sample_sizes = table(father_couple["health"])
+    caregiving_by_father_single_health_sample_sizes = table(father_single["health"])
+
+    """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
     cpi_data = pd.read_csv(path_to_cpi)
@@ -185,6 +222,11 @@ def task_create_moments(
     )
     intensive_care_var_weighted = "intensive_care_no_other_weighted"
 
+    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
+
     mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
     mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
 
@@ -239,7 +281,7 @@ def task_create_moments(
         )
     )
 
-    # labor and caregiving transitions
+    ### labor and caregiving transitions ###
     # work transitions
     employment_transitions_soep = get_employment_transitions_soep()
 
@@ -434,6 +476,7 @@ def task_create_moments(
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
+            # parent child data
             care_transitions_parent_child_data,
         ],
         ignore_index=False,
@@ -441,6 +484,39 @@ def task_create_moments(
     )
 
     all_moments.to_csv(path_to_save)
+
+
+# ================================================================================
+# Variance-Covariance matrix
+# ================================================================================
+
+
+def task_calcualte_variance_covariance_matrix(
+    path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
+    path_to_parent_child_hh_weight: Path = BLD
+    / "data"
+    / "parent_child_data_hh_weight.csv",
+    path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
+):
+    """Calculate variance-covariance matrix of moments.
+
+    moments_cov = em.get_moments_cov(     data, calculate_moments,
+    bootstrap_kwargs={"n_draws": 5_000, "seed": 0} )
+
+    """
+    dat_hh_weight = pd.read_csv(path_to_hh_weight)
+    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    cpi_data = pd.read_csv(path_to_cpi)
+
+    dat = dat_hh_weight.copy()
+    dat = deflate_income_and_wealth(dat, cpi_data)
+
+    parent = parent_hh_weight.copy()
+
+    dat["data"] = "estimation"
+    parent["data"] = "parent_child"
+
+    return pd.concat([dat, parent], ignore_index=True)
 
 
 # ================================================================================

@@ -1,4 +1,5 @@
 """Tests for data mergeing and preparation of the estimation data set."""
+
 # def test_merge_waves();
 # def is_weakly_increasing(series):
 # # Group the data by mergeid and apply the is_weakly_increasing function
@@ -7,6 +8,7 @@
 # # Group the data by mergeid and apply the is_weakly_increasing function
 # # Assert that all groups have weakly increasing work experience
 import pandas as pd
+
 from elder_care.config import BLD
 
 
