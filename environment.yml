@@ -63,3 +63,6 @@ dependencies:
 
     # local installation
     - -e .
+
+    # local dcegm
+    - -e ../dcegm

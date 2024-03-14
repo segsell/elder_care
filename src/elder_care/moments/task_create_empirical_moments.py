@@ -130,10 +130,23 @@ def task_create_moments(
     # debt minus combined household super,
     # where the components are defined as in Summerfield et al. (2013)
     # We deflate wealth by the consumer price
-    wealth_by_age_bin = get_wealth_by_age_bin(
+
+    savings_rate_no_informal_care_by_age_bin = (
+        get_income_by_caregiving_status_and_age_bin(
+            dat,
+            age_bins_coarse,
+            moment="real_savings_rate",
+            is_caregiver=False,
+            care_type=intensive_care_var,
+            weight=weight,
+        )
+    )
+    savings_rate_informal_care_by_age_bin = get_income_by_caregiving_status_and_age_bin(
         dat,
         age_bins_coarse,
-        moment="real_hnetw",
+        moment="real_savings_rate",
+        is_caregiver=True,
+        care_type=intensive_care_var,
         weight=weight,
     )
 
@@ -245,9 +258,10 @@ def task_create_moments(
             employment_by_age,
             share_intensive_care_by_age_bin_coarse,
             #
-            net_income_by_age_bin_part_time,
-            net_income_by_age_bin_full_time,
-            wealth_by_age_bin,
+            # net_income_by_age_bin_part_time,
+            # net_income_by_age_bin_full_time,
+            # savings_rate_no_informal_care_by_age_bin,
+            # savings_rate_informal_care_by_age_bin,
             #
             employment_by_caregiving_status,
             caregiving_by_mother_health,
@@ -1537,6 +1551,7 @@ def deflate_income_and_wealth(dat, cpi):
         "labor_income",
         "labor_income_monthly",
         "hourly_wage",
+        "savings_rate",
     ]
 
     for var in vars_to_deflate:

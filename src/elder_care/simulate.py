@@ -634,7 +634,23 @@ def get_mean_by_age_bin_for_lagged_choice(df_arr, ind, var, lagged_choice):
         age_bin_mask = (df_arr[:, ind["period"]] > age_bin[0]) & (
             df_arr[:, ind["period"]] <= age_bin[1]
         )
-        means += [jnp.mean(df_arr[lagged_choice_mask & age_bin_mask, ind[var]])]
+        means.append([jnp.mean(df_arr[lagged_choice_mask & age_bin_mask, ind[var]])])
+
+    return means
+
+
+def get_savings_rate_by_age_bin(arr, ind, care_type):
+    """Get savings rate of given care type by age bin."""
+    care_type_mask = jnp.isin(arr[:, ind["lagged_choice"]], care_type)
+    means = []
+    for age_bin in AGE_BINS:
+        age_bin_mask = (arr[:, ind["period"]] > age_bin[0]) & (
+            arr[:, ind["period"]] <= age_bin[1]
+        )
+
+        means.append(
+            jnp.mean([arr[care_type_mask & age_bin_mask, ind["savings_rate"]]]),
+        )
 
     return means
 
