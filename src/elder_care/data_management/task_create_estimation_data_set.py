@@ -6,9 +6,9 @@ from typing import Annotated
 
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
 
+from elder_care.config import BLD
 
 FEMALE = 2
 

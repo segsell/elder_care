@@ -5,9 +5,9 @@ from typing import Annotated
 
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
 
+from elder_care.config import BLD
 
 WAVE_1 = 1
 WAVE_2 = 2
@@ -21,7 +21,7 @@ WAVE_8 = 8
 FEMALE = 2
 MALE = 1
 
-MIN_AGE = 68
+MIN_AGE = 60
 MAX_AGE = 105
 
 HEALTH_EXCELLENT = 1

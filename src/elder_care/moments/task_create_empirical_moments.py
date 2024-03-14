@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Annotated
 
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
+
+from elder_care.config import BLD
 
 BASE_YEAR = 2015
 
@@ -78,6 +79,12 @@ def task_create_moments(
             weight=weight,
         )
     )
+
+    caregiving_by_mother_couple_health_sample_sizes = table(mother_couple["health"])
+    caregiving_by_mother_single_health_sample_sizes = table(mother_single["health"])
+
+    caregiving_by_father_couple_health_sample_sizes = table(father_couple["health"])
+    caregiving_by_father_single_health_sample_sizes = table(father_single["health"])
 
     """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
@@ -193,7 +200,34 @@ def task_create_moments(
         parent["no_informal_care_child"] * parent[weight]
     )
 
-    # labor and caregiving transitions
+    mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
+    mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
+
+    father_couple = parent[(parent["gender"] == MALE) & (parent["married"] == True)]
+    father_single = parent[(parent["gender"] == MALE) & (parent["married"] == False)]
+
+    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
+
+    # care mix by health status of parent
+    caregiving_by_mother_health = (
+        get_caregiving_status_by_mother_health_and_marital_status(
+            mother_couple,
+            mother_single,
+            weight=weight,
+        )
+    )
+    caregiving_by_father_health = (
+        get_caregiving_status_by_father_health_and_marital_status(
+            father_couple,
+            father_single,
+            weight=weight,
+        )
+    )
+
+    ### labor and caregiving transitions ###
     # work transitions
     employment_transitions_soep = get_employment_transitions_soep()
 
@@ -230,8 +264,8 @@ def task_create_moments(
             # savings_rate_informal_care_by_age_bin,
             #
             employment_by_caregiving_status,
-            # caregiving_by_mother_health,
-            # caregiving_by_father_health,
+            caregiving_by_mother_health,
+            caregiving_by_father_health,
             #
             employment_transitions_soep,
             care_transitions_estimation_data,

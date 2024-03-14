@@ -19,8 +19,8 @@ ignore-regex = ["task_*"]
 [tool.ruff]
 target-version = "py311"
 fix = true
-select = ["ALL"]
-extend-ignore = [
+lint.select = ["ALL"]
+lint.extend-ignore = [
     # missing type annotation
     "ANN001",
 
@@ -78,3 +78,9 @@ extend-ignore = [
 
 [tool.ruff.pydocstyle]
 convention = "google"
+
+
+[tool.yamlfix]
+line_length = 88
+sequence_style = "block_style"
+none_representation = "null"

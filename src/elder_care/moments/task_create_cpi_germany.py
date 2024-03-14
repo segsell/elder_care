@@ -4,8 +4,9 @@ from pathlib import Path
 from typing import Annotated
 
 import pandas as pd
-from elder_care.config import BLD
 from pytask import Product
+
+from elder_care.config import BLD
 
 
 def task_process_cpi_data(
