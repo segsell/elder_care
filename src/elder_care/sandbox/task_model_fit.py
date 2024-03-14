@@ -946,7 +946,11 @@ def task_debug_simulate():
     }
 
     wage = calc_stochastic_wage(
-        period=0, lagged_choice=8, wage_shock=0, min_age=50, params=params,
+        period=0,
+        lagged_choice=8,
+        wage_shock=0,
+        min_age=50,
+        params=params,
     )
     breakpoint()
 
