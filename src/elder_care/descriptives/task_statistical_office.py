@@ -1,4 +1,5 @@
 """Descriptives from the German statistical office."""
+
 from pathlib import Path
 from typing import Annotated
 
@@ -6,9 +7,9 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import numpy as np
 import pandas as pd
-from elder_care.config import BLD
-from elder_care.config import SRC
 from pytask import Product
+
+from elder_care.config import BLD, SRC
 
 
 def task_create_type_of_care_by_age_group(
@@ -279,7 +280,10 @@ def plot_share_by_age_group_width(dat, sex, year, save_path):
             bottom=[
                 i + j + k
                 for i, j, k in zip(
-                    _only_informal, _combination_care, _only_home_care, strict=False,
+                    _only_informal,
+                    _combination_care,
+                    _only_home_care,
+                    strict=False,
                 )
             ][i],
             width=widths[i],
