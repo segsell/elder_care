@@ -95,7 +95,7 @@ repos:
     rev: v2.2.6
     hooks:
     -   id: codespell
-        exclude: src/elder_care/descriptives/task_statistical_office.py
+        exclude: src/elder_care/moments/task_care_mix_statistical_office.py
 -   repo: meta
     hooks:
     -   id: check-useless-excludes
