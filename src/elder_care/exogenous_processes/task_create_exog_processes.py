@@ -29,7 +29,14 @@ BAD_HEALTH = 2
 RETIREMENT_AGE = 65  # 65
 
 
-def task_create_params_parental_health_transition():
+def task_create_params_parental_health_transition(
+    path_to_save_params_female: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_health_transition_female.pkl",
+    path_to_save_params_male: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_health_transition_male.pkl",
+):
     """Health transition probabilities for parents.
 
     Estimated from SOEP data.
@@ -73,7 +80,8 @@ def task_create_params_parental_health_transition():
         },
     }
 
-    return params_female, params_male
+    save_dict_to_pickle(params_female, path_to_save_params_female)
+    save_dict_to_pickle(params_male, path_to_save_params_male)
 
 
 def task_create_params_spousal_income(
@@ -509,6 +517,12 @@ def task_create_survival_probabilities(
     / "data"
     / "statistical_office"
     / "12621-0001_Sterbetafel_clean.csv",
+    path_to_save_female: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_survival_prob_female.pkl",
+    path_to_save_male: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_survival_prob_male.pkl",
 ) -> None:
     """Create exogenous survival probabilities for parents."""
     data = pd.read_csv(path_to_raw_data)
@@ -539,10 +553,17 @@ def task_create_survival_probabilities(
     logit_male = sm.Logit(y_male, x_male).fit()
     logit_female = sm.Logit(y_female, x_female).fit()
 
-    coefs_male = logit_male.params
-    coefs_female = logit_female.params
+    params_female = statsmodels_params_to_dict(
+        logit_female.params,
+        name_prefix="survival_prob_female",
+    )
+    params_male = statsmodels_params_to_dict(
+        logit_male.params,
+        name_prefix="survival_prob_male",
+    )
 
-    return coefs_male, coefs_female
+    save_dict_to_pickle(params_female, path_to_save_female)
+    save_dict_to_pickle(params_male, path_to_save_male)
 
 
 def exog_care_demand_probability(
