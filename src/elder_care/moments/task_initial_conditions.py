@@ -19,6 +19,7 @@ BASE_YEAR = 2015
 MALE = 1
 FEMALE = 2
 
+START_AGE = 40
 MIN_AGE = 50
 MAX_AGE = 65
 
@@ -66,6 +67,17 @@ def task_create_initial_conditions(
     - share not working part time, full time
     - share informal care
     - share formal care
+
+
+    Usage:
+
+    _mother_age = draw_parental_age(
+        seed=2024,
+        n_agents=100,
+        mean=initial_mother_age_mean,
+        std_dev=initial_mother_age_std,
+    )
+    _mother_age_clipped = np.clip(_mother_age - 10, START_AGE + 18, 100)
 
     """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
@@ -137,7 +149,7 @@ def task_create_initial_conditions(
         initial_father_age_std,
     ) = get_inital_parent_age_mean_and_std_dev(
         dat,
-        age=MIN_AGE + 1,
+        age=MIN_AGE,
         weight=weight,
     )
 
@@ -357,6 +369,28 @@ def _plot_dist(sample):
     plt.xlabel("Age")
     plt.ylabel("Frequency")
     plt.title("Distribution of Age")
+    plt.show()
+
+
+def _plot_density_distribution(
+    sample,
+    xlabel="Value",
+    title="Density Distribution",
+):
+    """Plot the density distribution of a specified column in a pandas DataFrame.
+
+    Args:
+        sample (pandas.DataFrame): The DataFrame containing the data.
+        column_name (str): The name of the column to plot.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'Value'.
+        title (str, optional): The title of the plot. Defaults to
+            'Density Distribution'.
+
+    """
+    sns.kdeplot(sample, shade=True)
+    plt.xlabel(xlabel)
+    plt.ylabel("Density")
+    plt.title(title)
     plt.show()
 
 
