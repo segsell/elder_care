@@ -29,6 +29,10 @@ BAD_HEALTH = 2
 RETIREMENT_AGE = 65  # 65
 
 
+def table(df_col):
+    return pd.crosstab(df_col, columns="Count")["Count"]
+
+
 def task_create_params_parental_health_transition(
     path_to_save_params_female: Annotated[Path, Product] = BLD
     / "model"
@@ -163,6 +167,12 @@ def task_create_params_exog_other_income(
 
 def task_create_parental_survival_prob(
     path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
+    path_to_save_female: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_survival_prob_female.pkl",
+    path_to_save_male: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_survival_prob_male.pkl",
 ) -> None:
     """Create exogenous survival probabilities from SHARE data.
 
@@ -171,6 +181,8 @@ def task_create_parental_survival_prob(
 
     Args:
         path_to_raw_data (Path): Path to the raw data.
+        path_to_save_female (Path): Path to save the survival parameters for females.
+        path_to_save_male (Path): Path to save the survival parameters for males.
 
     Returns:
         None
@@ -178,70 +190,76 @@ def task_create_parental_survival_prob(
     """
     dat = pd.read_csv(path_to_raw_data)
 
-    dat = _prepare_dependent_variables_health(dat)
+    dat = _prepare_dependent_variables_health(
+        dat,
+        health="lagged_health",
+        age="lagged_age",
+    )
 
-    x_single_mother_with_nans = sm.add_constant(
+    x_mother_with_nans = sm.add_constant(
         dat[
             [
-                "mother_age",
-                "mother_age_squared",
-                "mother_health_medium",
-                "mother_health_bad",
+                "mother_lagged_age",
+                "mother_lagged_age_squared",
+                "mother_lagged_health_medium",
+                "mother_lagged_health_bad",
             ]
         ],
     )
-    x_single_mother = x_single_mother_with_nans.dropna()
-    data_single_mother = dat.dropna(
+    x_mother = x_mother_with_nans.dropna()
+    data_mother = dat.dropna(
         subset=[
-            "mother_age",
-            "mother_age_squared",
-            "mother_health_medium",
-            "mother_health_bad",
+            "mother_lagged_age",
+            "mother_lagged_age_squared",
+            "mother_lagged_health_medium",
+            "mother_lagged_health_bad",
         ],
     )
 
-    x_single_father_with_nans = sm.add_constant(
+    x_father_with_nans = sm.add_constant(
         dat[
             [
-                "father_age",
-                "father_age_squared",
-                "father_health_medium",
-                "father_health_bad",
+                "father_lagged_age",
+                "father_lagged_age_squared",
+                "father_lagged_health_medium",
+                "father_lagged_health_bad",
             ]
         ],
     )
-    x_single_father = x_single_father_with_nans.dropna()
-    data_single_father = dat.dropna(
+    x_father = x_father_with_nans.dropna()
+    data_father = dat.dropna(
         subset=[
-            "father_age",
-            "father_age_squared",
-            "father_health_medium",
-            "father_health_bad",
+            "father_lagged_age",
+            "father_lagged_age_squared",
+            "father_lagged_health_medium",
+            "father_lagged_health_bad",
         ],
     )
 
-    # Single father
+    x_male = x_father[(data_father["father_alive"].notna())]
+    y_male = data_father["father_alive"][(data_father["father_alive"].notna())]
+    x_male = x_male.reset_index(drop=True)
+    y_male = y_male.reset_index(drop=True)
 
-    x_single_male = x_single_father[(data_single_father["father_alive"].notna())]
-    y_single_male = data_single_father["father_alive"][
-        (data_single_father["father_alive"].notna())
-    ]
-    x_single_male = x_single_male.reset_index(drop=True)
-    y_single_male = y_single_male.reset_index(drop=True)
+    x_female = x_mother[(data_mother["mother_alive"].notna())]
+    y_female = data_mother["mother_alive"][(data_mother["mother_alive"].notna())]
+    x_female = x_female.reset_index(drop=True)
+    y_female = y_female.reset_index(drop=True)
 
-    # Single mother
+    logit_female = sm.Logit(y_female, x_female).fit()
+    logit_male = sm.Logit(y_male, x_male).fit()
 
-    x_single_female = x_single_mother[(data_single_mother["mother_alive"].notna())]
-    y_single_female = data_single_mother["mother_alive"][
-        (data_single_mother["mother_alive"].notna())
-    ]
-    x_single_female = x_single_female.reset_index(drop=True)
-    y_single_female = y_single_female.reset_index(drop=True)
+    params_female = statsmodels_params_to_dict(
+        logit_female.params,
+        name_prefix="survival_prob_female",
+    )
+    params_male = statsmodels_params_to_dict(
+        logit_male.params,
+        name_prefix="survival_prob_male",
+    )
 
-    logit_single_father = sm.Logit(y_single_male, x_single_male).fit()
-    logit_single_mother = sm.Logit(y_single_female, x_single_female).fit()
-
-    return logit_single_father.params, logit_single_mother.params
+    save_dict_to_pickle(params_female, path_to_save_female)
+    save_dict_to_pickle(params_male, path_to_save_male)
 
 
 def task_create_params_exog_care_demand_basic(
@@ -554,43 +572,43 @@ def task_create_params_exog_care_demand(
     save_dict_to_pickle(params_couple, path_to_save_couple)
 
 
-def _prepare_dependent_variables_health(data):
+def _prepare_dependent_variables_health(data, health="health", age="age"):
     data = data.copy()
 
-    data["father_health_good"] = np.where(
-        data["father_health"] == GOOD_HEALTH,
-        GOOD_HEALTH,
-        np.where(data["father_health"].isna(), np.nan, 0),
+    data[f"father_{health}_good"] = np.where(
+        data[f"father_{health}"] == GOOD_HEALTH,
+        1,
+        np.where(data[f"father_{health}"].isna(), np.nan, 0),
     )
-    data["father_health_medium"] = np.where(
-        data["father_health"] == MEDIUM_HEALTH,
-        MEDIUM_HEALTH,
-        np.where(data["father_health"].isna(), np.nan, 0),
+    data[f"father_{health}_medium"] = np.where(
+        data[f"father_{health}"] == MEDIUM_HEALTH,
+        1,
+        np.where(data[f"father_{health}"].isna(), np.nan, 0),
     )
-    data["father_health_bad"] = np.where(
-        data["father_health"] == BAD_HEALTH,
-        BAD_HEALTH,
-        np.where(data["father_health"].isna(), np.nan, 0),
-    )
-
-    data["mother_health_good"] = np.where(
-        data["mother_health"] == GOOD_HEALTH,
-        GOOD_HEALTH,
-        np.where(data["mother_health"].isna(), np.nan, 0),
-    )
-    data["mother_health_medium"] = np.where(
-        data["mother_health"] == MEDIUM_HEALTH,
-        MEDIUM_HEALTH,
-        np.where(data["mother_health"].isna(), np.nan, 0),
-    )
-    data["mother_health_bad"] = np.where(
-        data["mother_health"] == BAD_HEALTH,
-        BAD_HEALTH,
-        np.where(data["mother_health"].isna(), np.nan, 0),
+    data[f"father_{health}_bad"] = np.where(
+        data[f"father_{health}"] == BAD_HEALTH,
+        1,
+        np.where(data[f"father_{health}"].isna(), np.nan, 0),
     )
 
-    data["mother_age_squared"] = data["mother_age"] ** 2
-    data["father_age_squared"] = data["father_age"] ** 2
+    data[f"mother_{health}_good"] = np.where(
+        data[f"mother_{health}"] == GOOD_HEALTH,
+        1,
+        np.where(data[f"mother_{health}"].isna(), np.nan, 0),
+    )
+    data[f"mother_{health}_medium"] = np.where(
+        data[f"mother_{health}"] == MEDIUM_HEALTH,
+        1,
+        np.where(data[f"mother_{health}"].isna(), np.nan, 0),
+    )
+    data[f"mother_{health}_bad"] = np.where(
+        data[f"mother_{health}"] == BAD_HEALTH,
+        1,
+        np.where(data[f"mother_{health}"].isna(), np.nan, 0),
+    )
+
+    data[f"mother_{age}_squared"] = data[f"mother_{age}"] ** 2
+    data[f"father_{age}_squared"] = data[f"father_{age}"] ** 2
 
     return data
 
@@ -600,12 +618,6 @@ def _task_create_survival_probabilities_stat_office(
     / "data"
     / "statistical_office"
     / "12621-0001_Sterbetafel_clean.csv",
-    path_to_save_female: Annotated[Path, Product] = BLD
-    / "model"
-    / "exog_survival_prob_female.pkl",
-    path_to_save_male: Annotated[Path, Product] = BLD
-    / "model"
-    / "exog_survival_prob_male.pkl",
 ) -> None:
     """Create exogenous survival probabilities for parents."""
     data = pd.read_csv(path_to_raw_data)
@@ -645,8 +657,7 @@ def _task_create_survival_probabilities_stat_office(
         name_prefix="survival_prob_male",
     )
 
-    save_dict_to_pickle(params_female, path_to_save_female)
-    save_dict_to_pickle(params_male, path_to_save_male)
+    return params_female, params_male
 
 
 def exog_care_demand_probability(

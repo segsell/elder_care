@@ -796,6 +796,8 @@ def create_parents_live_close(dat):
 
 def create_parental_health_status(dat, parent):
     """Aggregate health status of parents from 5 into 3 levels."""
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
     if parent == "mother":
         parent_indicator = 1
     elif parent == "father":
@@ -810,6 +812,7 @@ def create_parental_health_status(dat, parent):
     _val = [0, 1, 2]
 
     dat[f"{parent}_health"] = np.select(_cond, _val, default=np.nan)
+    dat[f"{parent}_lagged_health"] = dat.groupby("mergeid")[f"{parent}_health"].shift(1)
 
     return dat
 
@@ -832,14 +835,13 @@ def create_age_parent_and_parent_alive(dat, parent):
 
     # ==============================================================================
 
-    # Replace negative values with NaN
     dat[f"{parent}_age"] = np.where(
         dat[f"{parent}_age"] < MIN_AGE + 16,
         np.nan,
         dat[f"{parent}_age"],
     )
 
-    dat[f"lagged_{parent}_age"] = dat.groupby("mergeid")[f"{parent}_age"].shift(1)
+    dat[f"{parent}_lagged_age_raw"] = dat.groupby("mergeid")[f"{parent}_age"].shift(1)
     # Get the first non-NaN value of '{parent}_age'
     dat[f"{parent}_age_first"] = dat.groupby("mergeid")[f"{parent}_age"].transform(
         "first",
@@ -856,7 +858,7 @@ def create_age_parent_and_parent_alive(dat, parent):
     dat[f"{parent}_alive"] = np.select(_cond, _val, default=np.nan)
 
     dat[f"{parent}_dead"] = np.where(
-        dat[f"{parent}_age"].isna() & (dat[f"lagged_{parent}_age"] > 0),
+        dat[f"{parent}_age"].isna() & (dat[f"{parent}_lagged_age_raw"] > 0),
         1,
         np.nan,
     )
@@ -907,6 +909,8 @@ def create_age_parent_and_parent_alive(dat, parent):
         dat[f"{parent}_age_imputed_two"],
     ]
     dat[f"{parent}_age"] = np.select(_cond, _val, default=dat[f"{parent}_age"])
+
+    dat[f"{parent}_lagged_age"] = dat.groupby("mergeid")[f"{parent}_age"].shift(1)
 
     return dat
 
