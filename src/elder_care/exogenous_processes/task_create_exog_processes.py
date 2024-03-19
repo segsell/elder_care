@@ -153,7 +153,18 @@ def task_create_params_exog_other_income(
 def task_create_parental_survival_prob(
     path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
 ) -> None:
+    """Create exogenous survival probabilities from SHARE data.
 
+    The data is used to estimate the probability of a parent being alive in the
+    next period
+
+    Args:
+        path_to_raw_data (Path): Path to the raw data.
+
+    Returns:
+        None
+
+    """
     dat = pd.read_csv(path_to_raw_data)
 
     dat = _prepare_dependent_variables_health(dat)
@@ -547,7 +558,7 @@ def _prepare_dependent_variables_health(data):
     return data
 
 
-def task_create_survival_probabilities(
+def _task_create_survival_probabilities_stat_office(
     path_to_raw_data: Path = SRC
     / "data"
     / "statistical_office"
@@ -762,7 +773,7 @@ def predict_care_demand(
     coefs_single_mother,
     coefs_couple,
 ):
-    """Predicts the survival probability based on logit parameters.
+    """Predicts the care demand based on logit parameters.
 
     Parameters:
         age (int): The age of the individual. Age >= 65.
