@@ -70,13 +70,14 @@ lint.extend-ignore = [
     "E712"
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
 "docs/source/conf.py" = ["INP001"]
 "src/elder_care/sandbox/run.py" = ["INP001"]
+"src/elder_care/utils.py" = ["S301"]
 
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 
