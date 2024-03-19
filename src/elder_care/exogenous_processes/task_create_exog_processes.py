@@ -150,6 +150,78 @@ def task_create_params_exog_other_income(
     return model.params
 
 
+def task_create_parental_survival_prob(
+    path_to_raw_data: Path = BLD / "data" / "estimation_data.csv",
+) -> None:
+
+    dat = pd.read_csv(path_to_raw_data)
+
+    dat = _prepare_dependent_variables_health(dat)
+
+    x_single_mother_with_nans = sm.add_constant(
+        dat[
+            [
+                "mother_age",
+                "mother_age_squared",
+                "mother_health_medium",
+                "mother_health_bad",
+            ]
+        ],
+    )
+    x_single_mother = x_single_mother_with_nans.dropna()
+    data_single_mother = dat.dropna(
+        subset=[
+            "mother_age",
+            "mother_age_squared",
+            "mother_health_medium",
+            "mother_health_bad",
+        ],
+    )
+
+    x_single_father_with_nans = sm.add_constant(
+        dat[
+            [
+                "father_age",
+                "father_age_squared",
+                "father_health_medium",
+                "father_health_bad",
+            ]
+        ],
+    )
+    x_single_father = x_single_father_with_nans.dropna()
+    data_single_father = dat.dropna(
+        subset=[
+            "father_age",
+            "father_age_squared",
+            "father_health_medium",
+            "father_health_bad",
+        ],
+    )
+
+    # Single father
+
+    x_single_male = x_single_father[(data_single_father["father_alive"].notna())]
+    y_single_male = data_single_father["father_alive"][
+        (data_single_father["father_alive"].notna())
+    ]
+    x_single_male = x_single_male.reset_index(drop=True)
+    y_single_male = y_single_male.reset_index(drop=True)
+
+    # Single mother
+
+    x_single_female = x_single_mother[(data_single_mother["mother_alive"].notna())]
+    y_single_female = data_single_mother["mother_alive"][
+        (data_single_mother["mother_alive"].notna())
+    ]
+    x_single_female = x_single_female.reset_index(drop=True)
+    y_single_female = y_single_female.reset_index(drop=True)
+
+    logit_single_father = sm.Logit(y_single_male, x_single_male).fit()
+    logit_single_mother = sm.Logit(y_single_female, x_single_female).fit()
+
+    return logit_single_father.params, logit_single_mother.params
+
+
 def task_create_params_exog_care_demand_basic(
     path_to_parent_data: Path = BLD / "data" / "parent_child_data.csv",
     path_to_parent_couple_data: Path = BLD / "data" / "parent_child_data_couple.csv",
@@ -167,8 +239,8 @@ def task_create_params_exog_care_demand_basic(
     parent["mother_health"] = parent.loc[parent["gender"] == FEMALE, "health"]
     parent["father_health"] = parent.loc[parent["gender"] == MALE, "health"]
 
-    parent = _prepare_dependent_variables_care_demand(parent)
-    couple = _prepare_dependent_variables_care_demand(couple)
+    parent = _prepare_dependent_variables_health(parent)
+    couple = _prepare_dependent_variables_health(couple)
 
     mother = parent[(parent["married"] == False) & (parent["gender"] == FEMALE)].copy()
     father = parent[(parent["married"] == False) & (parent["gender"] == MALE)].copy()
@@ -301,8 +373,8 @@ def task_create_params_exog_care_demand(
     parent["mother_health"] = parent.loc[parent["gender"] == FEMALE, "health"]
     parent["father_health"] = parent.loc[parent["gender"] == MALE, "health"]
 
-    parent = _prepare_dependent_variables_care_demand(parent)
-    couple = _prepare_dependent_variables_care_demand(couple)
+    parent = _prepare_dependent_variables_health(parent)
+    couple = _prepare_dependent_variables_health(couple)
 
     mother = parent[(parent["married"] == False) & (parent["gender"] == FEMALE)].copy()
     father = parent[(parent["married"] == False) & (parent["gender"] == MALE)].copy()
@@ -434,7 +506,7 @@ def task_create_params_exog_care_demand(
     return logit_single_father.params, logit_single_mother.params, logit_couple.params
 
 
-def _prepare_dependent_variables_care_demand(data):
+def _prepare_dependent_variables_health(data):
     data = data.copy()
 
     data["father_health_good"] = np.where(
