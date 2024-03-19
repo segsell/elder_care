@@ -1,14 +1,17 @@
 """Create exogenous transition probabilities."""
 
 from pathlib import Path
+from typing import Annotated
 
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from pytask import Product
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from elder_care.config import BLD, SRC
+from elder_care.utils import save_dict_to_pickle, statsmodels_params_to_dict
 
 FEMALE = 2
 MALE = 1
@@ -23,10 +26,17 @@ MEDIUM_HEALTH = 1
 BAD_HEALTH = 2
 
 
-RETIREMENT_AGE = 62  # 65
+RETIREMENT_AGE = 65  # 65
 
 
-def task_create_params_parental_health_transition():
+def task_create_params_parental_health_transition(
+    path_to_save_params_female: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_health_transition_female.pkl",
+    path_to_save_params_male: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_health_transition_male.pkl",
+):
     """Health transition probabilities for parents.
 
     Estimated from SOEP data.
@@ -70,7 +80,8 @@ def task_create_params_parental_health_transition():
         },
     }
 
-    return params_female, params_male
+    save_dict_to_pickle(params_female, path_to_save_params_female)
+    save_dict_to_pickle(params_male, path_to_save_params_male)
 
 
 def task_create_params_spousal_income(
@@ -80,20 +91,20 @@ def task_create_params_spousal_income(
     data = pd.read_csv(path_to_raw_data)
 
     data["age_squared"] = data["age"] ** 2
-    data["age_62_and_older"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
+    data["above_retirement_age"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
 
     _dat = data[
         [
             "other_income",
             "age",
             "age_squared",
-            "age_62_and_older",
+            "above_retirement_age",
             "married",
         ]
     ]
     dat = _dat.dropna()
 
-    regressors = dat[["age", "age_62_and_older", "married"]]
+    regressors = dat[["age", "above_retirement_age", "married"]]
     regressors = sm.add_constant(regressors)
 
     dat.loc[dat["other_income"] <= 0, "other_income"] = np.finfo(float).eps
@@ -118,21 +129,21 @@ def task_create_params_exog_other_income(
     data = pd.read_csv(path_to_raw_data)
 
     data["age_squared"] = data["age"] ** 2
-    data["age_62_and_older"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
+    data["above_retirement_age"] = np.where(data["age"] >= RETIREMENT_AGE, 1, 0)
 
     _dat = data[
         [
             "other_income",
             "age",
             "age_squared",
-            "age_62_and_older",
+            "above_retirement_age",
             "married",
             "high_educ",
         ]
     ]
     dat = _dat.dropna()
 
-    regressors = dat[["age", "age_62_and_older", "married", "high_educ"]]
+    regressors = dat[["age", "above_retirement_age", "married", "high_educ"]]
     regressors = sm.add_constant(regressors)
 
     dat.loc[dat["other_income"] <= 0, "other_income"] = np.finfo(float).eps
@@ -370,6 +381,15 @@ def task_create_params_exog_care_demand_basic(
 def task_create_params_exog_care_demand(
     path_to_parent_data: Path = BLD / "data" / "parent_child_data.csv",
     path_to_parent_couple_data: Path = BLD / "data" / "parent_child_data_couple.csv",
+    path_to_save_single_mother: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_care_single_mother.pkl",
+    path_to_save_single_father: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_care_single_father.pkl",
+    path_to_save_couple: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_care_couple.pkl",
 ) -> None:
     """Create exogenous care demand probabilities."""
     parent = pd.read_csv(path_to_parent_data)
@@ -514,7 +534,24 @@ def task_create_params_exog_care_demand(
     logit_couple = sm.Logit(y_couple, x_couple).fit()
     # care demand is zero if no parent is alive
 
-    return logit_single_father.params, logit_single_mother.params, logit_couple.params
+    params_single_mother = statsmodels_params_to_dict(
+        logit_single_mother.params,
+        name_prefix="exog_care_single",
+        name_constant="mother",
+    )
+    params_single_father = statsmodels_params_to_dict(
+        logit_single_father.params,
+        name_prefix="exog_care_single",
+        name_constant="father",
+    )
+    params_couple = statsmodels_params_to_dict(
+        logit_couple.params,
+        name_prefix="exog_care_couple",
+    )
+
+    save_dict_to_pickle(params_single_mother, path_to_save_single_mother)
+    save_dict_to_pickle(params_single_father, path_to_save_single_father)
+    save_dict_to_pickle(params_couple, path_to_save_couple)
 
 
 def _prepare_dependent_variables_health(data):
@@ -563,6 +600,12 @@ def _task_create_survival_probabilities_stat_office(
     / "data"
     / "statistical_office"
     / "12621-0001_Sterbetafel_clean.csv",
+    path_to_save_female: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_survival_prob_female.pkl",
+    path_to_save_male: Annotated[Path, Product] = BLD
+    / "model"
+    / "exog_survival_prob_male.pkl",
 ) -> None:
     """Create exogenous survival probabilities for parents."""
     data = pd.read_csv(path_to_raw_data)
@@ -593,10 +636,17 @@ def _task_create_survival_probabilities_stat_office(
     logit_male = sm.Logit(y_male, x_male).fit()
     logit_female = sm.Logit(y_female, x_female).fit()
 
-    coefs_male = logit_male.params
-    coefs_female = logit_female.params
+    params_female = statsmodels_params_to_dict(
+        logit_female.params,
+        name_prefix="survival_prob_female",
+    )
+    params_male = statsmodels_params_to_dict(
+        logit_male.params,
+        name_prefix="survival_prob_male",
+    )
 
-    return coefs_male, coefs_female
+    save_dict_to_pickle(params_female, path_to_save_female)
+    save_dict_to_pickle(params_male, path_to_save_male)
 
 
 def exog_care_demand_probability(
@@ -757,7 +807,7 @@ def predict_other_income(age, married, high_educ, params):
     log_other_income = (
         params["other_income_const"]
         + params["other_income_age"] * age
-        + params["other_income_age_62_and_older"] * (age >= RETIREMENT_AGE)
+        + params["other_income_above_retirement_age"] * (age >= RETIREMENT_AGE)
         + params["other_income_married"] * married
         + params["other_income_high_educ"] * high_educ
     )
