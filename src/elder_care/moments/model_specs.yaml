@@ -1,0 +1,25 @@
+# =====================================================================================
+# Model parameters
+# =====================================================================================
+
+quadrature_points_stochastic: 5
+
+start_age: 40
+end_age: 80
+
+n_choices: 12
+experience_cap: 44 # maximum of exp accumulated
+
+# Parameters of the policy environment
+unemployment_benefits: 0.65
+unemployment_wealth_thresh: 10.5
+min_wage: 1.36
+early_retirement_penalty: 0.036
+
+
+# =====================================================================================
+# Simulation parameters
+# =====================================================================================
+
+n_agents: 100_000
+seed: 1234
