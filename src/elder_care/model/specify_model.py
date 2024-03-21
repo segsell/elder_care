@@ -1,3 +1,5 @@
+"""Specify model for estimation and simulation."""
+
 import numpy as np
 
 from dcegm.pre_processing.setup_model import load_and_setup_model, setup_and_save_model
@@ -12,7 +14,7 @@ from elder_care.model.utility_functions import (
 )
 
 
-def specify_model(
+def task_specify_model(
     path_dict,
     update_spec_for_policy_state,
     policy_state_trans_func,
