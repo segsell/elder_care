@@ -1,6 +1,6 @@
 import numpy as np
-
 from dcegm.pre_processing.setup_model import load_and_setup_model, setup_and_save_model
+
 from elder_care.model.budget import budget_constraint
 from elder_care.model.state_space import (
     create_state_space_functions,
