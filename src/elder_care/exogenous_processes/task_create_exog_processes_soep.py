@@ -47,7 +47,11 @@ def task_create_exog_full_time_offer():
 
 
 def task_create_exog_wage():
-    """Create exogenous log wage offer."""
+    """Create exogenous log wage offer.
+
+    Include variance of wage unobservable.
+
+    """
     return {
         "wage_constant": 1.997354,
         "wage_age": 0.0124007328,
@@ -56,6 +60,7 @@ def task_create_exog_wage():
         "wage_experience_squared": -0.0003839528,
         "wage_high_education": 0.4582799360,
         "wage_part_time": -0.0561647814,
+        "wage_std_regression_residual": 0.5512142746125238,
     }
 
 
