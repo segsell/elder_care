@@ -67,12 +67,9 @@ def task_create_ltc_by_children(
     / "data"
     / "parent_child_data_hh_weight.csv",
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
-    path_to_save_females: Annotated[Path, Product] = BLD
+    path_to_save_females_normalized: Annotated[Path, Product] = BLD
     / "descriptives"
-    / "informal_caregiving_by_age_group_females.png",
-    path_to_save_males: Annotated[Path, Product] = BLD
-    / "descriptives"
-    / "informal_caregiving_by_age_group_males.png",
+    / "informal_caregiving_by_age_group_females_normalized.png",
 ) -> None:
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
@@ -272,19 +269,11 @@ def task_create_ltc_by_children(
         0.0288907,
     ]
 
-    # Replace 'path/to/save/plot.png' with the actual path where you want to save the plot
-    create_and_save_caregiving_plot(
+    create_and_save_caregiving_plot_normalized(
         dat,
         gender=FEMALE,
-        save_path=path_to_save_females,
+        save_path=path_to_save_females_normalized,
     )
-    create_and_save_caregiving_plot(
-        dat,
-        gender=MALE,
-        save_path=path_to_save_males,
-    )
-
-    # breakpoint()
 
 
 def task_create_ltc_by_parent_age(
@@ -706,6 +695,151 @@ def create_and_save_caregiving_plot(dat, gender, save_path):
     plt.xlabel("Age Bins")
     plt.ylabel("Share of (Daily) Informal Caregivers")
     plt.ylim(0, 0.13)  # Set y-axis range from 0 to 15%
+    plt.grid(axis="y")
+
+    # get handles and labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # specify order of items in legend
+    order = [3, 2, 1, 0]
+
+    # add legend to plot
+    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+
+    # Save plot
+    plt.savefig(save_path)
+    plt.close()  # Close the plot to prevent display in the notebook
+
+
+def create_and_save_caregiving_plot_normalized(dat, gender, save_path):
+    """Creates and saves a stacked bar chart of intensive informal caregiving shares.
+
+    Parameters:
+    general (list): Share of general intensive informal caregiving by age bin.
+    parents (list): Share of intensive informal caregiving to parents by age bin.
+    spouse (list): Share of intensive informal caregiving to spouse by age bin.
+    save_path (str): Path to save the generated plot.
+
+    """
+    dat = dat[dat["gender"] == gender]
+    weight = "hh_weight"
+
+    dat["intensive_care_general_weighted"] = (
+        dat["intensive_care_general"] * dat["hh_weight"]
+    )
+    dat["intensive_care_all_parents_weighted"] = (
+        dat["intensive_care_all_parents"] * dat["hh_weight"]
+    )
+    dat["intensive_care_in_laws_weighted"] = (
+        dat["intensive_care_in_laws"] * dat["hh_weight"]
+    )
+    dat["intensive_care_new_weighted"] = dat["intensive_care_new"] * dat["hh_weight"]
+    dat["intensive_care_spouse_weighted"] = (
+        dat["intensive_care_spouse"] * dat["hh_weight"]
+    )
+
+    # general
+
+    all_parents = _get_share_by_age_bin(
+        dat,
+        moment="intensive_care_all_parents_weighted",
+        age_lower=50,
+        age_upper=65,
+        weight=weight,
+        age_bins=AGE_BINS_COARSE,
+    )
+    in_laws = _get_share_by_age_bin(
+        dat,
+        moment="intensive_care_in_laws_weighted",
+        age_lower=50,
+        age_upper=65,
+        weight=weight,
+        age_bins=AGE_BINS_COARSE,
+    )
+    spouse = _get_share_by_age_bin(
+        dat,
+        moment="intensive_care_spouse_weighted",
+        age_lower=50,
+        age_upper=65,
+        weight=weight,
+        age_bins=AGE_BINS_COARSE,
+    )
+
+    general = _get_share_by_age_bin(
+        dat,
+        moment="intensive_care_general_weighted",
+        age_lower=50,
+        age_upper=65,
+        weight=weight,
+        age_bins=AGE_BINS_COARSE,
+    )
+    own_parents = (np.asarray(all_parents) - np.asarray(in_laws)).tolist()
+
+    if gender == FEMALE:
+        share_gender = 0.071
+    elif gender == MALE:
+        share_gender = 0.065
+
+    _sum = (
+        np.asarray(general)
+        # + np.asarray(own_parents)
+        # + np.asarray(in_laws)
+        # + np.asarray(spouse)
+    )
+    general = np.array([1, 1, 1, 1, 1])  # * share_gender
+    own_parents = np.asarray(own_parents) / _sum  # * share_gender
+    in_laws = np.asarray(in_laws) / _sum  # * share_gender
+    spouse = np.asarray(spouse) / _sum  # * share_gender
+
+    # Calculate the remaining share for 'other' caregiving
+    other = [
+        g - p - i - s
+        for g, p, i, s in zip(general, own_parents, in_laws, spouse, strict=False)
+    ]
+
+    # Age bins
+    age_bins_coarse = ["50-54", "55-59", "60-64", "65-69", "70+"]
+
+    # Plotting
+    plt.figure(figsize=(12, 8))
+    plt.bar(
+        age_bins_coarse,
+        own_parents,
+        label="Own Parents",
+        # color="sandybrown",
+        color="palegreen",
+        # color="moccasin",
+    )
+    plt.bar(
+        age_bins_coarse,
+        in_laws,
+        bottom=own_parents,
+        label="Parents In-Law",
+        # color="sandybrown",
+        # color="green",
+        # color="moccasin",
+        color="khaki",
+    )
+    plt.bar(
+        age_bins_coarse,
+        spouse,
+        bottom=[i + j for i, j in zip(own_parents, in_laws, strict=False)],
+        label="Spouse",
+        color="lightcoral",
+    )
+    plt.bar(
+        age_bins_coarse,
+        other,
+        bottom=[
+            i + j + k for i, j, k in zip(own_parents, in_laws, spouse, strict=False)
+        ],
+        label="Other",
+        color="lightblue",
+    )
+
+    plt.xlabel("Age Bins")
+    plt.ylabel("Share of (Daily) Informal Caregivers")
+    plt.ylim(0, 1)  # Set y-axis range from 0 to 15%
     plt.grid(axis="y")
 
     # get handles and labels
