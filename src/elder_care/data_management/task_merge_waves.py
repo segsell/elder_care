@@ -142,15 +142,15 @@ ALL_VARIABLES = {
         "sp019d9",
         "sp019d10",
         "sp019d11",
-        # "sp019d12",
-        # "sp019d13",
-        # "sp019d14",
-        # "sp019d15",
-        # "sp019d16",
-        # "sp019d17",
-        # "sp019d18",
-        # "sp019d19",
-        # "sp019d20",
+        "sp019d12",
+        "sp019d13",
+        "sp019d14",
+        "sp019d15",
+        "sp019d16",
+        "sp019d17",
+        "sp019d18",
+        "sp019d19",
+        "sp019d20",
         # received personal care in household
         "sp020_",  # someone in this household helped you regularly with personal care
         "sp021d1",  # R received help with personal care from: spouse/partner
@@ -347,6 +347,15 @@ KEYS_TO_REMOVE_WAVE6 = {
     # ],
     # received help with personal care from child 3 - 9
     "sp": [
+        "sp019d12",
+        "sp019d13",
+        "sp019d14",
+        "sp019d15",
+        "sp019d16",
+        "sp019d17",
+        "sp019d18",
+        "sp019d19",
+        #
         "sp021d12",
         "sp021d13",
         "sp021d14",
@@ -424,17 +433,26 @@ KEYS_TO_REMOVE_WAVE7 = {
     ],  # year started living with partner, year married
     # provided help with personal care to child 3 - 9
     # "sp": [
-    #    "sp019d12",
-    #    "sp019d13",
-    #    "sp019d14",
-    #    "sp019d15",
-    #    "sp019d16",
-    #    "sp019d17",
-    #    "sp019d18",
-    #    "sp019d19",
+    #     "sp019d12",
+    #     "sp019d13",
+    #     "sp019d14",
+    #     "sp019d15",
+    #     "sp019d16",
+    #     "sp019d17",
+    #     "sp019d18",
+    #     "sp019d19",
     # ],
     # received help with personal care from child 3 - 9
     "sp": [
+        "sp019d12",
+        "sp019d13",
+        "sp019d14",
+        "sp019d15",
+        "sp019d16",
+        "sp019d17",
+        "sp019d18",
+        "sp019d19",
+        #
         "sp021d12",
         "sp021d13",
         "sp021d14",
@@ -478,6 +496,15 @@ KEYS_TO_REMOVE_WAVE8 = {
     # ],
     # received help with personal care from child 3 - 9
     "sp": [
+        "sp019d12",
+        "sp019d13",
+        "sp019d14",
+        "sp019d15",
+        "sp019d16",
+        "sp019d17",
+        "sp019d18",
+        "sp019d19",
+        #
         "sp021d12",
         "sp021d13",
         "sp021d14",
@@ -506,6 +533,7 @@ GV_VARS = [
     "ypen5",  # Annual payment from social assistance
     "yreg1",  # Other regular payments from private pensions
     "yreg2",  # Other regular payment from private transfer
+    "slti",  # Savings for long-term investments: AS021, AS023, AS27, AS030
     "thinc",  # Total household net income - version A
     "thinc2",  # Total household net income - version B
     "hnetw",  # Household net worth (hnfass + hrass)
@@ -710,6 +738,9 @@ def process_wave(wave_number, data_modules):
                 for var in data_modules[module]
                 if var.startswith("sl")
             }
+        # elif module == "sp" and wave_number == WAVE_7:
+        #     _wave_module = pd.read_stata(module_file, convert_categoricals=False)
+        #     _wave_module = _wave_module[_wave_module["country"] == GERMANY]
 
         else:
             _wave_module = pd.read_stata(module_file, convert_categoricals=False)

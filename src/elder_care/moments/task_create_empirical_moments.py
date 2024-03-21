@@ -11,6 +11,7 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
+import numpy as np
 import pandas as pd
 from pytask import Product
 
@@ -33,6 +34,16 @@ AGE_62 = 62
 AGE_55 = 55
 AGE_60 = 60
 AGE_65 = 65
+
+# parent age
+AGE_70 = 70
+AGE_75 = 75
+AGE_80 = 80
+AGE_85 = 85
+AGE_90 = 90
+AGE_95 = 95
+AGE_100 = 100
+
 
 GOOD_HEALTH = 0
 MEDIUM_HEALTH = 1
@@ -92,16 +103,19 @@ def task_create_moments(
     cpi_data = pd.read_csv(path_to_cpi)
 
     dat = dat_hh_weight.copy()
+    # dat =
     dat = deflate_income_and_wealth(dat, cpi_data)
 
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
+    intensive_care_all_parents = "intensive_care_all_parents"
 
     age_bins_coarse = [
         (AGE_50, AGE_55),
         (AGE_55, AGE_60),
         (AGE_60, AGE_65),
     ]
+    age_sample = [(AGE_50, AGE_65)]
 
     net_income_by_age_bin_part_time = get_income_by_employment_by_age_bin(
         dat,
@@ -134,6 +148,32 @@ def task_create_moments(
         dat,
         age_bins_coarse,
         moment="real_hnetw",
+        weight=weight,
+    )
+
+    savings_rate_by_age_bin = get_wealth_by_age_bin(
+        dat,
+        age_bins_coarse,
+        moment="real_savings_rate",
+        weight=weight,
+    )
+
+    savings_rate_no_informal_care_by_age_bin = (
+        get_income_by_caregiving_status_and_age_bin(
+            dat,
+            age_bins_coarse,
+            moment="real_savings_rate",
+            is_caregiver=False,
+            care_type=intensive_care_all_parents,
+            weight=weight,
+        )
+    )
+    savings_rate_informal_care_by_age_bin = get_income_by_caregiving_status_and_age_bin(
+        dat,
+        age_bins_coarse,
+        moment="real_savings_rate",
+        is_caregiver=True,
+        care_type=intensive_care_all_parents,
         weight=weight,
     )
 
@@ -198,6 +238,33 @@ def task_create_moments(
         parent["no_informal_care_child"] * parent[weight]
     )
 
+    # Do by age group
+    parent_age_bins = [
+        (AGE_70, AGE_75),
+        (AGE_75, AGE_80),
+        (AGE_80, AGE_85),
+        (AGE_85, AGE_90),
+        (AGE_90, AGE_95),
+        (AGE_95, AGE_100),
+    ]
+    share_combination_care_in_home_care = [
+        parent.loc[
+            (parent["age"] >= age_bin[0])
+            & (parent["age"] < age_bin[1])
+            & (parent["combination_care"] == True),
+            "combination_care_weighted",
+        ].sum()
+        / (
+            parent.loc[
+                (parent["age"] >= age_bin[0])
+                & (parent["age"] < age_bin[1])
+                & (parent["home_care"] == True),
+                weight,
+            ].sum()
+        )
+        for age_bin in parent_age_bins
+    ]
+
     # care mix by health status of parent
     caregiving_by_mother_health = (
         get_caregiving_status_by_mother_health_and_marital_status(
@@ -240,6 +307,157 @@ def task_create_moments(
     employment_by_age = get_employment_by_age_soep()
     employment_by_caregiving_status = get_employment_by_caregiving_status_soep()
 
+    # ================================================================================
+
+    dat["age_weighted"] = dat["age"] * dat[weight]
+    dat["has_sister_weighted"] = dat["has_sister"] * dat[weight]
+    dat["has_sibling_weighted"] = dat["has_sibling"] * dat[weight]
+
+    dat["married_unweighted"] = dat["married"] / dat[weight]
+    dat["high_educ_unweighted"] = dat["high_educ"] / dat[weight]
+    dat["parents_live_close_unweighted"] = dat["parents_live_close"] / dat[weight]
+
+    parents_live_close_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "parents_live_close"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_parents_live_close_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="parents_live_close_unweighted",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    parents_live_close_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "parents_live_close"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_parents_live_close_informal_care = _get_weighted_variance(
+        dat,
+        moment="parents_live_close_unweighted",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    mean_age_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "age_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_age_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="age",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    mean_age_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "age_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_age_informal_care = _get_weighted_variance(
+        dat,
+        moment="age",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    # standard deviation
+
+    married_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "married"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_married_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="married_unweighted",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    married_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "married"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_married_informal_care = _get_weighted_variance(
+        dat,
+        moment="married_unweighted",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    has_sister_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "has_sister_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_has_sister_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sister",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    has_sister_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "has_sister_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_has_sister_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sister",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    has_sibling_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "has_sibling_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_has_sibling_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sibling",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    has_sibling_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "has_sibling_weighted"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_has_sibling_informal_care = _get_weighted_variance(
+        dat,
+        moment="has_sibling",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
+    share_high_educ_no_informal_care = (
+        dat.loc[(dat[intensive_care_var] == False), "high_educ"].sum()
+        / dat.loc[(dat[intensive_care_var] == False), weight].sum()
+    )
+    std_share_high_educ_no_informal_care = _get_weighted_variance(
+        dat,
+        moment="high_educ_unweighted",
+        is_caregiver=False,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+    share_high_educ_informal_care = (
+        dat.loc[(dat[intensive_care_var] == True), "high_educ"].sum()
+        / dat.loc[(dat[intensive_care_var] == True), weight].sum()
+    )
+    std_share_high_educ_informal_care = _get_weighted_variance(
+        dat,
+        moment="high_educ_unweighted",
+        is_caregiver=True,
+        care_type=intensive_care_var,
+        weight=weight,
+    )
+
     all_moments = pd.concat(
         [
             employment_by_age,
@@ -248,6 +466,9 @@ def task_create_moments(
             net_income_by_age_bin_part_time,
             net_income_by_age_bin_full_time,
             wealth_by_age_bin,
+            savings_rate_by_age_bin,
+            savings_rate_no_informal_care_by_age_bin,
+            savings_rate_informal_care_by_age_bin,
             #
             employment_by_caregiving_status,
             caregiving_by_mother_health,
@@ -1231,26 +1452,60 @@ def get_income_by_caregiving_status_and_age_bin(
     care_type,
     weight,
 ):
-    """Calculate mean income by caregiving status and age bin."""
-    is_care = (1 - is_caregiver) * "no" + "informal_care"
+    """Calculate mean and weighted variance of income by caregiving status and age
+    bin.
+    """
+    is_care = (1 - is_caregiver) * "no_" + "informal_care"
 
-    return pd.Series(
-        {
-            f"{moment}_{is_care}_{age_bin[0]}_{age_bin[1]}": dat.loc[
-                (dat["age"] > age_bin[0])
-                & (dat["age"] <= age_bin[1])
-                & (dat[care_type] == is_caregiver),
-                moment,
-            ].sum()
-            / dat.loc[
-                (dat["age"] > age_bin[0])
-                & (dat["age"] <= age_bin[1])
-                & (dat[care_type] == is_caregiver),
-                weight,
-            ].sum()
-            for age_bin in age_bins
-        },
-    )
+    dat = dat.copy()
+    dat[moment] = dat[moment] / dat[weight]
+
+    results = {}
+
+    for age_bin in age_bins:
+        # Define the subset of data for the specific age bin and caregiving status
+        subset = dat.loc[
+            (dat["age"] > age_bin[0])
+            & (dat["age"] <= age_bin[1])
+            & (dat[care_type] == is_caregiver),
+            [moment, weight],
+        ]
+
+        # Calculate the weighted mean
+        total_weight = subset[weight].sum()
+        weighted_mean = (subset[moment] * subset[weight]).sum() / total_weight
+
+        # Calculate the weighted variance
+        weighted_variance = (
+            (subset[moment] - weighted_mean) ** 2 * subset[weight]
+        ).sum() / total_weight
+
+        # Store the results
+        results[f"{moment}_mean_{is_care}_{age_bin[0]}_{age_bin[1]}"] = weighted_mean
+        results[f"{moment}_var_{is_care}_{age_bin[0]}_{age_bin[1]}"] = weighted_variance
+        results[f"{moment}_sd_{is_care}_{age_bin[0]}_{age_bin[1]}"] = np.sqrt(
+            weighted_variance,
+        )
+
+    return pd.Series(results)
+
+
+def _get_weighted_variance(dat, moment, is_caregiver, care_type, weight):
+    subset = dat.loc[
+        (dat[care_type] == is_caregiver),
+        [moment, weight],
+    ]
+
+    # Calculate the weighted mean
+    total_weight = subset[weight].sum()
+    weighted_mean = (subset[moment] * subset[weight]).sum() / total_weight
+
+    # Calculate the weighted variance
+    weighted_variance = (
+        (subset[moment] - weighted_mean) ** 2 * subset[weight]
+    ).sum() / total_weight
+
+    return np.sqrt(weighted_variance)
 
 
 def get_wealth_by_caregiving_status_and_age_bin(
@@ -1350,6 +1605,21 @@ def get_employment_by_caregiving_status_soep():
     )
 
 
+def get_employment_standard_deviation_by_caregiving_status_soep():
+    """Get employment by caregiving status of females age 51-65."""
+    return pd.Series(
+        {
+            "not_working_no_informal_care": 0.493225,
+            "part_time_no_informal_care": 0.4420179,
+            "full_time_no_informal_care": 0.4648369,
+            #
+            "not_working_informal_care": 0.4995952,
+            "part_time_informal_care": 0.4569979,
+            "full_time_informal_care": 0.417199,
+        },
+    )
+
+
 def get_employment_by_age_soep():
     """Get employment shares by age of females age 51-65."""
     return pd.Series(
@@ -1399,6 +1669,63 @@ def get_employment_by_age_soep():
             "full_time_age_63": 0.13898663,
             "full_time_age_64": 0.08457183,
             "full_time_age_65": 0.05377493,
+        },
+    )
+
+
+def get_employment_standard_deviation_by_age_soep():
+    return pd.Series(
+        {
+            "sd_not_working_age_50": 0.4481811,
+            "sd_not_working_age_51": 0.449908,
+            "sd_not_working_age_52": 0.4536764,
+            "sd_not_working_age_53": 0.4574949,
+            "sd_not_working_age_54": 0.4658234,
+            "sd_not_working_age_55": 0.4674743,
+            "sd_not_working_age_56": 0.4734653,
+            "sd_not_working_age_57": 0.4782217,
+            "sd_not_working_age_58": 0.4887237,
+            "sd_not_working_age_59": 0.495451,
+            "sd_not_working_age_60": 0.4996489,
+            "sd_not_working_age_61": 0.4962456,
+            "sd_not_working_age_62": 0.4764978,
+            "sd_not_working_age_63": 0.4448834,
+            "sd_not_working_age_64": 0.3736909,
+            "sd_not_working_age_65": 0.3216744,
+            #
+            "sd_part_time_age_50": 0.4773139,
+            "sd_part_time_age_51": 0.4736802,
+            "sd_part_time_age_52": 0.4708488,
+            "sd_part_time_age_53": 0.4665043,
+            "sd_part_time_age_54": 0.4659278,
+            "sd_part_time_age_55": 0.4683175,
+            "sd_part_time_age_56": 0.4650485,
+            "sd_part_time_age_57": 0.4616256,
+            "sd_part_time_age_58": 0.4533195,
+            "sd_part_time_age_59": 0.4403638,
+            "sd_part_time_age_60": 0.4306725,
+            "sd_part_time_age_61": 0.4020984,
+            "sd_part_time_age_62": 0.3649623,
+            "sd_part_time_age_63": 0.3392591,
+            "sd_part_time_age_64": 0.2761674,
+            "sd_part_time_age_65": 0.2437071,
+            #
+            "sd_full_time_age_50": 0.4830822,
+            "sd_full_time_age_51": 0.4850682,
+            "sd_full_time_age_52": 0.4851226,
+            "sd_full_time_age_53": 0.4859275,
+            "sd_full_time_age_54": 0.4810479,
+            "sd_full_time_age_55": 0.4779362,
+            "sd_full_time_age_56": 0.4753506,
+            "sd_full_time_age_57": 0.4732531,
+            "sd_full_time_age_58": 0.4653963,
+            "sd_full_time_age_59": 0.4604106,
+            "sd_full_time_age_60": 0.4465631,
+            "sd_full_time_age_61": 0.4243423,
+            "sd_full_time_age_62": 0.392432,
+            "sd_full_time_age_63": 0.3459935,
+            "sd_full_time_age_64": 0.2782927,
+            "sd_full_time_age_65": 0.2256132,
         },
     )
 
@@ -1529,7 +1856,9 @@ def deflate_income_and_wealth(dat, cpi):
     dat_with_cpi = dat.merge(cpi, on="int_year")
 
     vars_to_deflate = [
+        "slti",
         "hnetw",
+        "savings_rate",
         "thinc",
         "thinc2",
         "ydip",
