@@ -7,6 +7,8 @@ quadrature_points_stochastic: 5
 start_age: 40
 end_age: 80
 
+mother_start_age: 65
+fataher_start_age: 67
 n_choices: 12
 experience_cap: 44 # maximum of exp accumulated
 

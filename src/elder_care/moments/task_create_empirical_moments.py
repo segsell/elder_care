@@ -1316,6 +1316,27 @@ def get_caregiving_status_by_parental_health(
 # ================================================================================
 
 
+def get_coefficients_savings_rate_regression():
+    """Get coefficients of savings rate regression.
+
+    The coefficients are estimated using the SOEP data. The wealth variables used in the
+    calculation of the savings rate are deflated by the consumer price index (CPI) to
+    2015 prices.
+
+    """
+    return pd.Series(
+        {
+            "savings_rate_constant": 1.929170502311,
+            "savings_rate_age": -0.0755207021,
+            "savings_rate_age_squared": 0.0007550297,
+            "savings_rate_high_education": 0.0050211845,
+            "savings_rate_part_time": 0.0809547016,
+            "savings_rate_full_time": 0.1041300926,
+            "savings_rate_informal_care": -0.0339010984,
+        },
+    )
+
+
 def get_employment_transitions_soep():
     """Get employment transitions of females age 51-65 from SOEP."""
     return pd.Series(
