@@ -7,8 +7,8 @@ from elder_care.model.shared import (
     NO_WORK,
     PART_TIME,
     WORK,
-    is_working_full_time,
-    is_working_part_time,
+    is_full_time,
+    is_part_time,
 )
 
 
@@ -41,8 +41,8 @@ def update_endog_state(period, choice, experience, married, has_sibling, options
     next_state["lagged_choice"] = choice
 
     below_exp_cap = experience < options["experience_cap"]
-    experience_part_time = below_exp_cap * is_working_part_time(choice)
-    experience_full_time = below_exp_cap * is_working_full_time(choice)
+    experience_part_time = below_exp_cap * is_part_time(choice)
+    experience_full_time = below_exp_cap * is_full_time(choice)
     next_state["experience"] = experience + experience_part_time + experience_full_time
 
     next_state["married"] = married
@@ -90,8 +90,8 @@ def sparsity_condition(period, lagged_choice, experience, options):
     if (
         (
             (
-                (is_working_full_time(lagged_choice) is False)
-                & (is_working_part_time(lagged_choice) is False)
+                (is_full_time(lagged_choice) is False)
+                & (is_part_time(lagged_choice) is False)
             )
             & (period + max_init_experience == experience)
             & (period > 0)

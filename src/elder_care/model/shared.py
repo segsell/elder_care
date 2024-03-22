@@ -1,9 +1,13 @@
 import jax.numpy as jnp
 
+FEMALE = 2
+MALE = 1
+
 GOOD_HEALTH = 0
 MEDIUM_HEALTH = 1
 BAD_HEALTH = 2
 
+RETIREMENT_AGE = 65
 
 ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
 
@@ -25,6 +29,7 @@ COMBINATION_CARE = jnp.array([3, 7, 11])
 # Convert the results of set operations to lists, then to JAX arrays.
 NO_INFORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(INFORMAL_CARE.tolist())))
 NO_FORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(FORMAL_CARE.tolist())))
+
 
 # ==============================================================================
 # Choices

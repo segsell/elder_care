@@ -1,9 +1,12 @@
 """Assemble model dictionaries."""
 
 from pathlib import Path
+from typing import Annotated
+
+from pytask import Product
 
 from elder_care.config import BLD
-from elder_care.utils import load_dict_from_pickle
+from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
 
 
 def task_assemble_exog_processes(
@@ -20,6 +23,7 @@ def task_assemble_exog_processes(
     path_to_care_single_mother: Path = BLD / "model" / "exog_care_single_mother.pkl",
     path_to_care_single_father: Path = BLD / "model" / "exog_care_single_father.pkl",
     path_to_care_couple: Path = BLD / "model" / "exog_care_couple.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "exog_processes.pkl",
 ):
     """Assemble exogenous processes dictionaries.
 
@@ -46,4 +50,8 @@ def task_assemble_exog_processes(
     exog_care_couple = load_dict_from_pickle(path_to_care_couple)
     _exog_care = exog_care_single_mother | exog_care_single_father | exog_care_couple
 
-    return _exog_survival_prob | _exog_health_transition | _exog_care
+    exog_all = _exog_survival_prob | _exog_health_transition | _exog_care
+
+    save_dict_to_pickle(exog_all, path_to_save)
+
+    return exog_all
