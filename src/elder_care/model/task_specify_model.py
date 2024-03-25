@@ -57,10 +57,10 @@ def task_specify_and_setup_model(
             "states": np.arange(2, dtype=np.int8),
             "transition": prob_full_time_offer,
         },
-        "care_demand": {
-            "states": np.arange(2, dtype=np.int8),
-            "transition": prob_exog_care_demand,
-        },
+        # "care_demand": {
+        #     "states": np.arange(2, dtype=np.int8),
+        #     "transition": prob_exog_care_demand,
+        # },
         "mother_alive": {
             "states": np.arange(2, dtype=np.int8),
             "transition": prob_survival_mother,
@@ -82,9 +82,12 @@ def task_specify_and_setup_model(
                 # "married": np.arange(2, dtype=np.int8),
                 "has_sibling": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
-                    # specs["retirement_age"] - specs["start_age"], dtype=np.int8
-                    specs["experience_cap"] + 1,
-                    dtype=np.uint8,
+                    # start=specs["experience_start"],
+                    # start=1,
+                    stop=specs["experience_cap"] + 1,
+                    # step=1,
+                    # n_periods,
+                    dtype=np.uint16,
                 ),
                 "sparsity_condition": sparsity_condition,
             },

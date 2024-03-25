@@ -5,16 +5,18 @@
 quadrature_points_stochastic: 5
 
 start_age: 40
-end_age: 70
+end_age: 80
 retirement_age: 65
+age_seventy: 70
 
 mother_start_age: 65
 father_start_age: 67
 n_choices: 12
 
 min_init_experience: 0
-max_init_experience: 20
-experience_cap: 40  # maximum of exp accumulated
+max_init_experience: 40
+experience_start: 0
+experience_cap: 4  # maximum of exp accumulated, times 2
 
 # Parameters of the policy environment
 unemployment_benefits: 650

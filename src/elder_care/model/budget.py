@@ -39,7 +39,7 @@ def create_savings_grid():
 def budget_constraint(
     period: int,
     lagged_choice: int,
-    # experience: int,
+    experience: int,
     high_educ: int,
     # married: int,
     savings_end_of_previous_period: float,
@@ -66,7 +66,7 @@ def budget_constraint(
     wage_from_previous_period = get_exog_stochastic_wage(
         period=period,
         lagged_choice=lagged_choice,
-        # experience=experience,
+        experience=experience,
         high_educ=high_educ,
         wage_shock=income_shock_previous_period,
         options=options,
@@ -94,7 +94,7 @@ def budget_constraint(
 def get_exog_stochastic_wage(
     period: int,
     lagged_choice: int,
-    # experience: int,
+    experience: int,
     high_educ: int,
     wage_shock: float,
     options: dict[str, float],
@@ -110,6 +110,21 @@ def get_exog_stochastic_wage(
     labor_income = constant + alpha_1 * age + alpha_2 * age**2
     They include a constant as well as two coefficients on age and age squared,
     respectively. Note that the last one (alpha_2) typically has a negative sign.
+
+
+    Divide experience by 2 to get the number of years of experience.
+    One year of part-time work experience is equivalent to
+    0.5 years of full-time work experience. This is because the agent accumulates
+    experience at a slower rate when working part-time.
+
+    For computational reasons, we use the following transformation:
+    exp = experience / 2
+    exp_squared = (experience / 2) ** 2
+
+    So one year of part-time experience is counted as 1 year of experience in the
+    state space. But in the wage equation, it is counted as 0.5 years of experience.
+    Analogously, one year of full-time experience is counted as 2 years of experience
+    in the state space, but as 1 year of experience in the wage equation.
 
 
     Determinisctic component of income depending on experience:
@@ -150,8 +165,8 @@ def get_exog_stochastic_wage(
         options["wage_constant"]
         + options["wage_age"] * age
         + options["wage_age_squared"] * age**2
-        # + options["wage_experience"] * experience
-        # + options["wage_experience_squared"] * experience**2
+        + options["wage_experience"] * (experience / 2)
+        + options["wage_experience_squared"] * (experience / 2) ** 2
         + options["wage_high_education"] * high_educ
         + options["wage_part_time"] * is_part_time(lagged_choice)
     )
