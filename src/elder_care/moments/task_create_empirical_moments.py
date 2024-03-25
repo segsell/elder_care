@@ -160,6 +160,30 @@ def task_create_moments(
         },
     )
 
+    # care to mother over the life cycle
+    dat["care_to_mother_intensive_weighted"] = dat["care_to_mother_intensive"]
+
+    share_intensive_care_mother = []
+    share_intensive_care_mother += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "care_to_mother_intensive_weighted",
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins_coarse
+    ]
+    share_intensive_care_mother_by_age_bin_coarse = pd.Series(
+        {
+            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care_mother[
+                i
+            ]
+            for i, age_bin in enumerate(age_bins_coarse)
+        },
+    )
+
     # ================================================================================
     # PARENT CHILD DATA
     # ================================================================================

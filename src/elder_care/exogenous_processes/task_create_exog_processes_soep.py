@@ -51,7 +51,7 @@ def task_create_exog_wage():
 
     Include variance of wage unobservable.
 
-    """
+
     return {
         "wage_constant": 1.997354,
         "wage_age": 0.0124007328,
@@ -61,6 +61,18 @@ def task_create_exog_wage():
         "wage_high_education": 0.4582799360,
         "wage_part_time": -0.0561647814,
         "wage_std_regression_residual": 0.5512142746125238,
+    }
+
+    """
+    return {
+        "wage_constant": 2.0103482070,
+        "wage_age": 0.0114884074,
+        "wage_age_squared": -0.0001779835,
+        "wage_experience": 0.0280552316,
+        "wage_experience_squared": -0.0003998930,
+        "wage_high_education": 0.4617783635,
+        "wage_part_time": -0.0546509774,
+        "wage_std_regression_residual": 0.5584583071,
     }
 
 

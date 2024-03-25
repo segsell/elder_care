@@ -308,6 +308,146 @@ def prob_exog_care_demand(
     period,
     mother_alive,
     mother_health,
+    options,
+):
+    """Create nested exogenous care demand probabilities.
+
+    Compute based on parent alive. Otherwise zero.
+    Done outside?!
+
+    Nested exogenous transitions:
+    - First, a parent's health state is determined by their age and lagged health state.
+
+    Args:
+        period (int): Current period.
+        parental_age (int): Age of parent.
+        parent_alive (int): Binary indicator of whether parent is alive.
+        good_health (int): Binary indicator of good health.
+        medium_health (int): Binary indicator of medium health.
+        bad_health (int): Binary indicator of bad health.
+        params (dict): Dictionary of parameters.
+        mother_alive (int): Binary indicator of whether mother is alive.
+        mother_health (int): Binary indicator of mother's health state.
+        father_alive (int): Binary indicator of whether father is alive.
+        father_health (int): Binary indicator of father's health state.
+        options (dict): Dictionary of options.
+
+    Returns:
+        jnp.ndarray: Array of shape (2,) representing the probabilities of
+            no care demand and care demand, respectively.
+
+    """
+    mother_survival_prob = prob_survival_mother(period, options)
+
+    mother_trans_probs_health = exog_health_transition_mother(
+        period,
+        mother_health,
+        options,
+    )
+    # ===============================================================
+
+    mother_prob_care_good = _exog_care_demand_mother(
+        period=period,
+        mother_health=0,
+        options=options,
+    )
+    mother_prob_care_medium = _exog_care_demand_mother(
+        period=period,
+        mother_health=1,
+        options=options,
+    )
+    mother_prob_care_bad = _exog_care_demand_mother(
+        period=period,
+        mother_health=2,
+        options=options,
+    )
+
+    _mother_trans_probs_care_demand = jnp.array(
+        [mother_prob_care_good, mother_prob_care_medium, mother_prob_care_bad],
+    )
+
+    # Non-zero probability of care demand only if parent is alive,
+    # weighted by the parent's survival probability
+    prob_care_demand = (mother_survival_prob * mother_alive) * (
+        mother_trans_probs_health @ _mother_trans_probs_care_demand
+    )
+
+    return jnp.array([1 - prob_care_demand, prob_care_demand])
+
+
+def _exog_care_demand_mother(period, mother_health, options):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    mother_age = period + options["mother_start_age"]
+
+    logit = (
+        options["exog_care_single_mother_constant"]
+        + options["exog_care_single_mother_age"] * mother_age
+        + options["exog_care_single_mother_age_squared"] * (mother_age**2)
+        + options["exog_care_single_mother_medium_health"]
+        * (mother_health == MEDIUM_HEALTH)
+        + options["exog_care_single_mother_bad_health"] * (mother_health == BAD_HEALTH)
+    )
+    return 1 / (1 + jnp.exp(-logit))
+
+
+def _exog_care_demand_father(period, father_health, options):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    father_age = period + options["father_start_age"]
+
+    logit = (
+        options["exog_care_single_father_constant"]
+        + options["exog_care_single_father_age"] * father_age
+        + options["exog_care_single_father_age_squared"] * (father_age**2)
+        + options["exog_care_single_father_medium_health"]
+        * (father_health == MEDIUM_HEALTH)
+        + options["exog_care_single_father_bad_health"] * (father_health == BAD_HEALTH)
+    )
+    return 1 / (1 + np.exp(-logit))
+
+
+def _exog_care_demand_couple(period, mother_health, father_health, options):
+    """Compute scalar care demand probability.
+
+    Returns:
+        float: Probability of needing care given health state.
+
+    """
+    mother_age = period + options["mother_start_age"]
+    father_age = period + options["father_start_age"]
+
+    logit = (
+        options["exog_care_couple_constant"]
+        + options["exog_care_couple_mother_age"] * mother_age
+        + options["exog_care_couple_mother_age_squared"] * (mother_age**2)
+        + options["exog_care_couple_mother_medium_health"]
+        * (mother_health == MEDIUM_HEALTH)
+        + options["exog_care_couple_mother_bad_health"] * (mother_health == BAD_HEALTH)
+        + options["exog_care_couple_father_age"] * father_age
+        + options["exog_care_couple_father_age_squared"] * (father_age**2)
+        + options["exog_care_couple_father_medium_health"]
+        * (father_health == MEDIUM_HEALTH)
+        + options["exog_care_couple_father_bad_health"] * (father_health == BAD_HEALTH)
+    )
+    return 1 / (1 + jnp.exp(-logit))
+
+
+# Old
+
+
+def _prob_exog_care_demand_mother_and_father(
+    period,
+    mother_alive,
+    mother_health,
     father_alive,
     father_health,
     options,
@@ -494,72 +634,3 @@ def prob_exog_care_demand(
     )
 
     return jnp.array([1 - prob_care_demand, prob_care_demand])
-
-
-#
-
-
-def _exog_care_demand_mother(period, mother_health, options):
-    """Compute scalar care demand probability.
-
-    Returns:
-        float: Probability of needing care given health state.
-
-    """
-    mother_age = period + options["mother_start_age"]
-
-    logit = (
-        options["exog_care_single_mother_constant"]
-        + options["exog_care_single_mother_age"] * mother_age
-        + options["exog_care_single_mother_age_squared"] * (mother_age**2)
-        + options["exog_care_single_mother_medium_health"]
-        * (mother_health == MEDIUM_HEALTH)
-        + options["exog_care_single_mother_bad_health"] * (mother_health == BAD_HEALTH)
-    )
-    return 1 / (1 + jnp.exp(-logit))
-
-
-def _exog_care_demand_father(period, father_health, options):
-    """Compute scalar care demand probability.
-
-    Returns:
-        float: Probability of needing care given health state.
-
-    """
-    father_age = period + options["father_start_age"]
-
-    logit = (
-        options["exog_care_single_father_constant"]
-        + options["exog_care_single_father_age"] * father_age
-        + options["exog_care_single_father_age_squared"] * (father_age**2)
-        + options["exog_care_single_father_medium_health"]
-        * (father_health == MEDIUM_HEALTH)
-        + options["exog_care_single_father_bad_health"] * (father_health == BAD_HEALTH)
-    )
-    return 1 / (1 + np.exp(-logit))
-
-
-def _exog_care_demand_couple(period, mother_health, father_health, options):
-    """Compute scalar care demand probability.
-
-    Returns:
-        float: Probability of needing care given health state.
-
-    """
-    mother_age = period + options["mother_start_age"]
-    father_age = period + options["father_start_age"]
-
-    logit = (
-        options["exog_care_couple_constant"]
-        + options["exog_care_couple_mother_age"] * mother_age
-        + options["exog_care_couple_mother_age_squared"] * (mother_age**2)
-        + options["exog_care_couple_mother_medium_health"]
-        * (mother_health == MEDIUM_HEALTH)
-        + options["exog_care_couple_mother_bad_health"] * (mother_health == BAD_HEALTH)
-        + options["exog_care_couple_father_age"] * father_age
-        + options["exog_care_couple_father_age_squared"] * (father_age**2)
-        + options["exog_care_couple_father_medium_health"]
-        * (father_health == MEDIUM_HEALTH)
-        + options["exog_care_couple_father_bad_health"] * (father_health == BAD_HEALTH)
-    )
-    return 1 / (1 + jnp.exp(-logit))
