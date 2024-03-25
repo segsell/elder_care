@@ -69,7 +69,7 @@ def prob_full_time_offer(period, lagged_choice, options):
     return jnp.array([1 - full_time, full_time])
 
 
-def prob_survival_mother(period, mother_health, options):
+def prob_survival_mother(period, mother_health, mother_alive, options):
     """Predicts the survival probability based on logit parameters.
 
     coefs_male = np.array(
@@ -105,12 +105,14 @@ def prob_survival_mother(period, mother_health, options):
         + options["survival_prob_mother_lagged_health_bad"]
         * is_bad_health(mother_health)
     )
-    prob_survival = 1 / (1 + jnp.exp(-logit))
+    prob_logit = 1 / (1 + jnp.exp(-logit))
+
+    prob_survival = mother_alive * prob_logit
 
     return jnp.array([1 - prob_survival, prob_survival])
 
 
-def prob_survival_father(period, father_health, options):
+def prob_survival_father(period, father_health, father_alive, options):
     """Predicts the survival probability based on logit parameters.
 
     coefs_male = np.array(
@@ -146,7 +148,9 @@ def prob_survival_father(period, father_health, options):
         + options["survival_prob_father_lagged_health_bad"]
         * is_bad_health(father_health)
     )
-    prob_survival = 1 / (1 + jnp.exp(-logit))
+    prob_logit = 1 / (1 + jnp.exp(-logit))
+
+    prob_survival = father_alive * prob_logit
 
     return jnp.array([1 - prob_survival, prob_survival])
 

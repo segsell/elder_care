@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Annotated, Any
+import pytask
 
 import numpy as np
 import yaml
@@ -48,35 +49,35 @@ def task_specify_and_setup_model(
     exog_params = load_dict_from_pickle(path_to_exog)
 
     n_periods = specs["n_periods"]
-    choices = np.arange(specs["n_choices"], dtype=int)
+    choices = np.arange(specs["n_choices"], dtype=np.int8)
 
     exog_processes = {
         "part_time_offer": {
-            "states": np.arange(2),
+            "states": np.arange(2, dtype=np.int8),
             "transition": prob_part_time_offer,
         },
         "full_time_offer": {
-            "states": np.arange(2),
+            "states": np.arange(2, dtype=np.int8),
             "transition": prob_full_time_offer,
         },
-        "care_demand": {
-            "states": np.arange(2),
-            "transition": prob_exog_care_demand,
-        },
+        # "care_demand": {
+        #     "states": np.arange(2, dtype=np.int8),
+        #     "transition": prob_exog_care_demand,
+        # },
         "mother_alive": {
-            "states": np.arange(2),
+            "states": np.arange(2, dtype=np.int8),
             "transition": prob_survival_mother,
         },
         "father_alive": {
-            "states": np.arange(2),
+            "states": np.arange(2, dtype=np.int8),
             "transition": prob_survival_father,
         },
         "mother_health": {
-            "states": np.arange(3),
+            "states": np.arange(3, dtype=np.int8),
             "transition": exog_health_transition_mother,
         },
         "father_health": {
-            "states": np.arange(3),
+            "states": np.arange(3, dtype=np.int8),
             "transition": exog_health_transition_father,
         },
     }
@@ -88,9 +89,14 @@ def task_specify_and_setup_model(
             "income_shock_scale": specs["income_shock_scale"],
             "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
-                "married": np.arange(2),
-                "has_sibling": np.arange(2),
-                "experience": np.arange(n_periods, dtype=int),
+                "high_educ": np.arange(2, dtype=np.uint8),
+                # "married": np.arange(2, dtype=np.int8),
+                "has_sibling": np.arange(2, dtype=np.uint8),
+                # "experience": np.arange(
+                #     # specs["retirement_age"] - specs["start_age"], dtype=np.int8
+                #     specs["experience_cap"] + 1,
+                #     dtype=np.uint8,
+                # ),
                 "sparsity_condition": sparsity_condition,
             },
             "exogenous_processes": exog_processes,

@@ -39,9 +39,9 @@ def create_savings_grid():
 def budget_constraint(
     period: int,
     lagged_choice: int,
-    experience: int,
+    # experience: int,
     high_educ: int,
-    married: int,
+    # married: int,
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
@@ -66,16 +66,16 @@ def budget_constraint(
     wage_from_previous_period = get_exog_stochastic_wage(
         period=period,
         lagged_choice=lagged_choice,
-        experience=experience,
+        # experience=experience,
         high_educ=high_educ,
         wage_shock=income_shock_previous_period,
         options=options,
     )
-    spousal_income = get_exog_spousal_income(period, options) * married
+    # spousal_income = get_exog_spousal_income(period, options) * married
 
     wealth_beginning_of_period = (
         wage_from_previous_period * working_hours_yearly
-        + spousal_income
+        # + spousal_income
         + options["unemployment_benefits"] * is_not_working(lagged_choice) * 12
         + options["informal_care_benefits"] * is_informal_care(lagged_choice) * 12
         - options["formal_care_costs"] * is_formal_care(lagged_choice) * 12
@@ -94,7 +94,7 @@ def budget_constraint(
 def get_exog_stochastic_wage(
     period: int,
     lagged_choice: int,
-    experience: int,
+    # experience: int,
     high_educ: int,
     wage_shock: float,
     options: dict[str, float],
@@ -150,8 +150,8 @@ def get_exog_stochastic_wage(
         options["wage_constant"]
         + options["wage_age"] * age
         + options["wage_age_squared"] * age**2
-        + options["wage_experience"] * experience
-        + options["wage_experience_squared"] * experience**2
+        # + options["wage_experience"] * experience
+        # + options["wage_experience_squared"] * experience**2
         + options["wage_high_education"] * high_educ
         + options["wage_part_time"] * is_part_time(lagged_choice)
     )
