@@ -1,15 +1,14 @@
 import numpy as np
 
 from elder_care.model.shared import (
+    BAD_HEALTH,
     CARE,
     FULL_TIME,
+    MEDIUM_HEALTH,
     NO_CARE,
     NO_WORK,
     PART_TIME,
     WORK,
-    GOOD_HEALTH,
-    MEDIUM_HEALTH,
-    BAD_HEALTH,
     is_full_time,
     is_part_time,
 )
@@ -71,17 +70,12 @@ def get_state_specific_feasible_choice_set(
     mother_health,
     options,
 ):
-    """
-
-
-    # if ((mother_alive == 1) & (mother_health in [MEDIUM_HEALTH, BAD_HEALTH])) | (
-    #     (father_alive == 1) & (father_health in [MEDIUM_HEALTH, BAD_HEALTH])
-    # ):
-
+    """# if ((mother_alive == 1) & (mother_health in [MEDIUM_HEALTH, BAD_HEALTH])) | ( #
+    (father_alive == 1) & (father_health in [MEDIUM_HEALTH, BAD_HEALTH]) # ):
     """
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
-    if (mother_alive == 1) & (mother_health in [MEDIUM_HEALTH, BAD_HEALTH]):
+    if (mother_alive == 1) & (mother_health in (MEDIUM_HEALTH, BAD_HEALTH)):
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
@@ -135,17 +129,16 @@ def sparsity_condition(
     # If you have not worked last period, you can't have worked all your live
     if (
         (
-            (is_full_time(lagged_choice) is False)
-            & (is_part_time(lagged_choice) is False)
+            (
+                (is_full_time(lagged_choice) is False)
+                & (is_part_time(lagged_choice) is False)
+            )
+            & (period + max_init_experience == experience)
+            & (period > 0)
         )
-        & (period + max_init_experience == experience)
-        & (period > 0)
+        or experience > period + max_init_experience
+        or experience > options["experience_cap"]
     ):
-        cond = False
-    # You cannot have more experience than your age
-    elif experience > period + max_init_experience:
-        cond = False
-    elif experience > options["experience_cap"]:
         cond = False
 
     return cond

@@ -261,10 +261,10 @@ def task_create_estimation_data(
     ]
 
     dat["care_to_mother_intensive"] = np.select(
-        care_to_mother_intensive, [1, 1], default=0
+        care_to_mother_intensive, [1, 1], default=0,
     )
     dat["care_to_father_intensive"] = np.select(
-        care_to_father_intensive, [1, 1], default=0
+        care_to_father_intensive, [1, 1], default=0,
     )
 
     dat = dat[dat["gender"] == FEMALE]
