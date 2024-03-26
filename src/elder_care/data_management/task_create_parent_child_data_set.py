@@ -502,7 +502,6 @@ def create_married_or_partner_alive(dat):
 
 def create_children_information(dat):
     """Create information on number of children (and daughters)."""
-
     dat["has_two_daughters"] = 0  # Assuming less than two daughters by default
     dat["has_two_children"] = 0  # Assuming less than two children by default
 

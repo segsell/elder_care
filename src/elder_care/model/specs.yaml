@@ -13,6 +13,8 @@ mother_start_age: 65
 father_start_age: 67
 n_choices: 12
 
+min_init_experience: 0
+max_init_experience: 2
 experience_cap: 4  # maximum of exp accumulated, times 2
 
 # Parameters of the policy environment
