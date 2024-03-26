@@ -98,8 +98,9 @@ def task_create_parent_child_data(
         axis=1,
     )
 
-    # Keep only those aged 65 and older
     dat = dat[(dat["age"] > MIN_AGE) & (dat["age"] <= MAX_AGE)]
+
+    dat = create_children_information(dat)
 
     dat = create_married_or_partner_alive(dat)
     dat = create_care_variables(dat)
@@ -495,6 +496,36 @@ def create_married_or_partner_alive(dat):
         values_married_or_partner,
         np.nan,
     )
+
+    return dat
+
+
+def create_children_information(dat):
+    """Create information on number of children (and daughters)."""
+
+    dat["has_two_daughters"] = 0  # Assuming less than two daughters by default
+    dat["has_two_children"] = 0  # Assuming less than two children by default
+
+    # Iterate through the DataFrame rows
+    for index, row in dat.iterrows():
+        # Counting non-NaN values for 'has_two_children'
+        non_nan_count = row.filter(like="ch_gender_").notna().sum()
+
+        # Counting values equal to 2 for 'has_two_daughters'
+        female_count = (row.filter(like="ch_gender_") == 2).sum()
+
+        # Update 'has_two_children_loop' based on non-NaN count
+        if non_nan_count >= 2:
+            dat.at[index, "has_two_children"] = 1
+
+        # Update 'has_two_daughters_loop' based on female count
+        if female_count >= 2:
+            dat.at[index, "has_two_daughters"] = 1
+
+    # Handling the all-NaN case separately for both columns
+    ch_gender_cols = [col for col in dat.columns if col.startswith("ch_gender_")]
+    all_nan_indices = dat[ch_gender_cols].isna().all(axis=1)
+    dat.loc[all_nan_indices, ["has_two_daughters", "has_two_children"]] = np.nan
 
     return dat
 
