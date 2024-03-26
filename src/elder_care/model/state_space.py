@@ -1,15 +1,13 @@
 import numpy as np
 
 from elder_care.model.shared import (
-    BAD_HEALTH,
     CARE,
+    CHOICE_AFTER_AGE_70,
     FULL_TIME,
-    MEDIUM_HEALTH,
     NO_CARE,
     NO_WORK,
     PART_TIME,
     WORK,
-    CHOICE_AFTER_AGE_70,
     is_full_time,
     is_part_time,
 )
@@ -39,11 +37,11 @@ def get_state_specific_feasible_choice_set(
     """# if ((mother_alive == 1) & (mother_health in [MEDIUM_HEALTH, BAD_HEALTH])) | ( #
     (father_alive == 1) & (father_health in [MEDIUM_HEALTH, BAD_HEALTH]) # ):
 
-    if experience == options["experience_cap"]:
-        feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
+    if experience == options["experience_cap"]:     feasible_choice_set = [i for i in
+    feasible_choice_set if i in NO_WORK]
 
-    # elif period + options["start_age"] > options["retirement_age"]:
-    #     feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
+    # elif period + options["start_age"] > options["retirement_age"]: #
+    feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
     """
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
