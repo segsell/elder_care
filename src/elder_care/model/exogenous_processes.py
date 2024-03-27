@@ -202,7 +202,7 @@ def exog_health_transition_mother(period, mother_health, options):
         + options["mother_bad_health"]["bad_health_constant"]
     )
 
-    linear_comb = np.array([0, lc_medium_health, lc_bad_health])
+    linear_comb = jnp.array([0, lc_medium_health, lc_bad_health])
     transition_probs = _softmax(linear_comb)
 
     return jnp.array([transition_probs[0], transition_probs[1], transition_probs[2]])
@@ -293,7 +293,7 @@ def _softmax(lc):
       is subtracted from each linear combination before exponentiation.
 
     """
-    e_lc = np.exp(lc - np.max(lc))  # Subtract max for numerical stability
+    e_lc = jnp.exp(lc - jnp.max(lc))  # Subtract max for numerical stability
     return e_lc / e_lc.sum(axis=0)
 
 
@@ -391,9 +391,9 @@ def _exog_care_demand_mother(period, mother_health, options):
         options["exog_care_single_mother_constant"]
         + options["exog_care_single_mother_age"] * mother_age
         + options["exog_care_single_mother_age_squared"] * (mother_age**2)
-        + options["exog_care_single_mother_medium_health"]
+        + options["exog_care_single_mother_health_medium"]
         * (mother_health == MEDIUM_HEALTH)
-        + options["exog_care_single_mother_bad_health"] * (mother_health == BAD_HEALTH)
+        + options["exog_care_single_mother_health_bad"] * (mother_health == BAD_HEALTH)
     )
     return 1 / (1 + jnp.exp(-logit))
 
@@ -411,11 +411,11 @@ def _exog_care_demand_father(period, father_health, options):
         options["exog_care_single_father_constant"]
         + options["exog_care_single_father_age"] * father_age
         + options["exog_care_single_father_age_squared"] * (father_age**2)
-        + options["exog_care_single_father_medium_health"]
+        + options["exog_care_single_father_health_medium"]
         * (father_health == MEDIUM_HEALTH)
-        + options["exog_care_single_father_bad_health"] * (father_health == BAD_HEALTH)
+        + options["exog_care_single_father_health_bad"] * (father_health == BAD_HEALTH)
     )
-    return 1 / (1 + np.exp(-logit))
+    return 1 / (1 + jnp.exp(-logit))
 
 
 def _exog_care_demand_couple(period, mother_health, father_health, options):
