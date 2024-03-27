@@ -29,12 +29,12 @@ def get_state_specific_feasible_choice_set(
     period,
     part_time_offer,
     full_time_offer,
-    mother_alive,
-    mother_health,
     care_demand,
     options,
 ):
-    """# if ((mother_alive == 1) & (mother_health in [MEDIUM_HEALTH, BAD_HEALTH])) | ( #
+    """Get feasible choice set for current parent state.
+
+    # if ((mother_alive == 1) & (mother_health in [MEDIUM_HEALTH, BAD_HEALTH])) | ( #
     (father_alive == 1) & (father_health in [MEDIUM_HEALTH, BAD_HEALTH]) # ):
 
     if experience == options["experience_cap"]:     feasible_choice_set = [i for i in
@@ -42,8 +42,6 @@ def get_state_specific_feasible_choice_set(
 
     # elif period + options["start_age"] > options["retirement_age"]: #
     feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
-
-    # if (mother_alive == 1) & (mother_health in (MEDIUM_HEALTH, BAD_HEALTH)):
 
     """
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
