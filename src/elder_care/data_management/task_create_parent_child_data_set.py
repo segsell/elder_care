@@ -42,6 +42,9 @@ ANSWER_NO = 5
 YES_TEMPORARILY = 1
 YES_PERMANENTLY = 3
 
+DUMMY_TRUE = 1
+AT_LEAST_TWO = 2
+
 
 def table(df_col):
     """Return frequency table."""
@@ -511,15 +514,15 @@ def create_children_information(dat):
         non_nan_count = row.filter(like="ch_gender_").notna().sum()
 
         # Counting values equal to 2 for 'has_two_daughters'
-        female_count = (row.filter(like="ch_gender_") == 2).sum()
+        female_count = (row.filter(like="ch_gender_") == FEMALE).sum()
 
         # Update 'has_two_children_loop' based on non-NaN count
-        if non_nan_count >= 2:
-            dat.at[index, "has_two_children"] = 1
+        if non_nan_count >= AT_LEAST_TWO:
+            dat.loc[index, "has_two_children"] = DUMMY_TRUE
 
         # Update 'has_two_daughters_loop' based on female count
-        if female_count >= 2:
-            dat.at[index, "has_two_daughters"] = 1
+        if female_count >= AT_LEAST_TWO:
+            dat.loc[index, "has_two_daughters"] = DUMMY_TRUE
 
     # Handling the all-NaN case separately for both columns
     ch_gender_cols = [col for col in dat.columns if col.startswith("ch_gender_")]

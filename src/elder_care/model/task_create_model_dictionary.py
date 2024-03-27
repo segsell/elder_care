@@ -17,9 +17,6 @@ def task_assemble_exog_processes(
     path_to_health_transition_female: Path = BLD
     / "model"
     / "exog_health_transition_female.pkl",
-    path_to_health_transition_male: Path = BLD
-    / "model"
-    / "exog_health_transition_male.pkl",
     path_to_care_single_mother: Path = BLD / "model" / "exog_care_single_mother.pkl",
     path_to_care_single_father: Path = BLD / "model" / "exog_care_single_father.pkl",
     path_to_care_couple: Path = BLD / "model" / "exog_care_couple.pkl",

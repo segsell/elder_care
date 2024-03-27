@@ -138,53 +138,6 @@ def task_create_moments(
     )
 
     # ================================================================================
-
-    dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
-
-    share_intensive_care = []
-    share_intensive_care += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "intensive_care_weighted",
-        ].sum()
-        / dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins_coarse
-    ]
-    share_intensive_care_by_age_bin_coarse = pd.Series(
-        {
-            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
-            for i, age_bin in enumerate(age_bins_coarse)
-        },
-    )
-
-    # care to mother over the life cycle
-    dat["care_to_mother_intensive_weighted"] = dat["care_to_mother_intensive"]
-
-    share_intensive_care_mother = []
-    share_intensive_care_mother += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "care_to_mother_intensive_weighted",
-        ].sum()
-        / dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins_coarse
-    ]
-    share_intensive_care_mother_by_age_bin_coarse = pd.Series(
-        {
-            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care_mother[
-                i
-            ]
-            for i, age_bin in enumerate(age_bins_coarse)
-        },
-    )
-
-    # ================================================================================
     # PARENT CHILD DATA
     # ================================================================================
 
@@ -267,7 +220,6 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age,
-            share_intensive_care_by_age_bin_coarse,
             #
             net_income_by_age_bin_part_time,
             net_income_by_age_bin_full_time,
@@ -1305,6 +1257,68 @@ def get_wealth_by_caregiving_status_and_age_bin(
             for age_bin in age_bins
         },
     )
+
+
+# ================================================================================
+# Auxiliary?
+# ================================================================================
+
+
+def get_share_informal_care_by_age_bin(
+    dat,
+    intensive_care_var,
+    weight,
+    age_bins_coarse,
+):
+    dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
+
+    share_intensive_care = []
+    share_intensive_care += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "intensive_care_weighted",
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins_coarse
+    ]
+    return pd.Series(
+        {
+            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
+            for i, age_bin in enumerate(age_bins_coarse)
+        },
+    )
+
+
+def get_share_informal_care_to_mother_by_age_bin(dat, weight, age_bins_coarse):
+    dat["care_to_mother_intensive_weighted"] = dat["care_to_mother_intensive"]
+
+    share_intensive_care = []
+    share_intensive_care += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "care_to_mother_intensive_weighted",
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins_coarse
+    ]
+
+    return pd.Series(
+        {
+            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
+            for i, age_bin in enumerate(age_bins_coarse)
+        },
+    )
+
+
+# ================================================================================
+# Parent-child sample
+# ================================================================================
 
 
 def get_caregiving_status_by_parental_health(

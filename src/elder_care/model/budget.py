@@ -71,11 +71,9 @@ def budget_constraint(
         wage_shock=income_shock_previous_period,
         options=options,
     )
-    # spousal_income = get_exog_spousal_income(period, options) * married
 
     wealth_beginning_of_period = (
         wage_from_previous_period * working_hours_yearly
-        # + spousal_income
         + options["unemployment_benefits"] * is_not_working(lagged_choice) * 12
         + options["informal_care_benefits"] * is_informal_care(lagged_choice) * 12
         - options["formal_care_costs"] * is_formal_care(lagged_choice) * 12

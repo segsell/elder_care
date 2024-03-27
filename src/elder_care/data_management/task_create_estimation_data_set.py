@@ -208,68 +208,7 @@ def task_create_estimation_data(
     dat = interpolate_missing_values(dat, col="hnetw")
     dat = compute_spousal_and_other_income(dat, hh_income="thinc")
 
-    # Descriptives
-
-    care_to_mother = [
-        # personal care in hh
-        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
-        # care outside hh to mother
-        (dat["sp008_"] == 1)
-        & (
-            (dat["sp009_1"] == MOTHER)
-            | (dat["sp009_2"] == MOTHER)
-            | (dat["sp009_3"] == MOTHER)
-        ),
-    ]
-    care_to_father = [
-        # personal care in hh
-        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
-        # care outside hh to father
-        (dat["sp008_"] == 1)
-        & (
-            (dat["sp009_1"] == FATHER)
-            | (dat["sp009_2"] == FATHER)
-            | (dat["sp009_3"] == FATHER)
-        ),
-    ]
-
-    dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
-    dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
-
-    # intensive caregiving
-    care_to_mother_intensive = [
-        # personal care in hh
-        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
-        # care outside hh to mother
-        (dat["sp008_"] == 1)
-        & (
-            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([MOTHER])))
-            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([MOTHER])))
-            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([MOTHER])))
-        ),
-    ]
-    care_to_father_intensive = [
-        # personal care in hh
-        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
-        # care outside hh to father
-        (dat["sp008_"] == 1)
-        & (
-            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([FATHER])))
-            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([FATHER])))
-            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([FATHER])))
-        ),
-    ]
-
-    dat["care_to_mother_intensive"] = np.select(
-        care_to_mother_intensive,
-        [1, 1],
-        default=0,
-    )
-    dat["care_to_father_intensive"] = np.select(
-        care_to_father_intensive,
-        [1, 1],
-        default=0,
-    )
+    dat = check_share_informal_care_to_mother_father(dat)
 
     dat = dat[dat["gender"] == FEMALE]
     dat = dat.reset_index(drop=True)
@@ -1699,6 +1638,72 @@ def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
     conditions = [(dat["isced"] >= HOCHSCHUL_DEGREE), (dat["isced"] < HOCHSCHUL_DEGREE)]
     values = [1, 0]
     dat["high_isced"] = np.select(conditions, values, default=np.nan)
+
+    return dat
+
+
+def check_share_informal_care_to_mother_father(dat):
+    """Compute the shares of informal care to mother and father, respectively."""
+    care_to_mother = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == MOTHER)
+            | (dat["sp009_2"] == MOTHER)
+            | (dat["sp009_3"] == MOTHER)
+        ),
+    ]
+    care_to_father = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
+        # care outside hh to father
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == FATHER)
+            | (dat["sp009_2"] == FATHER)
+            | (dat["sp009_3"] == FATHER)
+        ),
+    ]
+
+    dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
+    dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
+
+    # intensive caregiving
+    care_to_mother_intensive = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([MOTHER])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([MOTHER])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([MOTHER])))
+        ),
+    ]
+    care_to_father_intensive = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
+        # care outside hh to father
+        (dat["sp008_"] == 1)
+        & (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([FATHER])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([FATHER])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([FATHER])))
+        ),
+    ]
+
+    dat["care_to_mother_intensive"] = np.select(
+        care_to_mother_intensive,
+        [1, 1],
+        default=0,
+    )
+    dat["care_to_father_intensive"] = np.select(
+        care_to_father_intensive,
+        [1, 1],
+        default=0,
+    )
 
     return dat
 

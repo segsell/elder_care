@@ -5,9 +5,9 @@ from typing import Annotated, Any
 
 import numpy as np
 import yaml
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
 
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
@@ -79,7 +79,6 @@ def task_specify_and_setup_model(
             "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
-                # "married": np.arange(2, dtype=np.int8),
                 "has_sibling": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
                     stop=specs["experience_cap"] + 1,
