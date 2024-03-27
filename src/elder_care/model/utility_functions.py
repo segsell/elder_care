@@ -37,10 +37,7 @@ def create_final_period_utility_functions():
 def utility_func(
     consumption: jnp.array,
     choice: int,
-    mother_alive: int,
-    father_alive: int,
     mother_health: int,
-    father_health: int,
     has_sibling: int,
     params: dict,
 ) -> jnp.array:
@@ -102,9 +99,7 @@ def utility_func(
     """
     rho = params["rho"]
 
-    mother_health = mother_health if mother_alive else -1
-    father_health = father_health if father_alive else -1
-    parental_health = jnp.maximum(mother_health, father_health)
+    parental_health = mother_health
 
     informal_care = is_informal_care(choice)
     formal_care = is_formal_care(choice)

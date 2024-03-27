@@ -40,10 +40,7 @@ def task_assemble_exog_processes(
     exog_health_transition_female = load_dict_from_pickle(
         path_to_health_transition_female,
     )
-    exog_health_transition_male = load_dict_from_pickle(path_to_health_transition_male)
-    _exog_health_transition = (
-        exog_health_transition_female | exog_health_transition_male
-    )
+    _exog_health_transition = exog_health_transition_female
 
     exog_care_single_mother = load_dict_from_pickle(path_to_care_single_mother)
     exog_care_single_father = load_dict_from_pickle(path_to_care_single_father)

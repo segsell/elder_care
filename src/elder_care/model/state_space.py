@@ -43,10 +43,11 @@ def get_state_specific_feasible_choice_set(
     # elif period + options["start_age"] > options["retirement_age"]: #
     feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
+    # if (mother_alive == 1) & (mother_health in (MEDIUM_HEALTH, BAD_HEALTH)):
+
     """
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
-    # if (mother_alive == 1) & (mother_health in (MEDIUM_HEALTH, BAD_HEALTH)):
     if care_demand == 1:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
     else:

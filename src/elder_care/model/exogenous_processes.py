@@ -18,7 +18,7 @@ from elder_care.model.shared import (
 # ==============================================================================
 
 
-def prob_part_time_offer(period, lagged_choice, options):
+def prob_part_time_offer(period, lagged_choice, high_educ, options):
     """Compute logit probability of part time offer.
 
     + params["part_time_high_education"] * high_educ
@@ -27,8 +27,7 @@ def prob_part_time_offer(period, lagged_choice, options):
     logit = (
         options["part_time_constant"]
         + options["part_time_not_working_last_period"] * is_not_working(lagged_choice)
-        + options["part_time_working_full_time_last_period"]
-        * is_full_time(lagged_choice)
+        + options["part_time_high_education"] * high_educ
         + options["part_time_above_retirement_age"]
         * (period + options["start_age"] >= RETIREMENT_AGE)
         #
@@ -42,7 +41,7 @@ def prob_part_time_offer(period, lagged_choice, options):
     return jnp.array([1 - part_time, part_time])
 
 
-def prob_full_time_offer(period, lagged_choice, options):
+def prob_full_time_offer(period, lagged_choice, high_educ, options):
     """Compute logit probability of full time offer.
 
     + params["full_time_high_education"] * high_educ
@@ -53,8 +52,7 @@ def prob_full_time_offer(period, lagged_choice, options):
     logit = (
         options["full_time_constant"]
         + options["full_time_not_working_last_period"] * is_not_working(lagged_choice)
-        + options["full_time_working_part_time_last_period"]
-        * is_part_time(lagged_choice)
+        + options["full_time_high_education"] * high_educ
         + options["full_time_above_retirement_age"]
         * (period + options["start_age"] >= RETIREMENT_AGE)
         #
@@ -306,8 +304,8 @@ def _softmax(lc):
 
 def prob_exog_care_demand(
     period,
-    mother_alive,
     mother_health,
+    mother_alive,
     options,
 ):
     """Create nested exogenous care demand probabilities.
@@ -337,12 +335,17 @@ def prob_exog_care_demand(
             no care demand and care demand, respectively.
 
     """
-    mother_survival_prob = prob_survival_mother(period, options)
+    mother_survival_prob = prob_survival_mother(
+        period=period,
+        mother_health=mother_health,
+        mother_alive=mother_alive,
+        options=options,
+    )
 
     mother_trans_probs_health = exog_health_transition_mother(
-        period,
-        mother_health,
-        options,
+        period=period,
+        mother_health=mother_health,
+        options=options,
     )
     # ===============================================================
 

@@ -44,7 +44,7 @@ def task_create_params_parental_health_transition(
 
     """
     params_female = {
-        "medium_health": {
+        "mother_medium_health": {
             "medium_health_age": 0.0304,
             "medium_health_age_squared": -1.31e-05,
             "medium_health_lagged_good_health": -1.155,
@@ -52,7 +52,7 @@ def task_create_params_parental_health_transition(
             "medium_health_lagged_bad_health": 1.434,
             "medium_health_constant": -1.550,
         },
-        "bad_health": {
+        "mother_bad_health": {
             "bad_health_age": 0.196,
             "bad_health_age_squared": -0.000885,
             "bad_health_lagged_good_health": -2.558,
@@ -63,7 +63,7 @@ def task_create_params_parental_health_transition(
     }
 
     params_male = {
-        "medium_health": {
+        "father_medium_health": {
             "medium_health_age": 0.176,
             "medium_health_age_squared": -0.000968,
             "medium_health_lagged_good_health": -1.047,
@@ -71,7 +71,7 @@ def task_create_params_parental_health_transition(
             "medium_health_lagged_bad_health": 1.743,
             "medium_health_constant": -7.374,
         },
-        "bad_health": {
+        "father_bad_health": {
             "bad_health_age": 0.260,
             "bad_health_age_squared": -0.00134,
             "bad_health_lagged_good_health": -2.472,

@@ -1,0 +1,20 @@
+params = {
+    "beta": 0.95,
+    "rho": 2,
+    "interest_rate": 0.04,
+    #
+    "disutility_part_time": -2,
+    "disutility_full_time": -4,
+    "utility_informal_care_parent_good_health": 1,
+    "utility_informal_care_parent_medium_health": 1,
+    "utility_informal_care_parent_bad_health": 1,
+    "utility_formal_care_parent_good_health": 1,
+    "utility_formal_care_parent_medium_health": 1,
+    "utility_formal_care_parent_bad_health": 1,
+    "utility_combination_care_parent_good_health": 1,
+    "utility_combination_care_parent_medium_health": 1,
+    "utility_combination_care_parent_bad_health": 1,
+    "utility_informal_care_sibling": 1,
+    "utility_formal_care_sibling": 1,
+    "utility_combination_care_sibling": 1,
+}
