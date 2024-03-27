@@ -208,33 +208,7 @@ def task_create_estimation_data(
     dat = interpolate_missing_values(dat, col="hnetw")
     dat = compute_spousal_and_other_income(dat, hh_income="thinc")
 
-    # Descriptives
-
-    care_to_mother = [
-        # personal care in hh
-        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
-        # care outside hh to mother
-        (dat["sp008_"] == 1)
-        & (
-            (dat["sp009_1"] == MOTHER)
-            | (dat["sp009_2"] == MOTHER)
-            | (dat["sp009_3"] == MOTHER)
-        ),
-    ]
-    care_to_father = [
-        # personal care in hh
-        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
-        # care outside hh to mother
-        (dat["sp008_"] == 1)
-        & (
-            (dat["sp009_1"] == FATHER)
-            | (dat["sp009_2"] == FATHER)
-            | (dat["sp009_3"] == FATHER)
-        ),
-    ]
-
-    dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
-    dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
+    dat = check_share_informal_care_to_mother_father(dat)
 
     dat = dat[dat["gender"] == FEMALE]
     dat = dat.reset_index(drop=True)
@@ -271,6 +245,8 @@ def multiply_rows_with_weight(dat, weight):
         "intensive_care_no_other",
         "intensive_care_general",
         "intensive_care_all_parents",
+        "intensive_care_mother",
+        "intensive_care_father",
         "lagged_part_time",
         "lagged_full_time",
         "lagged_working_part_or_full_time",
@@ -338,6 +314,8 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(22, "n_siblings", dat["n_siblings"])
     dat_weighted.insert(23, "has_sibling", dat["has_sibling"])
     dat_weighted.insert(24, "has_sister", dat["has_sister"])
+    dat_weighted.insert(25, "intensive_care_mother", dat["intensive_care_mother"])
+    dat_weighted.insert(26, "intensive_care_father", dat["intensive_care_father"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -1209,6 +1187,8 @@ def create_caregving(dat):
     dat = _create_intensive_care_general(dat)
     dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
     dat = _create_intensive_parental_care_without_any_other_care(dat)
+    dat = _create_intensive_care_mother(dat)
+    dat = _create_intensive_care_father(dat)
 
     dat["no_intensive_informal"] = 1 - dat["intensive_care_no_other"]
     dat = _create_lagged_var(dat, "no_intensive_informal")
@@ -1293,6 +1273,44 @@ def _create_intensive_parental_care_without_any_other_care(dat):
     ]
     _choice = [1, 0]
     dat["intensive_care_no_other"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_care_mother(dat):
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([MOTHER])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([MOTHER])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([MOTHER])))
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & (dat["sp019d2"] == 1)  # for mother
+        ),
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0]
+    dat["intensive_care_mother"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_care_father(dat):
+    _cond = [
+        (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([FATHER])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([FATHER])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([FATHER])))
+        )
+        | (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & (dat["sp019d3"] == 1)  # for father
+        ),
+        (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
+    ]
+    _choice = [1, 0]
+    dat["intensive_care_father"] = np.select(_cond, _choice, default=np.nan)
 
     return dat
 
@@ -1620,6 +1638,72 @@ def create_high_educ(dat: pd.DataFrame) -> pd.DataFrame:
     conditions = [(dat["isced"] >= HOCHSCHUL_DEGREE), (dat["isced"] < HOCHSCHUL_DEGREE)]
     values = [1, 0]
     dat["high_isced"] = np.select(conditions, values, default=np.nan)
+
+    return dat
+
+
+def check_share_informal_care_to_mother_father(dat):
+    """Compute the shares of informal care to mother and father, respectively."""
+    care_to_mother = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == MOTHER)
+            | (dat["sp009_2"] == MOTHER)
+            | (dat["sp009_3"] == MOTHER)
+        ),
+    ]
+    care_to_father = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
+        # care outside hh to father
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == FATHER)
+            | (dat["sp009_2"] == FATHER)
+            | (dat["sp009_3"] == FATHER)
+        ),
+    ]
+
+    dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
+    dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
+
+    # intensive caregiving
+    care_to_mother_intensive = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d2"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([MOTHER])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([MOTHER])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([MOTHER])))
+        ),
+    ]
+    care_to_father_intensive = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d3"] == 1),
+        # care outside hh to father
+        (dat["sp008_"] == 1)
+        & (
+            ((dat["sp011_1"] == GIVEN_HELP_DAILY) & (dat["sp009_1"].isin([FATHER])))
+            | ((dat["sp011_2"] == GIVEN_HELP_DAILY) & (dat["sp009_2"].isin([FATHER])))
+            | ((dat["sp011_3"] == GIVEN_HELP_DAILY) & (dat["sp009_3"].isin([FATHER])))
+        ),
+    ]
+
+    dat["care_to_mother_intensive"] = np.select(
+        care_to_mother_intensive,
+        [1, 1],
+        default=0,
+    )
+    dat["care_to_father_intensive"] = np.select(
+        care_to_father_intensive,
+        [1, 1],
+        default=0,
+    )
 
     return dat
 
