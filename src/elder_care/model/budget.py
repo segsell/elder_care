@@ -5,7 +5,7 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import is_full_time, is_part_time
+from elder_care.model.shared import is_full_time, is_not_working, is_part_time
 
 # =====================================================================================
 # Exogenous savings grid
@@ -55,6 +55,10 @@ def budget_constraint(
     + options["informal_care_benefits"] * is_informal_care(lagged_choice) * 12
     - options["formal_care_costs"] * is_formal_care(lagged_choice) * 12
 
+
+    means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
+    unemployment_benefits_yearly = means_test * options["unemployment_benefits"] * 12
+
     """
     working_hours_yearly = (
         is_part_time(lagged_choice) * 20 * 4.33 * 12  # week month year
@@ -72,15 +76,13 @@ def budget_constraint(
 
     wealth_beginning_of_period = (
         wage_from_previous_period * working_hours_yearly
+        + options["unemployment_benefits"] * is_not_working(lagged_choice) * 12
         + (1 + options["interest_rate"]) * savings_end_of_previous_period
     )
 
-    means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
-    unemployment_benefits_yearly = means_test * options["unemployment_benefits"] * 12
-
     return jnp.maximum(
         wealth_beginning_of_period,
-        unemployment_benefits_yearly,
+        options["consumption_floor"] * 12,
     )
 
 
