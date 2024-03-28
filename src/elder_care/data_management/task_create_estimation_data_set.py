@@ -247,6 +247,8 @@ def multiply_rows_with_weight(dat, weight):
         "intensive_care_all_parents",
         "intensive_care_mother",
         "intensive_care_father",
+        "intensive_care_outside",
+        "intensive_parental_care_outside_no_other",
         "lagged_part_time",
         "lagged_full_time",
         "lagged_working_part_or_full_time",
@@ -319,6 +321,13 @@ def multiply_rows_with_weight(dat, weight):
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
+    )
+    dat_weighted.insert(27, "intensive_care_general", dat["intensive_care_general"])
+    dat_weighted.insert(28, "intensive_care_outside", dat["intensive_care_outside"])
+    dat_weighted.insert(
+        29,
+        "intensive_parental_care_outside_no_other",
+        dat["intensive_parental_care_outside_no_other"],
     )
 
     return dat_weighted
@@ -1187,8 +1196,12 @@ def create_caregving(dat):
     dat = _create_intensive_care_general(dat)
     dat = _create_intensive_parental_care_with_in_laws_and_step_parents(dat)
     dat = _create_intensive_parental_care_without_any_other_care(dat)
+
     dat = _create_intensive_care_mother(dat)
     dat = _create_intensive_care_father(dat)
+
+    dat = _create_intensive_care_outside_hh(dat)
+    dat = _create_intensive_parental_care_outside_hh(dat)
 
     dat["no_intensive_informal"] = 1 - dat["intensive_care_no_other"]
     dat = _create_lagged_var(dat, "no_intensive_informal")
@@ -1249,6 +1262,66 @@ def _create_intensive_parental_care(dat):
     return dat
 
 
+def _create_intensive_care_outside_hh(dat):
+    _cond = [
+        (
+            (dat["sp011_1"] == GIVEN_HELP_DAILY)
+            | (dat["sp011_2"] == GIVEN_HELP_DAILY)
+            | (dat["sp011_3"] == GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_NO),  # no personal care in hh
+        (dat["sp008_"] == ANSWER_NO),
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_YES),
+    ]
+    _choice = [1, 0, 0]
+    dat["intensive_care_outside"] = np.select(_cond, _choice, default=np.nan)
+
+    return dat
+
+
+def _create_intensive_parental_care_outside_hh(dat):
+    _cond = [
+        (
+            (
+                (dat["sp011_1"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & (dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        )
+        & (dat["sp018_"] == ANSWER_NO),  # no personal care in hh
+        dat["sp008_"] == ANSWER_NO,
+        (dat["sp008_"] == ANSWER_YES)
+        & (
+            (dat["sp011_1"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        )
+        & (dat["sp018_"] == ANSWER_YES),
+    ]
+    _choice = [1, 0, 0]
+
+    dat["intensive_parental_care_outside_no_other"] = np.select(
+        _cond,
+        _choice,
+        default=np.nan,
+    )
+
+    return dat
+
+
 def _create_intensive_parental_care_without_any_other_care(dat):
     _cond = [
         (
@@ -1268,7 +1341,7 @@ def _create_intensive_parental_care_without_any_other_care(dat):
         | (
             (dat["sp018_"] == 1)  # or personal care in hh
             & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
-        ),  # include mother and father in law?
+        ),
         (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
     ]
     _choice = [1, 0]
@@ -1364,9 +1437,7 @@ def _create_intensive_care_general(dat):
             | (dat["sp011_2"] == GIVEN_HELP_DAILY)
             | (dat["sp011_3"] == GIVEN_HELP_DAILY)
         )
-        | (
-            dat["sp018_"] == 1  # or personal care in hh
-        ),  # include mother and father in law?
+        | (dat["sp018_"] == 1),  # or personal care in hh
         (dat["sp018_"] == ANSWER_NO)
         & (dat["sp018_"] == ANSWER_NO),  # or personal care in hh
         (dat["sp008_"] == ANSWER_YES)
