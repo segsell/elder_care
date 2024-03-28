@@ -76,6 +76,7 @@ lint.extend-ignore = [
 "tests/*" = ["D", "ANN"]
 "docs/source/conf.py" = ["INP001"]
 "src/elder_care/sandbox/run.py" = ["INP001"]
+"src/elder_care/utils.py" = ["S301"]
 
 
 [tool.ruff.lint.pydocstyle]
