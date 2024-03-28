@@ -5,13 +5,7 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import (
-    is_formal_care,
-    is_full_time,
-    is_informal_care,
-    is_not_working,
-    is_part_time,
-)
+from elder_care.model.shared import is_full_time, is_part_time
 
 # =====================================================================================
 # Exogenous savings grid
@@ -41,7 +35,6 @@ def budget_constraint(
     lagged_choice: int,
     experience: int,
     high_educ: int,
-    # married: int,
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
@@ -56,6 +49,11 @@ def budget_constraint(
         wealth_beginning_of_period,
         options["consumption_floor"],
     )
+
+
+    + options["unemployment_benefits"] * is_not_working(lagged_choice) * 12
+    + options["informal_care_benefits"] * is_informal_care(lagged_choice) * 12
+    - options["formal_care_costs"] * is_formal_care(lagged_choice) * 12
 
     """
     working_hours_yearly = (
@@ -74,9 +72,6 @@ def budget_constraint(
 
     wealth_beginning_of_period = (
         wage_from_previous_period * working_hours_yearly
-        + options["unemployment_benefits"] * is_not_working(lagged_choice) * 12
-        + options["informal_care_benefits"] * is_informal_care(lagged_choice) * 12
-        - options["formal_care_costs"] * is_formal_care(lagged_choice) * 12
         + (1 + options["interest_rate"]) * savings_end_of_previous_period
     )
 

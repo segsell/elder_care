@@ -1,9 +1,11 @@
 import numpy as np
 
 from elder_care.model.shared import (
+    BAD_HEALTH,
     CARE,
     CHOICE_AFTER_AGE_70,
     FULL_TIME,
+    MEDIUM_HEALTH,
     NO_CARE,
     NO_WORK,
     PART_TIME,
@@ -29,7 +31,8 @@ def get_state_specific_feasible_choice_set(
     period,
     part_time_offer,
     full_time_offer,
-    care_demand,
+    mother_alive,
+    mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.
@@ -46,7 +49,7 @@ def get_state_specific_feasible_choice_set(
     """
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
-    if care_demand == 1:
+    if (mother_alive == 1) & (mother_health in (MEDIUM_HEALTH, BAD_HEALTH)):
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
@@ -71,7 +74,6 @@ def update_endog_state(
     experience,
     has_sibling,
     high_educ,
-    # married,
     options,
 ):
     """Update endogenous state variables.

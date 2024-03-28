@@ -7,7 +7,6 @@ from elder_care.model.shared import (
     is_combination_care,
     is_formal_care,
     is_full_time,
-    is_good_health,
     is_informal_care,
     is_medium_health,
     is_part_time,
@@ -116,19 +115,12 @@ def utility_func(
 
     utility_caregiving = (
         # informal care by parental health status
-        params["utility_informal_care_parent_good_health"]
-        * informal_care
-        * is_good_health(parental_health)
-        + params["utility_informal_care_parent_medium_health"]
+        params["utility_informal_care_parent_medium_health"]
         * informal_care
         * is_medium_health(parental_health)
         + params["utility_informal_care_parent_bad_health"]
         * informal_care
         * is_bad_health(parental_health)
-        # formal care by parental health status
-        + params["utility_formal_care_parent_good_health"]
-        * formal_care
-        * is_good_health(parental_health)
         + params["utility_formal_care_parent_medium_health"]
         * formal_care
         * is_medium_health(parental_health)
@@ -136,19 +128,40 @@ def utility_func(
         * formal_care
         * is_bad_health(parental_health)
         # combination care by parental health status
-        + params["utility_combination_care_parent_good_health"]
-        * combination_care
-        * is_good_health(parental_health)
         + params["utility_combination_care_parent_medium_health"]
         * combination_care
         * is_medium_health(parental_health)
         + params["utility_combination_care_parent_bad_health"]
         * combination_care
         * is_bad_health(parental_health)
-        # caregiving if sibling present
-        + params["utility_informal_care_sibling"] * informal_care * has_sibling
-        + params["utility_formal_care_sibling"] * formal_care * has_sibling
-        + params["utility_combination_care_sibling"] * combination_care * has_sibling
+        #
+        # informal care if sibling present
+        + params["utility_informal_care_medium_health_sibling"]
+        * informal_care
+        * is_medium_health(parental_health)
+        * has_sibling
+        + params["utility_informal_care_bad_health_sibling"]
+        * informal_care
+        * is_bad_health(parental_health)
+        * has_sibling
+        # formal care if sibling present
+        + params["utility_formal_care_medium_health_sibling"]
+        * formal_care
+        * is_medium_health(parental_health)
+        * has_sibling
+        + params["utility_formal_care_bad_health_sibling"]
+        * formal_care
+        * is_medium_health(parental_health)
+        * has_sibling
+        # combination care if sibling present
+        + params["utility_combination_care_medium_health_sibling"]
+        * combination_care
+        * is_medium_health(parental_health)
+        * has_sibling
+        + params["utility_combination_care_bad_health_sibling"]
+        * combination_care
+        * is_bad_health(parental_health)
+        * has_sibling
     )
 
     return utility_consumption + disutility_working + utility_caregiving
