@@ -138,29 +138,6 @@ def task_create_moments(
     )
 
     # ================================================================================
-
-    dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
-
-    share_intensive_care = []
-    share_intensive_care += [
-        dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            "intensive_care_weighted",
-        ].sum()
-        / dat.loc[
-            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
-            weight,
-        ].sum()
-        for age_bin in age_bins_coarse
-    ]
-    share_intensive_care_by_age_bin_coarse = pd.Series(
-        {
-            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
-            for i, age_bin in enumerate(age_bins_coarse)
-        },
-    )
-
-    # ================================================================================
     # PARENT CHILD DATA
     # ================================================================================
 
@@ -243,7 +220,6 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age,
-            share_intensive_care_by_age_bin_coarse,
             #
             net_income_by_age_bin_part_time,
             net_income_by_age_bin_full_time,
@@ -1283,6 +1259,68 @@ def get_wealth_by_caregiving_status_and_age_bin(
     )
 
 
+# ================================================================================
+# Auxiliary?
+# ================================================================================
+
+
+def get_share_informal_care_by_age_bin(
+    dat,
+    intensive_care_var,
+    weight,
+    age_bins_coarse,
+):
+    dat["intensive_care_weighted"] = dat[intensive_care_var] * dat[weight]
+
+    share_intensive_care = []
+    share_intensive_care += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "intensive_care_weighted",
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins_coarse
+    ]
+    return pd.Series(
+        {
+            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
+            for i, age_bin in enumerate(age_bins_coarse)
+        },
+    )
+
+
+def get_share_informal_care_to_mother_by_age_bin(dat, weight, age_bins_coarse):
+    dat["care_to_mother_intensive_weighted"] = dat["care_to_mother_intensive"]
+
+    share_intensive_care = []
+    share_intensive_care += [
+        dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            "care_to_mother_intensive_weighted",
+        ].sum()
+        / dat.loc[
+            (dat["age"] > age_bin[0]) & (dat["age"] <= age_bin[1]),
+            weight,
+        ].sum()
+        for age_bin in age_bins_coarse
+    ]
+
+    return pd.Series(
+        {
+            f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share_intensive_care[i]
+            for i, age_bin in enumerate(age_bins_coarse)
+        },
+    )
+
+
+# ================================================================================
+# Parent-child sample
+# ================================================================================
+
+
 def get_caregiving_status_by_parental_health(
     dat,
     moment,
@@ -1314,6 +1352,27 @@ def get_caregiving_status_by_parental_health(
 # ================================================================================
 # SOEP
 # ================================================================================
+
+
+def get_coefficients_savings_rate_regression():
+    """Get coefficients of savings rate regression.
+
+    The coefficients are estimated using the SOEP data. The wealth variables used in the
+    calculation of the savings rate are deflated by the consumer price index (CPI) to
+    2015 prices.
+
+    """
+    return pd.Series(
+        {
+            "savings_rate_constant": 1.929170502311,
+            "savings_rate_age": -0.0755207021,
+            "savings_rate_age_squared": 0.0007550297,
+            "savings_rate_high_education": 0.0050211845,
+            "savings_rate_part_time": 0.0809547016,
+            "savings_rate_full_time": 0.1041300926,
+            "savings_rate_informal_care": -0.0339010984,
+        },
+    )
 
 
 def get_employment_transitions_soep():

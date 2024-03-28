@@ -11,22 +11,19 @@ from pytask import Product
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from elder_care.config import BLD, SRC
+from elder_care.model.shared import (
+    BAD_HEALTH,
+    FEMALE,
+    GOOD_HEALTH,
+    MALE,
+    MEDIUM_HEALTH,
+    RETIREMENT_AGE,
+)
 from elder_care.utils import save_dict_to_pickle, statsmodels_params_to_dict
-
-FEMALE = 2
-MALE = 1
 
 MIN_YEAR = 2004
 MAX_YEAR = 2017
 PARENT_MIN_AGE = 65
-
-
-GOOD_HEALTH = 0
-MEDIUM_HEALTH = 1
-BAD_HEALTH = 2
-
-
-RETIREMENT_AGE = 65  # 65
 
 
 def table(df_col):
@@ -47,7 +44,7 @@ def task_create_params_parental_health_transition(
 
     """
     params_female = {
-        "medium_health": {
+        "mother_medium_health": {
             "medium_health_age": 0.0304,
             "medium_health_age_squared": -1.31e-05,
             "medium_health_lagged_good_health": -1.155,
@@ -55,7 +52,7 @@ def task_create_params_parental_health_transition(
             "medium_health_lagged_bad_health": 1.434,
             "medium_health_constant": -1.550,
         },
-        "bad_health": {
+        "mother_bad_health": {
             "bad_health_age": 0.196,
             "bad_health_age_squared": -0.000885,
             "bad_health_lagged_good_health": -2.558,
@@ -66,7 +63,7 @@ def task_create_params_parental_health_transition(
     }
 
     params_male = {
-        "medium_health": {
+        "father_medium_health": {
             "medium_health_age": 0.176,
             "medium_health_age_squared": -0.000968,
             "medium_health_lagged_good_health": -1.047,
@@ -74,7 +71,7 @@ def task_create_params_parental_health_transition(
             "medium_health_lagged_bad_health": 1.743,
             "medium_health_constant": -7.374,
         },
-        "bad_health": {
+        "father_bad_health": {
             "bad_health_age": 0.260,
             "bad_health_age_squared": -0.00134,
             "bad_health_lagged_good_health": -2.472,
@@ -249,17 +246,19 @@ def task_create_parental_survival_prob(
     logit_female = sm.Logit(y_female, x_female).fit()
     logit_male = sm.Logit(y_male, x_male).fit()
 
-    params_female = statsmodels_params_to_dict(
+    params_mother = statsmodels_params_to_dict(
         logit_female.params,
-        name_prefix="survival_prob_female",
+        name_prefix="survival_prob",
+        name_constant="mother",
     )
-    params_male = statsmodels_params_to_dict(
+    params_father = statsmodels_params_to_dict(
         logit_male.params,
-        name_prefix="survival_prob_male",
+        name_prefix="survival_prob",
+        name_constant="father",
     )
 
-    save_dict_to_pickle(params_female, path_to_save_female)
-    save_dict_to_pickle(params_male, path_to_save_male)
+    save_dict_to_pickle(params_mother, path_to_save_female)
+    save_dict_to_pickle(params_father, path_to_save_male)
 
 
 def task_create_params_exog_care_demand_basic(
