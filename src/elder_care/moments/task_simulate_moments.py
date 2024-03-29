@@ -1,9 +1,11 @@
+"""Sandbox for simulating moments."""
+
 from pathlib import Path
 
 import pandas as pd
 
+from elder_care._simulate import simulate_moments
 from elder_care.config import TESTS
-from elder_care.simulate import simulate_moments
 
 
 def task_create_simulated_moments(
