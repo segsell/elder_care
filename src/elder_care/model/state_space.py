@@ -3,7 +3,6 @@ import numpy as np
 from elder_care.model.shared import (
     BAD_HEALTH,
     CARE,
-    CHOICE_AFTER_AGE_70,
     FULL_TIME,
     MEDIUM_HEALTH,
     NO_CARE,
@@ -53,16 +52,18 @@ def get_state_specific_feasible_choice_set(
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
-    if period + options["start_age"] >= options["age_seventy"]:
-        feasible_choice_set = [CHOICE_AFTER_AGE_70]
-    elif (full_time_offer == False) & (part_time_offer == True):
+    if (full_time_offer == 0) & (part_time_offer == 1):
         feasible_choice_set = [i for i in feasible_choice_set if i in PART_TIME]
-    elif (full_time_offer == True) & (part_time_offer == False):
+    elif (full_time_offer == 1) & (part_time_offer == 0):
         feasible_choice_set = [i for i in feasible_choice_set if i in FULL_TIME]
-    elif (full_time_offer == True) & (part_time_offer == True):
+    elif (full_time_offer == 1) & (part_time_offer == 1):
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
+
+    # if period + options["start_age"] >= options["age_seventy"]:
+    #     feasible_choice_set = [CHOICE_AFTER_AGE_70]
+    # feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
     return np.array(feasible_choice_set)
 
@@ -112,16 +113,16 @@ def sparsity_condition(
 
     cond = True
 
-    if (
-        (is_full_time(lagged_choice) is False) & (is_part_time(lagged_choice) is False)
-    ) & (period + max_init_experience == experience) & (period > 0) | (
-        experience > options["experience_cap"]
-    ):
-        cond = False
+    # if (
+    #     (is_full_time(lagged_choice) is False) & (is_part_time(lagged_choice) is False)
+    # ) & (period + max_init_experience == experience) & (period > 0) | (
+    #     experience > options["experience_cap"]
+    # ):
+    #     cond = False
 
-    if (period + options["start_age"] >= options["age_seventy"] + 1) & (
-        lagged_choice != CHOICE_AFTER_AGE_70
-    ):
-        cond = False
+    # if (period + options["start_age"] >= options["age_seventy"] + 1) & (
+    #     lagged_choice != CHOICE_AFTER_AGE_70
+    # ):
+    #     cond = False
 
     return cond

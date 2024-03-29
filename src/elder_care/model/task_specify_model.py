@@ -40,6 +40,23 @@ def task_specify_and_setup_model(
     start_params["sigma"] = specs["income_shock_scale"]
 
     """
+    options = get_options_dict(path_to_specs, path_to_exog)
+
+    return setup_and_save_model(
+        options=options,
+        state_space_functions=create_state_space_functions(),
+        utility_functions=create_utility_functions(),
+        utility_functions_final_period=create_final_period_utility_functions(),
+        budget_constraint=budget_constraint,
+        path=path_to_save,
+    )
+
+
+def get_options_dict(
+    path_to_specs: Path = SRC / "model" / "specs.yaml",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+):
+
     specs, wage_params = load_specs(path_to_specs)
 
     exog_params = load_dict_from_pickle(path_to_exog)
@@ -62,6 +79,17 @@ def task_specify_and_setup_model(
         },
     }
 
+    more_exog_params = {
+        "part_time_constant": -2.568584,
+        "part_time_not_working_last_period": 0.3201395,
+        "part_time_high_education": 0.1691369,
+        "part_time_above_retirement_age": -1.9976496,
+        "full_time_constant": -2.445238,
+        "full_time_not_working_last_period": -0.9964007,
+        "full_time_high_education": 0.3019138,
+        "full_time_above_retirement_age": -2.6571659,
+    }
+
     options = {
         "state_space": {
             "n_periods": n_periods,
@@ -79,17 +107,14 @@ def task_specify_and_setup_model(
             },
             "exogenous_processes": exog_processes,
         },
-        "model_params": specs | wage_params | exog_params,
+        "model_params": specs
+        | wage_params
+        | exog_params
+        | more_exog_params
+        | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 
-    return setup_and_save_model(
-        options=options,
-        state_space_functions=create_state_space_functions(),
-        utility_functions=create_utility_functions(),
-        utility_functions_final_period=create_final_period_utility_functions(),
-        budget_constraint=budget_constraint,
-        path=path_to_save,
-    )
+    return options
 
 
 def load_specs(path_to_specs):
