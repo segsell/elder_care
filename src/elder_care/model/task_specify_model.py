@@ -5,19 +5,18 @@ from typing import Annotated, Any
 
 import numpy as np
 import yaml
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
 
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
 )
 from elder_care.model.budget import budget_constraint
 from elder_care.model.exogenous_processes import (
-    exog_health_transition_mother,
+    exog_health_transition_mother_with_survival,
     prob_full_time_offer,
     prob_part_time_offer,
-    prob_survival_mother,
 )
 from elder_care.model.state_space import (
     create_state_space_functions,
@@ -57,13 +56,9 @@ def task_specify_and_setup_model(
             "states": np.arange(2, dtype=np.int8),
             "transition": prob_full_time_offer,
         },
-        "mother_alive": {
-            "states": np.arange(2, dtype=np.int8),
-            "transition": prob_survival_mother,
-        },
         "mother_health": {
-            "states": np.arange(3, dtype=np.int8),
-            "transition": exog_health_transition_mother,
+            "states": np.arange(4, dtype=np.int8),
+            "transition": exog_health_transition_mother_with_survival,
         },
     }
 

@@ -1,10 +1,17 @@
+import pytest
 from numpy.testing import assert_almost_equal as aaae
 
+from elder_care.config import BLD
 from elder_care.exogenous_processes.task_create_exog_processes import (
     exog_health_transition,
 )
+from elder_care.model.exogenous_processes import (
+    exog_health_transition_mother_with_survival,
+)
+from elder_care.utils import load_dict_from_pickle
 
 
+@pytest.mark.skip(reason="Outdated")
 def test_exog_health_transition():
     params = {
         "medium_health": {
@@ -46,3 +53,39 @@ def test_exog_health_transition():
     aaae(prob_medium, expected_prob_medium)
     aaae(prob_bad, expected_prob_bad)
     aaae(prob_good + prob_medium + prob_bad, 1)
+
+
+def test_exog_health_transition_with_alive():
+
+    path_to_survival_prob = BLD / "model" / "exog_survival_prob_female.pkl"
+
+    model_params = {
+        "mother_medium_health": {
+            "medium_health_age": 0.0304,
+            "medium_health_age_squared": -1.31e-05,
+            "medium_health_lagged_good_health": -1.155,
+            "medium_health_lagged_medium_health": 0.736,
+            "medium_health_lagged_bad_health": 1.434,
+            "medium_health_constant": -1.550,
+        },
+        "mother_bad_health": {
+            "bad_health_age": 0.196,
+            "bad_health_age_squared": -0.000885,
+            "bad_health_lagged_good_health": -2.558,
+            "bad_health_lagged_medium_health": -0.109,
+            "bad_health_lagged_bad_health": 2.663,
+            "bad_health_constant": -9.220,
+        },
+    }
+    survival_prob_params = load_dict_from_pickle(path_to_survival_prob)
+    options = {"mother_start_age": 65} | model_params | survival_prob_params
+
+    prob_good, prob_medium, prob_bad, prob_dead = (
+        exog_health_transition_mother_with_survival(
+            period=5,
+            mother_health=1,
+            options=options,
+        )
+    )
+
+    aaae(prob_good + prob_medium + prob_bad + prob_dead, 1)

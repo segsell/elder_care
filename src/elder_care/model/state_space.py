@@ -31,7 +31,6 @@ def get_state_specific_feasible_choice_set(
     period,
     part_time_offer,
     full_time_offer,
-    mother_alive,
     mother_health,
     options,
 ):
@@ -49,7 +48,7 @@ def get_state_specific_feasible_choice_set(
     """
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
-    if (mother_alive == 1) & (mother_health in (MEDIUM_HEALTH, BAD_HEALTH)):
+    if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
@@ -80,8 +79,6 @@ def update_endog_state(
 
     next_state["mother_age"] = options["mother_min_age"] + mother_age + 1
     next_state["father_age"] = options["father_min_age"] + father_age + 1
-
-    alive based on exog state health based on exog state
 
     experience_cap: 15 # maximum of exp accumulated, see Adda et al (2017)
     Returns to experience are flat after 15 years of experience.
