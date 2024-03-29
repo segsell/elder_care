@@ -4,11 +4,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.state_space import create_state_space_functions
@@ -18,7 +18,7 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 
-jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
 
 PARAMS = {
@@ -93,19 +93,6 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
     for k in entries_to_remove:
         initial_states.pop(k, None)
 
-    # Fix in dcegm?
-    model_loaded["state_space_names"] = model_loaded["model_structure"][
-        "state_space_names"
-    ]
-    model_loaded["map_state_choice_to_index"] = model_loaded["model_structure"][
-        "map_state_choice_to_index"
-    ]
-
-    model_loaded["exog_mapping"] = model_loaded["model_funcs"]["exog_mapping"]
-    model_loaded["get_next_period_state"] = model_loaded["model_funcs"][
-        "get_next_period_state"
-    ]
-
     sim_dict = simulate_all_periods_for_model(
         states_initial=initial_states,
         resources_initial=initial_resources,
@@ -120,14 +107,7 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
         model=model_loaded,
     )
 
-    df = create_simulation_df(sim_dict)
-
-    breakpoint()
-
-    return df
-
-
-# def simulate_local():
+    return create_simulation_df(sim_dict)
 
 
 # ==============================================================================
