@@ -30,9 +30,12 @@ AGE_56 = 56
 AGE_59 = 59
 AGE_62 = 62
 
+AGE_40 = 40
+AGE_45 = 45
 AGE_55 = 55
 AGE_60 = 60
 AGE_65 = 65
+AGE_70 = 70
 
 GOOD_HEALTH = 0
 MEDIUM_HEALTH = 1
@@ -86,6 +89,24 @@ def task_create_moments(
     caregiving_by_father_couple_health_sample_sizes = table(father_couple["health"])
     caregiving_by_father_single_health_sample_sizes = table(father_single["health"])
 
+
+    parent["health_weighted"] = parent["health"] * parent[weight]
+    data = parent.loc[parent["gender"] == FEMALE]
+    moment = "health_weighted"
+    initial_mother_health = pd.Series(
+        {
+            f"mother_health_{health}": data.loc[
+                (data["health"] == health) & (data["age"] >= 65) & (data["age"] <= 68),
+                moment,
+            ].sum()
+            / data.loc[
+                data["health"].notna() & (data["age"] >= 65) & (data["age"] <= 68),
+                weight,
+            ].sum()
+            for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
+        },
+    )
+
     """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
@@ -98,9 +119,12 @@ def task_create_moments(
     intensive_care_var = "intensive_care_no_other"
 
     age_bins_coarse = [
+        (AGE_40, AGE_45),
+        (AGE_45, AGE_60),
         (AGE_50, AGE_55),
         (AGE_55, AGE_60),
         (AGE_60, AGE_65),
+        (AGE_65, AGE_70),
     ]
 
     net_income_by_age_bin_part_time = get_income_by_employment_by_age_bin(
@@ -174,6 +198,8 @@ def task_create_moments(
     parent["no_informal_care_child_weighted"] = (
         parent["no_informal_care_child"] * parent[weight]
     )
+
+    # ================================================================================
 
     # care mix by health status of parent
     caregiving_by_mother_health = (
