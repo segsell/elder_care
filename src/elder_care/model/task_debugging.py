@@ -11,9 +11,7 @@ from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
-from elder_care.model.state_space import (
-    create_state_space_functions,
-)
+from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
 from elder_care.model.utility_functions import (
     create_final_period_utility_functions,
@@ -85,7 +83,10 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
     initial_conditions = pd.read_csv(path, index_col=0)
 
     initial_resources, initial_states = draw_initial_states(
-        initial_conditions, initial_wealth_empirical, n_agents, seed=seed,
+        initial_conditions,
+        initial_wealth_empirical,
+        n_agents,
+        seed=seed,
     )
 
     entries_to_remove = ("married", "care_demand", "father_alive")

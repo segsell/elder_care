@@ -1,4 +1,4 @@
 [submodule "dcegm"]
 	path = dcegm
 	url = https://github.com/OpenSourceEconomics/dcegm.git
-	branch = batches
+	branch = main
