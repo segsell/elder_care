@@ -15,6 +15,8 @@ ignore-nested-functions = true
 exclude = ["setup.py", "docs", "bld"]
 ignore-regex = ["task_*"]
 
+[tool.black]
+line-length = 88
 
 [tool.ruff]
 target-version = "py311"
@@ -74,6 +76,7 @@ lint.extend-ignore = [
 "tests/*" = ["D", "ANN"]
 "docs/source/conf.py" = ["INP001"]
 "src/elder_care/sandbox/run.py" = ["INP001"]
+"src/elder_care/utils.py" = ["S301"]
 
 
 [tool.ruff.lint.pydocstyle]
