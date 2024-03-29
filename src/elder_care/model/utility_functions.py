@@ -1,8 +1,16 @@
+"""Utility functions for the model."""
+
 from typing import Any
 
 import jax.numpy as jnp
 
 from elder_care.model.shared import (
+    N_MONTHS,
+    N_WEEKS,
+    TOTAL_WEEKLY_HOURS,
+    WEEKLY_HOURS_FULL_TIME,
+    WEEKLY_HOURS_PART_TIME,
+    WEEKLY_INTENSIVE_INFORMAL_HOURS,
     is_bad_health,
     is_combination_care,
     is_formal_care,
@@ -14,6 +22,7 @@ from elder_care.model.shared import (
 
 
 def create_utility_functions():
+    """Create dict of utility functions."""
     return {
         "utility": utility_func,
         "marginal_utility": marginal_utility,
@@ -22,6 +31,7 @@ def create_utility_functions():
 
 
 def create_final_period_utility_functions():
+    """Create dict of utility functions for the final period."""
     return {
         "utility": utility_final_consume_all,
         "marginal_utility": marginal_utility_final_consume_all,
@@ -36,8 +46,10 @@ def create_final_period_utility_functions():
 def utility_func(
     consumption: jnp.array,
     choice: int,
+    period: int,
     mother_health: int,
     has_sibling: int,
+    options: dict,
     params: dict,
 ) -> jnp.array:
     """Computes the agent's current utility based on a CRRA utility function.
@@ -98,6 +110,8 @@ def utility_func(
     """
     rho = params["rho"]
 
+    age = period + options["start_age"]
+
     parental_health = mother_health
 
     informal_care = is_informal_care(choice)
@@ -105,6 +119,27 @@ def utility_func(
     combination_care = is_combination_care(choice)
     part_time = is_part_time(choice)
     full_time = is_full_time(choice)
+
+    working_hours_weekly = (
+        part_time * WEEKLY_HOURS_PART_TIME + full_time * WEEKLY_HOURS_FULL_TIME
+    )
+    # From SOEP data we know that the 25% and 75% percentile in the care hours
+    # distribution are 7 and 21 hours per week in a comparative sample.
+    # We use these discrete mass-points as discrete choices of non-intensive and
+    # intensive informal care.
+    # In SHARE, respondents inform about the frequency with which they provide
+    # informal care. We use this information to proxy the care provision in the data.
+    caregiving_hours_weekly = informal_care * WEEKLY_INTENSIVE_INFORMAL_HOURS
+    leisure_hours = (
+        (TOTAL_WEEKLY_HOURS - working_hours_weekly - caregiving_hours_weekly)
+        * N_WEEKS  # month
+        * N_MONTHS  # year
+    )
+
+    # age is a proxy for health impacting the taste for free-time.
+    utility_leisure = (
+        params["utility_leisure_constant"] + params["utility_leisure_age"] * age
+    ) * jnp.log(leisure_hours)
 
     utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
 
@@ -164,14 +199,18 @@ def utility_func(
         * has_sibling
     )
 
-    return utility_consumption + disutility_working + utility_caregiving
+    return (
+        utility_consumption + utility_leisure + disutility_working + utility_caregiving
+    )
 
 
 def marginal_utility(consumption, params):
+    """Compute marginal utility of CRRA utility function."""
     return consumption ** (-params["rho"])
 
 
 def inverse_marginal_utility(marginal_utility, params):
+    """Compute inverse of marginal utility of CRRA utility function."""
     return marginal_utility ** (-1 / params["rho"])
 
 
@@ -185,6 +224,7 @@ def utility_final_consume_all(
     params: dict[str, float],
     options: dict[str, Any],
 ):
+    """Compute the agent's utility in the final period including bequest."""
     rho = params["rho"]
     bequest_scale = options["bequest_scale"]
 
@@ -196,7 +236,7 @@ def marginal_utility_final_consume_all(
     params: dict[str, float],
     options,
 ) -> jnp.array:
-    """Computes marginal utility of CRRA utility function.
+    """Computes marginal utility of CRRA utility function in final period.
 
     Args:
         choice (int): Choice of the agent, e.g. 0 = "retirement", 1 = "working".
