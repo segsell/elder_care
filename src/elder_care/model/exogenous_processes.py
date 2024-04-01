@@ -20,32 +20,28 @@ from elder_care.model.shared import (
 
 
 def prob_part_time_offer(period, lagged_choice, high_educ, options):
-    """Compute logit probability of part time offer.
-
-    + params["part_time_high_education"] * high_educ
-
-    """
+    """Compute logit probability of part time offer."""
     logit = (
         options["part_time_constant"]
         + options["part_time_not_working_last_period"] * is_not_working(lagged_choice)
         + options["part_time_high_education"] * high_educ
         + options["part_time_above_retirement_age"]
         * (period + options["start_age"] >= RETIREMENT_AGE)
-        #
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))
 
-    part_time = (
+    prob_part_time = (
         is_part_time(lagged_choice) * 1 + (1 - is_part_time(lagged_choice)) * prob_logit
     )
+    prob_part_time = (
+        options["age_seventy"] > period + options["start_age"]
+    ) * prob_part_time
 
-    return jnp.array([1 - part_time, part_time])
+    return jnp.array([1 - prob_part_time, prob_part_time])
 
 
 def prob_full_time_offer(period, lagged_choice, high_educ, options):
     """Compute logit probability of full time offer.
-
-    + params["full_time_high_education"] * high_educ
 
     _prob = jnp.exp(logit) / (1 + jnp.exp(logit))
 
@@ -56,16 +52,17 @@ def prob_full_time_offer(period, lagged_choice, high_educ, options):
         + options["full_time_high_education"] * high_educ
         + options["full_time_above_retirement_age"]
         * (period + options["start_age"] >= RETIREMENT_AGE)
-        #
     )
-
     prob_logit = 1 / (1 + jnp.exp(-logit))
 
-    full_time = (
+    prob_full_time = (
         is_full_time(lagged_choice) * 1 + (1 - is_full_time(lagged_choice)) * prob_logit
     )
+    prob_full_time = (
+        options["age_seventy"] > period + options["start_age"]
+    ) * prob_full_time
 
-    return jnp.array([1 - full_time, full_time])
+    return jnp.array([1 - prob_full_time, prob_full_time])
 
 
 # =====================================================================================

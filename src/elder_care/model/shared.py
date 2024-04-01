@@ -5,6 +5,29 @@ import jax.numpy as jnp
 FEMALE = 2
 MALE = 1
 
+
+MIN_AGE = 40
+MAX_AGE = 75
+
+AGE_40 = 40
+AGE_45 = 45
+AGE_50 = 50
+AGE_55 = 55
+AGE_60 = 60
+AGE_65 = 65
+AGE_70 = 70
+AGE_75 = 75
+
+AGE_BINS = [
+    (AGE_40 - MIN_AGE, AGE_45 - MIN_AGE),
+    (AGE_45 - MIN_AGE, AGE_50 - MIN_AGE),
+    (AGE_50 - MIN_AGE, AGE_55 - MIN_AGE),
+    (AGE_55 - MIN_AGE, AGE_60 - MIN_AGE),
+    (AGE_60 - MIN_AGE, AGE_65 - MIN_AGE),
+    (AGE_65 - MIN_AGE, AGE_70 - MIN_AGE),
+    (AGE_70 - MIN_AGE, AGE_75 - MIN_AGE),
+]
+
 GOOD_HEALTH = 0
 MEDIUM_HEALTH = 1
 BAD_HEALTH = 2

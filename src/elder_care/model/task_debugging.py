@@ -4,13 +4,15 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-
+from elder_care._simulate import get_share_by_age, get_share_by_type_by_age_bin
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
+from elder_care.model.shared import ALL, FULL_TIME, INFORMAL_CARE, NO_WORK, PART_TIME
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
 from elder_care.model.utility_functions import (
@@ -50,6 +52,7 @@ PARAMS = {
 }
 
 
+# @pytask.mark.skip()
 def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
 
     options = get_options_dict()
@@ -107,7 +110,59 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
         model=model_loaded,
     )
 
-    return create_simulation_df(sim_dict)
+    df_raw = create_simulation_df(sim_dict)
+    data = df_raw.notna()
+
+    #
+
+    n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
+
+    keys_to_drop = ["taste_shocks"]
+    dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
+
+    data = pd.DataFrame(
+        {key: val.ravel() for key, val in dict_to_df.items()},
+        index=pd.MultiIndex.from_product(
+            [np.arange(n_periods), np.arange(n_agents)],
+            names=["period", "agent"],
+        ),
+    )
+
+    column_indices = {col: idx for idx, col in enumerate(data.columns)}
+    idx = column_indices.copy()
+    arr = jnp.asarray(data)
+
+    share_not_working_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        lagged_choice=NO_WORK,
+    )  # 15
+
+    share_part_time_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        lagged_choice=PART_TIME,
+    )  # 15
+
+    share_full_time_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        lagged_choice=FULL_TIME,
+    )  # 15
+
+    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        care_type=ALL,
+        lagged_choice=INFORMAL_CARE,
+    )
+
+    return (
+        share_not_working_by_age,
+        share_part_time_by_age,
+        share_full_time_by_age,
+        share_informal_care_by_age_bin,
+    )
 
 
 # ==============================================================================

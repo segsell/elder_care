@@ -53,7 +53,9 @@ def get_state_specific_feasible_choice_set(
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
-    if (full_time_offer == 0) & (part_time_offer == 1):
+    if period + options["start_age"] >= options["age_seventy"]:
+        feasible_choice_set = [CHOICE_AFTER_AGE_70]
+    elif (full_time_offer == 0) & (part_time_offer == 1):
         feasible_choice_set = [i for i in feasible_choice_set if i in PART_TIME]
     elif (full_time_offer == 1) & (part_time_offer == 0):
         feasible_choice_set = [i for i in feasible_choice_set if i in FULL_TIME]
@@ -61,9 +63,6 @@ def get_state_specific_feasible_choice_set(
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
-
-    if period + options["start_age"] >= options["age_seventy"]:
-        feasible_choice_set = [CHOICE_AFTER_AGE_70]
 
     return np.array(feasible_choice_set)
 
