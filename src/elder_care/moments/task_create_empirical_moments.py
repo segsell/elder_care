@@ -240,24 +240,23 @@ def task_create_moments(
     )
 
     # share working by caregiving type (and age bin) --> to be checked
-    employment_by_age = get_employment_by_age_soep()
-    employment_by_caregiving_status = get_employment_by_caregiving_status_soep()
+    employment_by_age_soep = get_employment_by_age_soep()
+    employment_by_caregiving_status_soep = get_employment_by_caregiving_status_soep()
 
     all_moments = pd.concat(
         [
-            employment_by_age,
+            employment_by_age_soep,
             #
             net_income_by_age_bin_part_time,
             net_income_by_age_bin_full_time,
             wealth_by_age_bin,
             #
-            employment_by_caregiving_status,
+            employment_by_caregiving_status_soep,
             caregiving_by_mother_health,
             caregiving_by_father_health,
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
-            # parent child data
             care_transitions_parent_child_data,
         ],
         ignore_index=False,
@@ -1402,6 +1401,25 @@ def get_coefficients_savings_rate_regression():
 
 
 def get_employment_transitions_soep():
+    """Get employment transitions of females age 39-70 from SOEP."""
+    return pd.Series(
+        {
+            "not_working_to_not_working": 0.9081446,
+            "not_working_to_part_time": 0.07185538,
+            "not_working_to_full_time": 0.02,
+            #
+            "part_time_to_not_working": 0.1070033,
+            "part_time_to_part_time": 0.8167875,
+            "part_time_to_full_time": 0.07620923,
+            #
+            "full_time_to_not_working": 0.0558282,
+            "full_time_to_part_time": 0.07111375,
+            "full_time_to_full_time": 0.873058,
+        },
+    )
+
+
+def get_employment_transitions_soep_51_to_65():
     """Get employment transitions of females age 51-65 from SOEP."""
     return pd.Series(
         {
@@ -1436,6 +1454,113 @@ def get_employment_by_caregiving_status_soep():
 
 
 def get_employment_by_age_soep():
+    """Get employment shares by age of females age 39-70."""
+    return pd.Series(
+        {
+            # not working
+            "not_working_age_39": 0.3873923,
+            "not_working_age_40": 0.3624795,
+            "not_working_age_41": 0.3429091,
+            "not_working_age_42": 0.3217345,
+            "not_working_age_43": 0.3128681,
+            "not_working_age_44": 0.3001430,
+            "not_working_age_45": 0.2968833,
+            "not_working_age_46": 0.2921024,
+            "not_working_age_47": 0.2930369,
+            "not_working_age_48": 0.2827195,
+            "not_working_age_49": 0.2772086,
+            "not_working_age_50": 0.2789733,
+            "not_working_age_51": 0.2890753,
+            "not_working_age_52": 0.2981818,
+            "not_working_age_53": 0.3093333,
+            "not_working_age_54": 0.3253968,
+            "not_working_age_55": 0.3312008,
+            "not_working_age_56": 0.3494705,
+            "not_working_age_57": 0.3658537,
+            "not_working_age_58": 0.4085761,
+            "not_working_age_59": 0.4484105,
+            "not_working_age_60": 0.5026279,
+            "not_working_age_61": 0.6012961,
+            "not_working_age_62": 0.6930100,
+            "not_working_age_63": 0.7615607,
+            "not_working_age_64": 0.8543746,
+            "not_working_age_65": 0.8963161,
+            "not_working_age_66": 0.9447926,
+            "not_working_age_67": 0.9586930,
+            "not_working_age_68": 0.9703130,
+            "not_working_age_69": 0.9747814,
+            "not_working_age_70": 0.9805623,
+            # part-time
+            "part_time_age_39": 0.35843870,
+            "part_time_age_40": 0.37338666,
+            "part_time_age_41": 0.37436364,
+            "part_time_age_42": 0.38436831,
+            "part_time_age_43": 0.38283063,
+            "part_time_age_44": 0.38827315,
+            "part_time_age_45": 0.38005343,
+            "part_time_age_46": 0.37396322,
+            "part_time_age_47": 0.36248392,
+            "part_time_age_48": 0.35486308,
+            "part_time_age_49": 0.36013918,
+            "part_time_age_50": 0.34748272,
+            "part_time_age_51": 0.33326514,
+            "part_time_age_52": 0.32491979,
+            "part_time_age_53": 0.31377778,
+            "part_time_age_54": 0.30905696,
+            "part_time_age_55": 0.31471457,
+            "part_time_age_56": 0.30509329,
+            "part_time_age_57": 0.29766588,
+            "part_time_age_58": 0.27831715,
+            "part_time_age_59": 0.25571668,
+            "part_time_age_60": 0.23430152,
+            "part_time_age_61": 0.18230487,
+            "part_time_age_62": 0.14037090,
+            "part_time_age_63": 0.11734104,
+            "part_time_age_64": 0.07310628,
+            "part_time_age_65": 0.05763518,
+            "part_time_age_66": 0.03640704,
+            "part_time_age_67": 0.02897657,
+            "part_time_age_68": 0.02065182,
+            "part_time_age_69": 0.01782112,
+            "part_time_age_70": 0.01388407,
+            # full-time
+            "full_time_age_39": 0.254168957,
+            "full_time_age_40": 0.264133794,
+            "full_time_age_41": 0.282727273,
+            "full_time_age_42": 0.293897216,
+            "full_time_age_43": 0.304301267,
+            "full_time_age_44": 0.311583840,
+            "full_time_age_45": 0.323063224,
+            "full_time_age_46": 0.333934367,
+            "full_time_age_47": 0.344479148,
+            "full_time_age_48": 0.362417375,
+            "full_time_age_49": 0.362652233,
+            "full_time_age_50": 0.373543929,
+            "full_time_age_51": 0.377659574,
+            "full_time_age_52": 0.376898396,
+            "full_time_age_53": 0.376888889,
+            "full_time_age_54": 0.365546218,
+            "full_time_age_55": 0.354084646,
+            "full_time_age_56": 0.345436208,
+            "full_time_age_57": 0.336480462,
+            "full_time_age_58": 0.313106796,
+            "full_time_age_59": 0.295872839,
+            "full_time_age_60": 0.263070539,
+            "full_time_age_61": 0.216398986,
+            "full_time_age_62": 0.166619116,
+            "full_time_age_63": 0.121098266,
+            "full_time_age_64": 0.072519084,
+            "full_time_age_65": 0.046048723,
+            "full_time_age_66": 0.018800358,
+            "full_time_age_67": 0.012330456,
+            "full_time_age_68": 0.009035173,
+            "full_time_age_69": 0.007397445,
+            "full_time_age_70": 0.005553627,
+        },
+    )
+
+
+def get_employment_by_age_soep_51_to_65():
     """Get employment shares by age of females age 51-65."""
     return pd.Series(
         {
