@@ -1,11 +1,13 @@
-"""Descriptives from the German statistical office."""
+"""Care mix moments from the German statistical office."""
 
 from pathlib import Path
+from typing import Annotated
 
 import numpy as np
 import pandas as pd
+from pytask import Product
 
-from elder_care.config import SRC
+from elder_care.config import BLD, SRC
 
 FEMALE = 2
 MALE = 1
@@ -17,6 +19,9 @@ pd.set_option("future.no_silent_downcasting", True)  # noqa: FBT003
 
 def task_create_care_mix_moments(
     path_to_data: Path = SRC / "data/statistical_office" / "22421-0001_$F_modified.csv",
+    path_to_save: Annotated[Path, Product] = BLD
+    / "moments"
+    / "statistical_office_care_mix.csv",
 ):
     """Create care mix moments from statistical office data.
 
@@ -35,6 +40,7 @@ def task_create_care_mix_moments(
 
     Args:
         path_to_data (str): Path to the dataset file.
+        path_to_save (str): Path to save the moments.
 
     Returns:
         dict: A dictionary with the care mix moments by age bin for females.
@@ -100,9 +106,9 @@ def task_create_care_mix_moments(
     data = data.rename(columns={"value": "number"})
 
     dict_female = create_moments_by_age_bins(data, sex=2, year=2017)
-    dict_male = create_moments_by_age_bins(data, sex=1, year=2017)
 
-    return dict_female, dict_male
+    series = pd.Series(dict_female) / 100
+    series.to_csv(path_to_save, index=True)
 
 
 def create_moments_by_age_bins(df, sex, year):
@@ -172,6 +178,8 @@ def create_moments_by_age_bins(df, sex, year):
         + _combination_care
     )
 
+    pure_formal_care = _only_home_care + np.array(_nursing_home)
+
     _only_informal = _only_informal.tolist()
     _nursing_home = _nursing_home.tolist()
     _only_home_care = _only_home_care.tolist()
@@ -182,6 +190,11 @@ def create_moments_by_age_bins(df, sex, year):
         _combination_care,
         total_by_age_group,
     )
+    _pure_formal_care = _calculate_percentage_share(
+        pure_formal_care,
+        total_by_age_group,
+    )
+
     _only_home_care = _calculate_percentage_share(_only_home_care, total_by_age_group)
     _nursing_home = _calculate_percentage_share(_nursing_home, total_by_age_group)
 
@@ -190,14 +203,73 @@ def create_moments_by_age_bins(df, sex, year):
         start_index=12,
         end_age=95,
         age_step=5,
-        nursing_home=_nursing_home,
-        only_home_care=_only_home_care,
+        formal_care=_pure_formal_care,
         combination_care=_combination_care,
         only_informal=_only_informal,
     )
 
 
 def create_moments_dictionary(
+    sex,
+    start_index,
+    end_age,
+    age_step,
+    formal_care,
+    combination_care,
+    only_informal,
+):
+    """Create moments dictionary for the care mix by age bin.
+
+    Informal care is assumed to be provided by own children only. Other informal
+    caregivers are not considered in the data. The share of combination care in
+    home care is assumed to be constant across age groups.
+
+    Args:
+        sex(str): A string representing the sex, used in the key
+            (e.g., "male" or "female").
+        start_index (int): The starting index for the lists (nursing_home, etc.)
+            corresponding to the age bin "60 to 65".
+        end_age (int): The age to end at before the "95+" category.
+        age_step (int): The step size between age bins.
+        formal_care (list): A list containing the share of individuals receiving
+            formal care, i.e. formal home care or nursing home, by age bin.
+        combination_care (list): A list containing the share of individuals
+            receiving a combination of formal and informal care by age bin.
+        only_informal (list): A list containing the share of individuals receiving
+            only informal care, assumed to be from children, by age bin.
+
+    Returns:
+        dict: A dictionary with the care mix moments by age bin.
+
+    """
+    age_bins = [(age, age + age_step) for age in range(60, end_age, age_step)] + [
+        ("95", "+"),
+    ]
+    out = {}
+
+    for i, (start_age, end_age) in enumerate(age_bins, start=start_index):
+        age_key = (
+            f"{start_age}_to_{end_age}" if isinstance(end_age, int) else f"{start_age}+"
+        )
+
+        out[f"share_formal_care_{sex}_age_{age_key}"] = (
+            formal_care[i] if i < len(formal_care) else []
+        )
+        out[f"share_combination_care_{sex}_age_{age_key}"] = (
+            combination_care[i] if i < len(combination_care) else []
+        )
+        out[f"share_pure_informal_care_{sex}_age_{age_key}"] = (
+            only_informal[i] if i < len(only_informal) else []
+        )
+
+    return out
+
+
+def _calculate_percentage_share(numbers, total):
+    return [n / total[i] * 100 if total[i] > 0 else 0 for i, n in enumerate(numbers)]
+
+
+def create_moments_dictionary_all(
     sex,
     start_index,
     end_age,
@@ -257,10 +329,6 @@ def create_moments_dictionary(
         )
 
     return out
-
-
-def _calculate_percentage_share(numbers, total):
-    return [n / total[i] * 100 if total[i] > 0 else 0 for i, n in enumerate(numbers)]
 
 
 def _check_age_group_sums(df, year, sex, type_of_care):
