@@ -224,27 +224,23 @@ def task_create_moments(
             weight=weight,
         )
     )
-    care_transitions_parent_child_data_only = (
-        get_care_transitions_from_parent_child_data_weighted_only(
-            parent,
-            weight=weight,
-        )
-    )
 
     employment_by_age_soep = get_employment_by_age_soep()
+
+    ols_coeffs_savings_rate = get_coefficients_savings_rate_regression()
 
     care_mix_moments = pd.read_csv(path_to_care_mix_moments, index_col=0)["0"]
 
     all_moments = pd.concat(
         [
             employment_by_age_soep,
-            #
-            caregiving_by_mother_health_and_presence_of_sibling,
+            ols_coeffs_savings_rate,
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
             care_transitions_parent_child_data,
-            care_transitions_parent_child_data_only,
+            #
+            caregiving_by_mother_health_and_presence_of_sibling,
             #
             care_mix_moments,
         ],

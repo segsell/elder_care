@@ -19,6 +19,11 @@ AGE_60 = 60
 AGE_65 = 65
 AGE_70 = 70
 AGE_75 = 75
+AGE_80 = 80
+AGE_85 = 85
+AGE_90 = 90
+AGE_95 = 95
+AGE_105 = 105
 
 AGE_BINS = [
     (AGE_40 - MIN_AGE, AGE_45 - MIN_AGE),
@@ -28,6 +33,26 @@ AGE_BINS = [
     (AGE_60 - MIN_AGE, AGE_65 - MIN_AGE),
     (AGE_65 - MIN_AGE, AGE_70 - MIN_AGE),
     (AGE_70 - MIN_AGE, AGE_75 - MIN_AGE),
+]
+
+AGE_BINS_SIM = [
+    (AGE_40, AGE_45),
+    (AGE_45, AGE_50),
+    (AGE_50, AGE_55),
+    (AGE_55, AGE_60),
+    (AGE_60, AGE_65),
+    (AGE_65, AGE_70),
+    (AGE_70, AGE_75),
+]
+
+PARENT_AGE_BINS_SIM = [
+    (AGE_65, AGE_70),
+    (AGE_70, AGE_75),
+    (AGE_75, AGE_80),
+    (AGE_80, AGE_85),
+    (AGE_85, AGE_90),
+    (AGE_90, AGE_95),
+    (AGE_95, AGE_105),
 ]
 
 GOOD_HEALTH = 0

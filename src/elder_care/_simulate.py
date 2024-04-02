@@ -666,7 +666,52 @@ def get_share_by_type(df_arr, ind, lagged_choice, care_type):
     return jnp.sum(lagged_choice_mask & care_type_mask) / jnp.sum(care_type_mask)
 
 
-def get_share_care_type_by_parental_health(
+def get_transition(df_arr, ind, lagged_choice, current_choice):
+    """Get transition probability from lagged choice to current choice."""
+    return [
+        jnp.sum(
+            jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
+            & jnp.isin(df_arr[:, ind["choice"]], current_choice),
+        )
+        / jnp.sum(jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)),
+    ]
+
+
+def get_share_care_by_parental_health(
+    df_arr,
+    ind,
+    care_choice,
+    parent="mother",
+):
+    """Get share of agents choosing given care choice by parental health."""
+    return [
+        jnp.mean(
+            jnp.isin(df_arr[:, ind["lagged_choice"]], care_choice)
+            & (df_arr[:, ind[f"{parent}_health"]], health),
+        )
+        for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
+    ]
+
+
+def get_share_care_by_parental_health_and_presence_of_sibling(
+    df_arr,
+    ind,
+    care_choice,
+    has_sibling,
+    parent,
+):
+    """Get share of agents choosing given care choice by parental health."""
+    return [
+        jnp.mean(
+            jnp.isin(df_arr[:, ind["lagged_choice"]], care_choice)
+            & (df_arr[:, ind["has_sibling"]] == has_sibling)
+            & (df_arr[:, ind[f"{parent}_health"]], health),
+        )
+        for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
+    ]
+
+
+def _get_share_care_type_by_parental_health_and_other_parent_alive(
     df_arr,
     ind,
     care_choice,
@@ -683,17 +728,6 @@ def get_share_care_type_by_parental_health(
             & (df_arr[:, ind[f"{parent}_health"]], health),
         )
         for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
-    ]
-
-
-def get_transition(df_arr, ind, lagged_choice, current_choice):
-    """Get transition probability from lagged choice to current choice."""
-    return [
-        jnp.sum(
-            jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-            & jnp.isin(df_arr[:, ind["choice"]], current_choice),
-        )
-        / jnp.sum(jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)),
     ]
 
 
