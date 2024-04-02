@@ -2,6 +2,8 @@
 
 import jax.numpy as jnp
 
+BASE_YEAR = 2015
+
 FEMALE = 2
 MALE = 1
 

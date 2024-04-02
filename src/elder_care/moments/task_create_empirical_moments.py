@@ -15,31 +15,15 @@ import pandas as pd
 from pytask import Product
 
 from elder_care.config import BLD
-
-BASE_YEAR = 2015
-
-MALE = 1
-FEMALE = 2
-
-MIN_AGE = 50
-MAX_AGE = 65
-
-AGE_50 = 50
-AGE_53 = 53
-AGE_56 = 56
-AGE_59 = 59
-AGE_62 = 62
-
-AGE_40 = 40
-AGE_45 = 45
-AGE_55 = 55
-AGE_60 = 60
-AGE_65 = 65
-AGE_70 = 70
-
-GOOD_HEALTH = 0
-MEDIUM_HEALTH = 1
-BAD_HEALTH = 2
+from elder_care.model.shared import (
+    BAD_HEALTH,
+    BASE_YEAR,
+    FEMALE,
+    GOOD_HEALTH,
+    MAX_AGE,
+    MEDIUM_HEALTH,
+    MIN_AGE,
+)
 
 
 def table(df_col):
@@ -55,6 +39,49 @@ def task_create_moments(
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
     """Create empirical moments for SHARE data.
+
+    age_bins_coarse = [
+        (AGE_40, AGE_45),
+        (AGE_45, AGE_60),
+        (AGE_50, AGE_55),
+        (AGE_55, AGE_60),
+        (AGE_60, AGE_65),
+        (AGE_65, AGE_70),
+    ]
+
+    net_income_by_age_bin_part_time = get_income_by_employment_by_age_bin(
+        dat,
+        age_bins_coarse,
+        employment_status="part_time",
+        moment="real_labor_income",
+        weight=weight,
+    )
+    net_income_by_age_bin_full_time = get_income_by_employment_by_age_bin(
+        dat,
+        age_bins_coarse,
+        employment_status="full_time",
+        moment="real_labor_income",
+        weight=weight,
+    )
+
+    # income by age, working and non-working?
+    # must condition on working
+
+    # total household NET wealth by age bin
+    # We calculate wealth using the HILDA wealth model, which is based on
+    # variables collected in the special module
+    # included in waves 2, 6, 10 and 14. We calculate wealth at the household level,
+    # which includes the wealth of the spouse. Our
+    # measure of wealth is financial wealth plus non-financial wealth minus household
+    # debt minus combined household super,
+    # where the components are defined as in Summerfield et al. (2013)
+    # We deflate wealth by the consumer price
+    wealth_by_age_bin = get_wealth_by_age_bin(
+        dat,
+        age_bins_coarse,
+        moment="real_hnetw",
+        weight=weight,
+    )
 
     mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
     mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
@@ -118,61 +145,21 @@ def task_create_moments(
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
 
-    age_bins_coarse = [
-        (AGE_40, AGE_45),
-        (AGE_45, AGE_60),
-        (AGE_50, AGE_55),
-        (AGE_55, AGE_60),
-        (AGE_60, AGE_65),
-        (AGE_65, AGE_70),
-    ]
-
-    net_income_by_age_bin_part_time = get_income_by_employment_by_age_bin(
-        dat,
-        age_bins_coarse,
-        employment_status="part_time",
-        moment="real_labor_income",
-        weight=weight,
-    )
-    net_income_by_age_bin_full_time = get_income_by_employment_by_age_bin(
-        dat,
-        age_bins_coarse,
-        employment_status="full_time",
-        moment="real_labor_income",
-        weight=weight,
-    )
-
-    # income by age, working and non-working?
-    # must condition on working
-
-    # total household NET wealth by age bin
-    # We calculate wealth using the HILDA wealth model, which is based on
-    # variables collected in the special module
-    # included in waves 2, 6, 10 and 14. We calculate wealth at the household level,
-    # which includes the wealth of the spouse. Our
-    # measure of wealth is financial wealth plus non-financial wealth minus household
-    # debt minus combined household super,
-    # where the components are defined as in Summerfield et al. (2013)
-    # We deflate wealth by the consumer price
-    wealth_by_age_bin = get_wealth_by_age_bin(
-        dat,
-        age_bins_coarse,
-        moment="real_hnetw",
-        weight=weight,
-    )
-
     # ================================================================================
-    # PARENT CHILD DATA
+    # Parent child data (mother)
     # ================================================================================
 
-    # weighted parent child moments
     parent = parent_hh_weight.copy()
 
     parent["informal_care_child_weighted"] = (
         parent["informal_care_child"] * parent[weight]
     )
     parent["home_care_weighted"] = parent["home_care"] * parent[weight]
+    parent["formal_care_weighted"] = parent["formal_care"] * parent[weight]
     parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
+    parent["no_combination_care_weighted"] = (
+        parent["no_combination_care"] * parent[weight]
+    )
 
     parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
     parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
@@ -187,41 +174,38 @@ def task_create_moments(
     parent["no_informal_care_child_weighted"] = (
         parent["no_informal_care_child"] * parent[weight]
     )
+    parent["only_formal_weighted"] = parent["only_formal"] * parent[weight]
+    parent["no_only_formal_weighted"] = parent["no_only_formal"] * parent[weight]
+    parent["no_only_informal_weighted"] = parent["no_only_informal"] * parent[weight]
 
-    mother_couple = parent[(parent["gender"] == FEMALE) & (parent["married"] == True)]
-    mother_single = parent[(parent["gender"] == FEMALE) & (parent["married"] == False)]
+    mother = parent[(parent["gender"] == FEMALE)]
 
-    father_couple = parent[(parent["gender"] == MALE) & (parent["married"] == True)]
-    father_single = parent[(parent["gender"] == MALE) & (parent["married"] == False)]
-
+    parent["only_informal_care_child_weighted"] = (
+        parent["informal_care_child"] * parent[weight]
+    )
+    parent["no_only_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
     parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_formal_care_weighted"] = parent["no_formal_care"] * parent[weight]
     parent["no_informal_care_child_weighted"] = (
         parent["no_informal_care_child"] * parent[weight]
     )
 
+    caregiving_by_mother_health_and_presence_of_sibling = (
+        get_caregiving_status_by_mother_health_and_presence_of_sibling(
+            mother,
+            sibling_var="has_two_children",
+            weight=weight,
+        )
+    )
+
+    # ================================================================================
+    # Labor and caregiving transitions
     # ================================================================================
 
-    # care mix by health status of parent
-    caregiving_by_mother_health = (
-        get_caregiving_status_by_mother_health_and_marital_status(
-            mother_couple,
-            mother_single,
-            weight=weight,
-        )
-    )
-    caregiving_by_father_health = (
-        get_caregiving_status_by_father_health_and_marital_status(
-            father_couple,
-            father_single,
-            weight=weight,
-        )
-    )
-
-    ### labor and caregiving transitions ###
-    # work transitions
     employment_transitions_soep = get_employment_transitions_soep()
 
-    # caregiving transitions
     care_transitions_estimation_data = (
         get_care_transitions_from_estimation_data_weighted(
             dat,
@@ -231,33 +215,31 @@ def task_create_moments(
         )
     )
 
-    # formal care transitions from parent child data set
     care_transitions_parent_child_data = (
         get_care_transitions_from_parent_child_data_weighted(
             parent,
             weight=weight,
         )
     )
+    care_transitions_parent_child_data_only = (
+        get_care_transitions_from_parent_child_data_weighted_only(
+            parent,
+            weight=weight,
+        )
+    )
 
-    # share working by caregiving type (and age bin) --> to be checked
     employment_by_age_soep = get_employment_by_age_soep()
-    employment_by_caregiving_status_soep = get_employment_by_caregiving_status_soep()
 
     all_moments = pd.concat(
         [
             employment_by_age_soep,
             #
-            net_income_by_age_bin_part_time,
-            net_income_by_age_bin_full_time,
-            wealth_by_age_bin,
-            #
-            employment_by_caregiving_status_soep,
-            caregiving_by_mother_health,
-            caregiving_by_father_health,
+            caregiving_by_mother_health_and_presence_of_sibling,
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
             care_transitions_parent_child_data,
+            care_transitions_parent_child_data_only,
         ],
         ignore_index=False,
         axis=0,
@@ -305,7 +287,425 @@ def task_calcualte_variance_covariance_matrix(
 
 
 def get_care_transitions_from_parent_child_data_weighted(parent, weight):
-    """Get care transitions from parent child data set using survey weights."""
+    """Get care transitions from parent child data set using survey weights.
+
+    # informal no_informal_to_no_informal_weighted = get_care_transition_weighted(
+    parent,     previous_choice="no_informal_care_child",
+    current_choice="no_informal_care_child_weighted",     weight=weight, )
+    no_informal_to_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="no_informal_care_child",
+    current_choice="informal_care_child_weighted",     weight=weight, )
+
+    informal_to_no_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="informal_care_child",
+    current_choice="no_informal_care_child_weighted",     weight=weight, )
+    informal_to_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="informal_care_child",
+    current_choice="informal_care_child_weighted",     weight=weight, )
+
+    """
+    # ================================================================================
+    # Informal care
+    # ================================================================================
+
+    no_informal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_informal_care_child",
+        current_choice="no_formal_care_weighted",
+        weight=weight,
+    )
+    no_informal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_informal_care_child",
+        current_choice="formal_care_weighted",
+        weight=weight,
+    )
+    informal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="informal_care_child",
+        current_choice="no_formal_care_weighted",
+        weight=weight,
+    )
+    informal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="informal_care_child",
+        current_choice="formal_care_weighted",
+        weight=weight,
+    )
+
+    no_informal_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_informal_care_child",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    no_informal_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_informal_care_child",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+    informal_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="informal_care_child",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    informal_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="informal_care_child",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+
+    # ================================================================================
+    # Formal Care
+    # ================================================================================
+
+    no_formal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_formal_care",
+        current_choice="no_formal_care_weighted",
+        weight=weight,
+    )
+    no_formal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_formal_care",
+        current_choice="formal_care_weighted",
+        weight=weight,
+    )
+
+    formal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="formal_care",
+        current_choice="no_formal_care_weighted",
+        weight=weight,
+    )
+    formal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="formal_care",
+        current_choice="formal_care_weighted",
+        weight=weight,
+    )
+
+    no_formal_to_no_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_formal_care",
+        current_choice="no_informal_care_child_weighted",
+        weight=weight,
+    )
+    no_formal_to_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_formal_care",
+        current_choice="informal_care_child_weighted",
+        weight=weight,
+    )
+    formal_to_no_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="formal_care",
+        current_choice="no_informal_care_child_weighted",
+        weight=weight,
+    )
+    formal_to_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="formal_care",
+        current_choice="informal_care_child_weighted",
+        weight=weight,
+    )
+
+    no_formal_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_formal_care",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    no_formal_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_formal_care",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+    formal_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="formal_care",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    formal_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="formal_care",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+
+    # ================================================================================
+    # Combination care
+    # ================================================================================
+
+    no_combination_to_no_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_combination_care",
+        current_choice="no_informal_care_child_weighted",
+        weight=weight,
+    )
+    no_combination_to_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_combination_care",
+        current_choice="informal_care_child_weighted",
+        weight=weight,
+    )
+
+    combination_to_no_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="combination_care",
+        current_choice="no_informal_care_child_weighted",
+        weight=weight,
+    )
+    combination_to_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="combination_care",
+        current_choice="informal_care_child_weighted",
+        weight=weight,
+    )
+
+    no_combination_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_combination_care",
+        current_choice="no_formal_care_weighted",
+        weight=weight,
+    )
+    no_combination_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_combination_care",
+        current_choice="formal_care_weighted",
+        weight=weight,
+    )
+    combination_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="combination_care",
+        current_choice="no_formal_care_weighted",
+        weight=weight,
+    )
+    combination_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="combination_care",
+        current_choice="formal_care_weighted",
+        weight=weight,
+    )
+
+    no_combination_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_combination_care",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    no_combination_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_combination_care",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+    combination_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="combination_care",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    combination_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="combination_care",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+
+    return pd.concat(
+        [
+            # Informal care
+            # to (no) formal
+            no_informal_to_no_formal_weighted,
+            no_informal_to_formal_weighted,
+            informal_to_no_formal_weighted,
+            informal_to_formal_weighted,
+            # to (no) combination
+            no_informal_to_no_combination_weighted,
+            no_informal_to_combination_weighted,
+            informal_to_no_combination_weighted,
+            informal_to_combination_weighted,
+            # Formal care
+            # to (no) informal
+            no_formal_to_no_informal_weighted,
+            no_formal_to_informal_weighted,
+            formal_to_no_informal_weighted,
+            formal_to_informal_weighted,
+            # to (no) formal
+            no_formal_to_no_formal_weighted,
+            no_formal_to_formal_weighted,
+            formal_to_no_formal_weighted,
+            formal_to_formal_weighted,
+            # to (no) combination
+            no_formal_to_no_combination_weighted,
+            no_formal_to_combination_weighted,
+            formal_to_no_combination_weighted,
+            formal_to_combination_weighted,
+            # Combination care
+            # to (no) informal
+            no_combination_to_no_informal_weighted,
+            no_combination_to_informal_weighted,
+            combination_to_no_informal_weighted,
+            combination_to_informal_weighted,
+            # to (no) formal
+            no_combination_to_no_formal_weighted,
+            no_combination_to_formal_weighted,
+            combination_to_no_formal_weighted,
+            combination_to_formal_weighted,
+            # to (no) combination
+            no_combination_to_no_combination_weighted,
+            no_combination_to_combination_weighted,
+            combination_to_no_combination_weighted,
+            combination_to_combination_weighted,
+        ],
+        ignore_index=False,
+        axis=0,
+    )
+
+
+def get_care_transitions_from_parent_child_data_weighted_only(parent, weight):
+    """Get care transitions from parent child data set using survey weights.
+
+    # informal no_informal_to_no_informal_weighted = get_care_transition_weighted(
+    parent,     previous_choice="no_informal_care_child",
+    current_choice="no_informal_care_child_weighted",     weight=weight, )
+    no_informal_to_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="no_informal_care_child",
+    current_choice="informal_care_child_weighted",     weight=weight, )
+
+    informal_to_no_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="informal_care_child",
+    current_choice="no_informal_care_child_weighted",     weight=weight, )
+    informal_to_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="informal_care_child",
+    current_choice="informal_care_child_weighted",     weight=weight, )
+
+    """
+    no_formal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_only_formal",
+        current_choice="no_only_formal_weighted",
+        weight=weight,
+    )
+    no_formal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_only_formal",
+        current_choice="only_formal_weighted",
+        weight=weight,
+    )
+
+    formal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="only_formal",
+        current_choice="no_only_formal_weighted",
+        weight=weight,
+    )
+    formal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="only_formal",
+        current_choice="only_formal_weighted",
+        weight=weight,
+    )
+
+    no_formal_to_no_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_only_formal",
+        current_choice="no_only_informal_weighted",
+        weight=weight,
+    )
+    no_formal_to_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_only_formal",
+        current_choice="only_informal_weighted",
+        weight=weight,
+    )
+
+    formal_to_no_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="only_formal",
+        current_choice="no_only_informal_weighted",
+        weight=weight,
+    )
+    formal_to_informal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="only_formal",
+        current_choice="only_informal_weighted",
+        weight=weight,
+    )
+
+    # informal care transitions from parent child data set
+    no_informal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_only_informal",
+        current_choice="no_only_formal_weighted",
+        weight=weight,
+    )
+    no_informal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_only_informal",
+        current_choice="only_formal_weighted",
+        weight=weight,
+    )
+
+    informal_to_no_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="only_informal",
+        current_choice="no_only_formal_weighted",
+        weight=weight,
+    )
+    informal_to_formal_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="only_informal",
+        current_choice="only_formal_weighted",
+        weight=weight,
+    )
+
+    return pd.concat(
+        [
+            no_informal_to_no_formal_weighted,
+            no_informal_to_formal_weighted,
+            informal_to_no_formal_weighted,
+            informal_to_formal_weighted,
+            #
+            no_formal_to_no_informal_weighted,
+            no_formal_to_informal_weighted,
+            formal_to_no_informal_weighted,
+            formal_to_informal_weighted,
+            #
+            no_formal_to_no_formal_weighted,
+            no_formal_to_formal_weighted,
+            formal_to_no_formal_weighted,
+            formal_to_formal_weighted,
+        ],
+        ignore_index=False,
+        axis=0,
+    )
+
+
+def get_care_transitions_from_parent_child_data_weighted_home_care(parent, weight):
+    """Get care transitions from parent child data set using survey weights.
+
+    # informal no_informal_to_no_informal_weighted = get_care_transition_weighted(
+    parent,     previous_choice="no_informal_care_child",
+    current_choice="no_informal_care_child_weighted",     weight=weight, )
+    no_informal_to_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="no_informal_care_child",
+    current_choice="informal_care_child_weighted",     weight=weight, )
+
+    informal_to_no_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="informal_care_child",
+    current_choice="no_informal_care_child_weighted",     weight=weight, )
+    informal_to_informal_weighted = get_care_transition_weighted(     parent,
+    previous_choice="informal_care_child",
+    current_choice="informal_care_child_weighted",     weight=weight, )
+
+    """
     no_formal_to_no_formal_weighted = get_care_transition_weighted(
         parent,
         previous_choice="no_home_care",
@@ -401,11 +801,6 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
             no_formal_to_formal_weighted,
             formal_to_no_formal_weighted,
             formal_to_formal_weighted,
-            # ?
-            # no_informal_to_no_informal_weighted,
-            # no_informal_to_informal_weighted,
-            # informal_to_no_informal_weighted,
-            # informal_to_informal_weighted,
         ],
         ignore_index=False,
         axis=0,
@@ -634,6 +1029,151 @@ def get_emplyoment_transitions_share(dat, weight):
 # ================================================================================
 # Caregiving status by parental health
 # ================================================================================
+
+
+def get_caregiving_status_by_mother_health_and_presence_of_sibling(
+    mother,
+    sibling_var,
+    weight,
+):
+    """Get caregiving status by mother's health and marital status."""
+    informal_care_by_mother_health = (
+        get_caregiving_status_by_parental_health_any_sibling(
+            mother,
+            parent="mother",
+            moment="informal_care_child_weighted",
+            weight=weight,
+        )
+    )
+
+    home_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
+        mother,
+        parent="mother",
+        moment="home_care_weighted",
+        weight=weight,
+    )
+    formal_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
+        mother,
+        parent="mother",
+        moment="formal_care_weighted",
+        weight=weight,
+    )
+
+    combination_care_by_mother_health = (
+        get_caregiving_status_by_parental_health_any_sibling(
+            mother,
+            parent="mother",
+            moment="combination_care_weighted",
+            weight=weight,
+        )
+    )
+
+    informal_care_by_mother_health_no_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="informal_care_child_weighted",
+            has_other_sibling=False,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+    home_care_by_mother_health_no_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="home_care_weighted",
+            has_other_sibling=False,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+    formal_care_by_mother_health_no_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="formal_care_weighted",
+            has_other_sibling=False,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+    combination_care_by_mother_health_no_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="combination_care_weighted",
+            has_other_sibling=False,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+    informal_care_by_mother_health_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="informal_care_child_weighted",
+            has_other_sibling=True,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+    home_care_by_mother_health_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="home_care_weighted",
+            has_other_sibling=True,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+    formal_care_by_mother_health_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="formal_care_weighted",
+            has_other_sibling=True,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+    combination_care_by_mother_health_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="combination_care_weighted",
+            has_other_sibling=True,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+    return pd.concat(
+        [
+            informal_care_by_mother_health,
+            home_care_by_mother_health,
+            formal_care_by_mother_health,
+            combination_care_by_mother_health,
+            # only_home_care_by_mother_health_couple,
+            # only_home_care_by_mother_health_single,
+            informal_care_by_mother_health_sibling,
+            home_care_by_mother_health_sibling,
+            formal_care_by_mother_health_sibling,
+            combination_care_by_mother_health_sibling,
+            informal_care_by_mother_health_no_sibling,
+            home_care_by_mother_health_no_sibling,
+            formal_care_by_mother_health_no_sibling,
+            combination_care_by_mother_health_no_sibling,
+        ],
+        ignore_index=False,
+        axis=0,
+    )
 
 
 def get_caregiving_status_by_mother_health_and_marital_status(
@@ -1344,6 +1884,70 @@ def get_share_informal_care_to_mother_by_age_bin(dat, weight, age_bins_coarse):
 # ================================================================================
 # Parent-child sample
 # ================================================================================
+
+
+def get_caregiving_status_by_parental_health_any_sibling(
+    dat,
+    moment,
+    parent,
+    weight,
+):
+    """Get caregiving status by health and presence of sibling.
+
+    Share of people providing informal care by health and presence of sibling out of all
+    people with parents of that health category and sibling status.
+
+    """
+    moment_string = moment.replace("_weighted", "").replace("_child", "")
+
+    return pd.Series(
+        {
+            f"{moment_string}_{parent}_health_{health}": dat.loc[
+                dat["health"] == health,
+                moment,
+            ].sum()
+            / dat.loc[
+                dat["health"] == health,
+                weight,
+            ].sum()
+            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+        },
+    )
+
+
+def get_caregiving_status_by_parental_health_and_presence_of_sibling(
+    dat,
+    moment,
+    parent,
+    has_other_sibling,
+    sibling_var,
+    weight,
+):
+    """Get caregiving status by health and presence of sibling.
+
+    Share of people providing informal care by health and presence of sibling out of all
+    people with parents of that health category and sibling status.
+
+    """
+    moment_string = moment.replace("_weighted", "").replace("_child", "")
+
+    sibling_status = (
+        has_other_sibling * "sibling" + (1 - has_other_sibling) * "no_sibling"
+    )
+
+    return pd.Series(
+        {
+            f"{moment_string}_{parent}_{sibling_status}_health_{health}": dat.loc[
+                (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
+                moment,
+            ].sum()
+            / dat.loc[
+                (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
+                weight,
+            ].sum()
+            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+        },
+    )
 
 
 def get_caregiving_status_by_parental_health(
