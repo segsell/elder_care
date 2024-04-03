@@ -226,6 +226,9 @@ def task_create_moments(
     )
 
     employment_by_age_soep = get_employment_by_age_soep()
+    employment_by_age_bin_caregivers_soep = (
+        get_employment_by_age_bin_informal_parental_caregivers_soep()
+    )
 
     ols_coeffs_savings_rate = get_coefficients_savings_rate_regression()
 
@@ -234,6 +237,7 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age_soep,
+            employment_by_age_bin_caregivers_soep,
             ols_coeffs_savings_rate,
             #
             employment_transitions_soep,
@@ -2167,7 +2171,91 @@ def get_employment_by_age_soep():
     )
 
 
-def get_employment_by_age_soep_51_to_65():
+def get_employment_by_age_bin_informal_parental_caregivers_soep():
+    """Get employment shares by age bin of informal parental caregivers.
+
+    return pd.Series({
+        "not_working_age_40_45": 0.4051896,
+        "part_time_age_40_45": 0.3702595,
+        "full_time_age_40_45": 0.2245509,
+        #
+        "not_working_age_45_50": 0.3209970,
+        "part_time_age_45_50": 0.3655589,
+        "full_time_age_45_50": 0.3134441,
+        #
+        "not_working_age_50_55": 0.3302812,
+        "part_time_age_50_55": 0.3871812,
+        "full_time_age_50_55": 0.2825376,
+        #
+        "not_working_age_55_60": 0.4206566,
+        "part_time_age_55_60": 0.3201094,
+        "full_time_age_55_60": 0.2592339,
+        #
+        "not_working_age_60_65": 0.7387153,
+        "part_time_age_60_65": 0.1336806,
+        "full_time_age_60_65": 0.1276042,
+        #
+        "not_working_age_65_70": 0.9545455,
+        "part_time_age_65_70": 0.0275974,
+        "full_time_age_65_70": 0.0178571,
+    })
+
+    """
+    return pd.Series(
+        {
+            "not_working_age_40_45": 0.4051896,
+            "not_working_age_45_50": 0.3209970,
+            "not_working_age_50_55": 0.3302812,
+            "not_working_age_55_60": 0.4206566,
+            "not_working_age_60_65": 0.7387153,
+            "not_working_age_65_70": 0.9545455,
+            #
+            "part_time_age_40_45": 0.3702595,
+            "part_time_age_45_50": 0.3655589,
+            "part_time_age_50_55": 0.3871812,
+            "part_time_age_55_60": 0.3201094,
+            "part_time_age_60_65": 0.1336806,
+            "part_time_age_65_70": 0.0275974,
+            #
+            "full_time_age_40_45": 0.2245509,
+            "full_time_age_45_50": 0.3134441,
+            "full_time_age_50_55": 0.2825376,
+            "full_time_age_55_60": 0.2592339,
+            "full_time_age_60_65": 0.1276042,
+            "full_time_age_65_70": 0.0178571,
+        },
+    )
+
+
+def get_employment_by_age_bin_non_informal_caregivers_soep():
+    """Get employment shares by age bin of non-informal caregivers."""
+    return pd.Series(
+        {
+            "not_working_age_40_45": 0.3199924,
+            "not_working_age_45_50": 0.2835182,
+            "not_working_age_50_55": 0.2951276,
+            "not_working_age_55_60": 0.3752067,
+            "not_working_age_60_65": 0.6762942,
+            "not_working_age_65_70": 0.9477137,
+            #
+            "part_time_age_40_45": 0.38325688,
+            "part_time_age_45_50": 0.36695721,
+            "part_time_age_50_55": 0.32171694,
+            "part_time_age_55_60": 0.28790557,
+            "part_time_age_60_65": 0.15151144,
+            "part_time_age_65_70": 0.03306054,
+            #
+            "full_time_age_40_45": 0.296750765,
+            "full_time_age_45_50": 0.349524564,
+            "full_time_age_50_55": 0.383155452,
+            "full_time_age_55_60": 0.336887723,
+            "full_time_age_60_65": 0.172194346,
+            "full_time_age_65_70": 0.019225773,
+        },
+    )
+
+
+def _get_employment_by_age_soep_51_to_65():
     """Get employment shares by age of females age 51-65."""
     return pd.Series(
         {

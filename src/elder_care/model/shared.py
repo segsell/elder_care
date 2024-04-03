@@ -89,6 +89,8 @@ FORMAL_CARE = jnp.array([1, 3, 5, 7, 9, 11])
 INFORMAL_CARE = jnp.array([2, 3, 6, 7, 10, 11])
 CARE = jnp.concatenate([FORMAL_CARE, INFORMAL_CARE])
 
+PURE_FORMAL_CARE = jnp.array([1, 5, 9])
+PURE_INFORMAL_CARE = jnp.array([2, 6, 10])
 COMBINATION_CARE = jnp.array([3, 7, 11])
 
 # For NO_INFORMAL_CARE and NO_FORMAL_CARE, we need to perform set operations before

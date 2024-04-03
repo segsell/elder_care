@@ -20,6 +20,8 @@ from elder_care.model.shared import (
     NO_WORK,
     PARENT_AGE_BINS_SIM,
     PART_TIME,
+    PURE_FORMAL_CARE,
+    PURE_INFORMAL_CARE,
 )
 
 
@@ -101,6 +103,32 @@ def simulate_moments(arr, idx):
         ind=idx,
         lagged_choice=FULL_TIME,
         care_type=INFORMAL_CARE,
+    )
+
+    # ================================================================================
+    # Labor shares for informal caregivers
+    # ================================================================================
+
+    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=NO_WORK,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
     )
 
     # ================================================================================
@@ -330,14 +358,21 @@ def simulate_moments(arr, idx):
     care_mix_informal_by_mother_age_bin = get_care_mix_by_mother_age_bin(
         arr,
         ind=idx,
-        choice=INFORMAL_CARE,
+        choice=PURE_INFORMAL_CARE,
         care_type=CARE,
         age_bins=PARENT_AGE_BINS_SIM,
     )
     care_mix_formal_by_mother_age_bin = get_care_mix_by_mother_age_bin(
         arr,
         ind=idx,
-        choice=FORMAL_CARE,
+        choice=PURE_FORMAL_CARE,
+        care_type=CARE,
+        age_bins=PARENT_AGE_BINS_SIM,
+    )
+    care_mix_combination_by_mother_age_bin = get_care_mix_by_mother_age_bin(
+        arr,
+        ind=idx,
+        choice=COMBINATION_CARE,
         care_type=CARE,
         age_bins=PARENT_AGE_BINS_SIM,
     )
@@ -350,6 +385,9 @@ def simulate_moments(arr, idx):
         share_not_working_by_age
         + share_working_part_time_by_age
         + share_working_full_time_by_age
+        + share_not_working_informal_care_by_age_bin
+        + share_part_time_informal_care_by_age_bin
+        + share_full_time_informal_care_by_age_bin
         + savings_rate_coeffs
         +
         #
@@ -400,7 +438,8 @@ def simulate_moments(arr, idx):
         + combination_care_mother_health_has_sibling
         #
         + care_mix_informal_by_mother_age_bin
-        + care_mix_formal_by_mother_age_bin,
+        + care_mix_formal_by_mother_age_bin
+        + care_mix_combination_by_mother_age_bin,
     )
 
 
@@ -460,14 +499,32 @@ def get_transition(df_arr, ind, lagged_choice, current_choice):
     ]
 
 
+def get_share_by_type_by_age_bin(df_arr, ind, choice, care_type, age_bins):
+    """Get share of agents of given care type choosing lagged choice by age bin."""
+    choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], choice)
+    type_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], care_type)
+
+    shares = []
+    for age_bin in age_bins:
+        age_bin_mask = (df_arr[:, ind["age"]] >= age_bin[0]) & (
+            df_arr[:, ind["age"]] < age_bin[1]
+        )
+        share = jnp.sum(choice_mask & type_mask & age_bin_mask) / jnp.sum(
+            type_mask & age_bin_mask,
+        )
+        shares.append(share)
+
+    return shares
+
+
 def get_savings_rate_by_age_bin(arr, ind, care_type):
     """Get savings rate of given care type by age bin."""
     care_type_mask = jnp.isin(arr[:, ind["choice"]], care_type)
     means = []
 
     for age_bin in AGE_BINS_SIM:
-        age_bin_mask = (arr[:, ind["period"]] > age_bin[0]) & (
-            arr[:, ind["period"]] <= age_bin[1]
+        age_bin_mask = (arr[:, ind["period"]] >= age_bin[0]) & (
+            arr[:, ind["period"]] < age_bin[1]
         )
         selected_values = jnp.take(
             arr[:, ind["savings_rate"]],
