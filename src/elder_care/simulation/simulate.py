@@ -2,6 +2,8 @@
 
 import jax
 import jax.numpy as jnp
+import numpy as np
+import pandas as pd
 
 from elder_care.model.shared import (
     AGE_BINS_SIM,
@@ -10,7 +12,6 @@ from elder_care.model.shared import (
     COMBINATION_CARE,
     FORMAL_CARE,
     FULL_TIME,
-    GOOD_HEALTH,
     INFORMAL_CARE,
     MAX_AGE,
     MEDIUM_HEALTH,
@@ -388,10 +389,10 @@ def simulate_moments(arr, idx):
         + share_not_working_informal_care_by_age_bin
         + share_part_time_informal_care_by_age_bin
         + share_full_time_informal_care_by_age_bin
-        + savings_rate_coeffs
+        + savings_rate_coeffs.tolist()
         +
         #
-        +[share_not_working_no_informal_care]
+        [share_not_working_no_informal_care]
         + [share_part_time_no_informal_care]
         + [share_full_time_no_informal_care]
         + [share_not_working_informal_care]
@@ -436,7 +437,7 @@ def simulate_moments(arr, idx):
         + informal_care_mother_health_has_sibling
         + formal_care_mother_health_has_sibling
         + combination_care_mother_health_has_sibling
-        #
+        # Care mix
         + care_mix_informal_by_mother_age_bin
         + care_mix_formal_by_mother_age_bin
         + care_mix_combination_by_mother_age_bin,
@@ -470,7 +471,7 @@ def get_share_by_age(df_arr, ind, lagged_choice):
     lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
     shares = []
 
-    for age in range(MAX_AGE - MIN_AGE + 1):
+    for age in range(MIN_AGE, MAX_AGE + 1):
         age_mask = df_arr[:, ind["age"]] == age
 
         share = jnp.sum(age_mask & lagged_choice_mask) / jnp.sum(age_mask)
@@ -537,7 +538,7 @@ def get_savings_rate_by_age_bin(arr, ind, care_type):
     return means
 
 
-def get_share_care_by_parental_health(
+def get_share_care_by_parental_health_old(
     df_arr,
     ind,
     care_choice,
@@ -549,11 +550,11 @@ def get_share_care_by_parental_health(
             jnp.isin(df_arr[:, ind["choice"]], care_choice)
             & (df_arr[:, ind[f"{parent}_health"]], health),
         )
-        for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
+        for health in (MEDIUM_HEALTH, BAD_HEALTH)
     ]
 
 
-def get_share_care_by_parental_health_and_presence_of_sibling(
+def get_share_care_by_parental_health_and_presence_of_sibling_old(
     df_arr,
     ind,
     care_choice,
@@ -567,8 +568,50 @@ def get_share_care_by_parental_health_and_presence_of_sibling(
             & (df_arr[:, ind["has_sibling"]] == has_sibling)
             & (df_arr[:, ind[f"{parent}_health"]], health),
         )
-        for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
+        for health in (MEDIUM_HEALTH, BAD_HEALTH)
     ]
+
+
+def get_share_care_by_parental_health_and_presence_of_sibling(
+    df_arr,
+    ind,
+    care_choice,
+    has_sibling,
+    parent="mother",
+):
+    """Get share of agents choosing given care choice by parental health."""
+    care_choice_mask = jnp.isin(df_arr[:, ind["choice"]], care_choice)
+    sibling_mask = df_arr[:, ind["has_sibling"]] == has_sibling
+
+    shares = []
+    for health in (MEDIUM_HEALTH, BAD_HEALTH):
+        health_mask = df_arr[:, ind[f"{parent}_health"]] == health
+
+        share = jnp.sum(care_choice_mask & sibling_mask & health_mask) / jnp.sum(
+            sibling_mask & health_mask,
+        )
+        shares.append(share)
+
+    return shares
+
+
+def get_share_care_by_parental_health(
+    df_arr,
+    ind,
+    care_choice,
+    parent="mother",
+):
+    """Get share of agents choosing given care choice by parental health."""
+    care_choice_mask = jnp.isin(df_arr[:, ind["choice"]], care_choice)
+
+    shares = []
+    for health in (MEDIUM_HEALTH, BAD_HEALTH):
+        health_mask = df_arr[:, ind[f"{parent}_health"]] == health
+
+        share = jnp.sum(care_choice_mask & health_mask) / jnp.sum(health_mask)
+        shares.append(share)
+
+    return shares
 
 
 def get_care_mix_by_mother_age_bin(df_arr, ind, choice, care_type, age_bins):
@@ -593,64 +636,127 @@ def get_care_mix_by_mother_age_bin(df_arr, ind, choice, care_type, age_bins):
 # Prepare simulation array
 # ==============================================================================
 
+
 # Assuming _assign_working_hours is adapted for JAX, using vmap for batch operations
 # if necessary.
 # Since JAX does not support functions like .apply() directly,
 # you'll likely need to vectorize this logic.
 
 
-def create_simulation_array(sim_dict, options, params, n_agents):
-    """Create simulation array from dict.
+def create_simulation_array_from_df(data, options):
+    """Create simulation array from dict."""
+    options = options["model_params"]
+    n_agents = options["n_agents"]
+    n_periods = options["n_periods"]
 
-    idx = {
-        'agent': 0,
-        'period': 1,
-        'lagged_choice': 2,
-        'choice': 3,
-        'age': 4,
-        'age_squared': 5,
-        'mother_age': 6,
-        'wealth': 7,
-        'savings_rate': 8,
-        'wage': 9,
-        'working_hours': 10,
-        'income': 11,
-        'is_part_time': 12,
-        'is_full_time': 13,
-        'is_informal_care': 14
-    }
+    data["agent"] = jnp.tile(jnp.arange(n_agents), n_periods)
+    period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
+    data["age"] = period_indices + options["start_age"]
+    data["age_squared"] = data["age"] ** 2
+    data["mother_age"] = period_indices + options["mother_start_age"]
 
-    """
+    data = data.dropna()
+
+    data["wealth"] = data["savings"] + data["consumption"]
+    data["savings_rate"] = jnp.where(
+        jnp.array(data["wealth"]) > 0,
+        jnp.divide(jnp.array(data["savings"]), jnp.array(data["wealth"])),
+        0,
+    )
+
+    data["experience_squared"] = data["experience"] ** 2
+
+    # Adjusting the logic for PART_TIME and FULL_TIME checks
+    data["lagged_part_time"] = jnp.isin(
+        jnp.array(data["lagged_choice"]),
+        PART_TIME,
+    ).astype(
+        np.int8,
+    )
+
+    data["choice_part_time"] = jnp.isin(jnp.array(data["choice"]), PART_TIME).astype(
+        np.int8,
+    )
+    data["choice_full_time"] = jnp.isin(jnp.array(data["choice"]), FULL_TIME).astype(
+        np.int8,
+    )
+    data["choice_informal_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        INFORMAL_CARE,
+    ).astype(np.int8)
+
+    data["log_wage"] = (
+        options["wage_constant"]
+        + options["wage_age"] * data["age"]
+        + options["wage_age_squared"] * data["age_squared"]
+        + options["wage_experience"] * data["experience"]
+        + options["wage_experience_squared"] * data["experience_squared"]
+        + options["wage_high_education"] * data["high_educ"]
+        + options["wage_part_time"] * data["lagged_part_time"]
+    )
+
+    data["wage"] = jnp.exp(
+        jnp.array(data["log_wage"]) + jnp.array(data["income_shock"]),
+    )
+
+    # For the _assign_working_hours part, it's assumed _assign_working_hours_vectorized
+    # is an adapted version suitable for vector operations
+    # Since jax.vmap expects functions that operate on JAX arrays,
+    # ensure that your DataFrame operations are compatible or consider converting
+    # relevant parts to JAX arrays
+    data["working_hours"] = jax.vmap(_assign_working_hours_vectorized)(
+        data["lagged_choice"].values,
+    )
+
+    data["income"] = data["working_hours"] * data["wage"]
+
+    column_indices = {col: idx for idx, col in enumerate(data.columns)}
+
+    return jnp.array(data), column_indices
+
+
+def create_simulation_array(sim_dict, options):
+    """Create simulation array from dict."""
+    options = options["model_params"]
     n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
 
-    # Convert the dictionary to arrays
     agent = jnp.tile(jnp.arange(n_agents), n_periods)
     period = sim_dict["period"].ravel()
     savings = sim_dict["savings"].ravel()
     consumption = sim_dict["consumption"].ravel()
     lagged_choice = sim_dict["lagged_choice"].ravel()
     choice = sim_dict["choice"].ravel()
+    high_educ = sim_dict["high_educ"].ravel()
+    experience = sim_dict["experience"].ravel()
     income_shock = sim_dict["income_shock"].ravel()
+    mother_health = sim_dict["mother_health"].ravel()
+    has_sibling = sim_dict["has_sibling"].ravel()
 
     wealth = savings + consumption
     savings_rate = jnp.where(wealth > 0, jnp.divide(savings, wealth), 0)
     period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
 
-    age = period_indices + options["model_params"]["start_age"]
+    age = period_indices + options["start_age"]
     age_squared = age**2
-    mother_age = period_indices + options["model_params"]["mother_start_age"]
+    mother_age = period_indices + options["mother_start_age"]
+
+    experience_squared = experience**2
 
     # Adjusting the logic for PART_TIME and FULL_TIME checks
+    lagged_part_time = jnp.isin(lagged_choice, PART_TIME)
+
     is_part_time = jnp.isin(choice, PART_TIME)
     is_full_time = jnp.isin(choice, FULL_TIME)
     is_informal_care = jnp.isin(choice, INFORMAL_CARE)
 
     log_wage = (
-        params["wage_constant"]
-        + params["wage_age"] * age
-        + params["wage_age_squared"] * age**2
-        + params["wage_part_time"] * is_part_time  # lagged_choice
-        + params["wage_not_working"] * is_full_time  # lagged_choice
+        options["wage_constant"]
+        + options["wage_age"] * age
+        + options["wage_age_squared"] * age_squared
+        + options["wage_experience"] * experience
+        + options["wage_experience_squared"] * experience_squared
+        + options["wage_high_education"] * high_educ
+        + options["wage_part_time"] * lagged_part_time
     )
 
     wage = jnp.exp(log_wage + income_shock)
@@ -663,7 +769,7 @@ def create_simulation_array(sim_dict, options, params, n_agents):
 
     income = working_hours * wage
 
-    return jnp.column_stack(
+    arr = jnp.column_stack(
         (
             agent,
             period,
@@ -680,6 +786,51 @@ def create_simulation_array(sim_dict, options, params, n_agents):
             is_part_time,
             is_full_time,
             is_informal_care,
+            experience,
+            experience_squared,
+            high_educ,
+            mother_health,
+            has_sibling,
+        ),
+    )
+
+    idx = {
+        "agent": 0,
+        "period": 1,
+        "lagged_choice": 2,
+        "choice": 3,
+        "age": 4,
+        "age_squared": 5,
+        "mother_age": 6,
+        "wealth": 7,
+        "savings_rate": 8,
+        "wage": 9,
+        "working_hours": 10,
+        "income": 11,
+        "choice_part_time": 12,
+        "choice_full_time": 13,
+        "choice_informal_care": 14,
+        "experience": 15,
+        "experience_squared": 16,
+        "high_educ": 17,
+        "mother_health": 18,
+        "has_sibling": 19,
+    }
+
+    return arr, idx
+
+
+def create_simulation_df_from_dict(sim_dict):
+    n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
+
+    keys_to_drop = ["taste_shocks"]
+    dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
+
+    return pd.DataFrame(
+        {key: val.ravel() for key, val in dict_to_df.items()},
+        index=pd.MultiIndex.from_product(
+            [np.arange(n_periods), np.arange(n_agents)],
+            names=["period", "agent"],
         ),
     )
 

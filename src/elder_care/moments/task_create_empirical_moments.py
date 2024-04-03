@@ -198,10 +198,17 @@ def task_create_moments(
     caregiving_by_mother_health_and_presence_of_sibling = (
         get_caregiving_status_by_mother_health_and_presence_of_sibling(
             mother,
-            sibling_var="has_two_children",
+            sibling_var="has_two_daughters",
             weight=weight,
         )
     )
+    # has_two_children
+    # only_informal_mother_no_sibling_health_1,0.06905436552048537
+    # only_informal_mother_no_sibling_health_2,0.09596244304706751
+    # only_formal_mother_no_sibling_health_1,0.027828958712207575
+    # only_formal_mother_no_sibling_health_2,0.11644042613563298
+    # combination_care_mother_no_sibling_health_1,0.05082939655180018
+    # combination_care_mother_no_sibling_health_2,0.15856733665240463
 
     # ================================================================================
     # Labor and caregiving transitions
@@ -310,6 +317,32 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
     previous_choice="informal_care_child",
     current_choice="informal_care_child_weighted",     weight=weight, )
 
+
+    no_informal_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_informal_care_child",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    no_informal_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="no_informal_care_child",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+    informal_to_no_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="informal_care_child",
+        current_choice="no_combination_care_weighted",
+        weight=weight,
+    )
+    informal_to_combination_weighted = get_care_transition_weighted(
+        parent,
+        previous_choice="informal_care_child",
+        current_choice="combination_care_weighted",
+        weight=weight,
+    )
+
     """
     # ================================================================================
     # Informal care
@@ -337,31 +370,6 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
         parent,
         previous_choice="informal_care_child",
         current_choice="formal_care_weighted",
-        weight=weight,
-    )
-
-    no_informal_to_no_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_informal_care_child",
-        current_choice="no_combination_care_weighted",
-        weight=weight,
-    )
-    no_informal_to_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_informal_care_child",
-        current_choice="combination_care_weighted",
-        weight=weight,
-    )
-    informal_to_no_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="informal_care_child",
-        current_choice="no_combination_care_weighted",
-        weight=weight,
-    )
-    informal_to_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="informal_care_child",
-        current_choice="combination_care_weighted",
         weight=weight,
     )
 
@@ -420,111 +428,6 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
         weight=weight,
     )
 
-    no_formal_to_no_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_formal_care",
-        current_choice="no_combination_care_weighted",
-        weight=weight,
-    )
-    no_formal_to_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_formal_care",
-        current_choice="combination_care_weighted",
-        weight=weight,
-    )
-    formal_to_no_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="formal_care",
-        current_choice="no_combination_care_weighted",
-        weight=weight,
-    )
-    formal_to_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="formal_care",
-        current_choice="combination_care_weighted",
-        weight=weight,
-    )
-
-    # ================================================================================
-    # Combination care
-    # ================================================================================
-
-    no_combination_to_no_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_combination_care",
-        current_choice="no_informal_care_child_weighted",
-        weight=weight,
-    )
-    no_combination_to_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_combination_care",
-        current_choice="informal_care_child_weighted",
-        weight=weight,
-    )
-
-    combination_to_no_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="combination_care",
-        current_choice="no_informal_care_child_weighted",
-        weight=weight,
-    )
-    combination_to_informal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="combination_care",
-        current_choice="informal_care_child_weighted",
-        weight=weight,
-    )
-
-    no_combination_to_no_formal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_combination_care",
-        current_choice="no_formal_care_weighted",
-        weight=weight,
-    )
-    no_combination_to_formal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_combination_care",
-        current_choice="formal_care_weighted",
-        weight=weight,
-    )
-    combination_to_no_formal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="combination_care",
-        current_choice="no_formal_care_weighted",
-        weight=weight,
-    )
-    combination_to_formal_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="combination_care",
-        current_choice="formal_care_weighted",
-        weight=weight,
-    )
-
-    no_combination_to_no_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_combination_care",
-        current_choice="no_combination_care_weighted",
-        weight=weight,
-    )
-    no_combination_to_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="no_combination_care",
-        current_choice="combination_care_weighted",
-        weight=weight,
-    )
-    combination_to_no_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="combination_care",
-        current_choice="no_combination_care_weighted",
-        weight=weight,
-    )
-    combination_to_combination_weighted = get_care_transition_weighted(
-        parent,
-        previous_choice="combination_care",
-        current_choice="combination_care_weighted",
-        weight=weight,
-    )
-
     return pd.concat(
         [
             # Informal care
@@ -533,11 +436,6 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
             no_informal_to_formal_weighted,
             informal_to_no_formal_weighted,
             informal_to_formal_weighted,
-            # to (no) combination
-            no_informal_to_no_combination_weighted,
-            no_informal_to_combination_weighted,
-            informal_to_no_combination_weighted,
-            informal_to_combination_weighted,
             # Formal care
             # to (no) informal
             no_formal_to_no_informal_weighted,
@@ -549,27 +447,6 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
             no_formal_to_formal_weighted,
             formal_to_no_formal_weighted,
             formal_to_formal_weighted,
-            # to (no) combination
-            no_formal_to_no_combination_weighted,
-            no_formal_to_combination_weighted,
-            formal_to_no_combination_weighted,
-            formal_to_combination_weighted,
-            # Combination care
-            # to (no) informal
-            no_combination_to_no_informal_weighted,
-            no_combination_to_informal_weighted,
-            combination_to_no_informal_weighted,
-            combination_to_informal_weighted,
-            # to (no) formal
-            no_combination_to_no_formal_weighted,
-            no_combination_to_formal_weighted,
-            combination_to_no_formal_weighted,
-            combination_to_formal_weighted,
-            # to (no) combination
-            no_combination_to_no_combination_weighted,
-            no_combination_to_combination_weighted,
-            combination_to_no_combination_weighted,
-            combination_to_combination_weighted,
         ],
         ignore_index=False,
         axis=0,
@@ -1043,7 +920,54 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
     sibling_var,
     weight,
 ):
-    """Get caregiving status by mother's health and marital status."""
+    """Get caregiving status by mother's health and marital status.
+
+    home_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
+        mother,
+        parent="mother",
+        moment="home_care_weighted",
+        weight=weight,
+    )
+
+    home_care_by_mother_health_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="home_care_weighted",
+            has_other_sibling=True,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
+
+
+    only_informal_mother_health_1,0.05254345856715846
+    only_informal_mother_health_2,0.07798704406329442
+    only_formal_mother_health_1,0.024764440332745708
+    only_formal_mother_health_2,0.10506268806066696
+    combination_care_mother_health_1,0.018357843911438215
+    combination_care_mother_health_2,0.07055417366795928
+    only_informal_mother_sibling_health_1,0.09563346857355969
+    only_informal_mother_sibling_health_2,0.14147469097360235
+    only_formal_mother_sibling_health_1,0.04490369113141575
+    only_formal_mother_sibling_health_2,0.07847892386314938
+    combination_care_mother_sibling_health_1,0.036819814566593945
+    combination_care_mother_sibling_health_2,0.06878949679959141
+
+    informal_care_mother_health_1,0.07299073869631172
+    informal_care_mother_health_2,0.1590767936814578
+    formal_care_mother_health_1,0.13534639478066254
+    formal_care_mother_health_2,0.36428609226949604
+    combination_care_mother_health_1,0.018357843911438215
+    combination_care_mother_health_2,0.07055417366795928
+    informal_care_mother_sibling_health_1,0.13980470689107538
+    informal_care_mother_sibling_health_2,0.2213289679890795
+    formal_care_mother_sibling_health_1,0.14468126887776186
+    formal_care_mother_sibling_health_2,0.3652255363660134
+    combination_care_mother_sibling_health_1,0.036819814566593945
+    combination_care_mother_sibling_health_2,0.06878949679959141
+
+    """
     informal_care_by_mother_health = (
         get_caregiving_status_by_parental_health_any_sibling(
             mother,
@@ -1051,13 +975,6 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
             moment="informal_care_child_weighted",
             weight=weight,
         )
-    )
-
-    home_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
-        mother,
-        parent="mother",
-        moment="home_care_weighted",
-        weight=weight,
     )
     formal_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
         mother,
@@ -1075,65 +992,11 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
         )
     )
 
-    informal_care_by_mother_health_no_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="informal_care_child_weighted",
-            has_other_sibling=False,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-
-    home_care_by_mother_health_no_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="home_care_weighted",
-            has_other_sibling=False,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-    formal_care_by_mother_health_no_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="formal_care_weighted",
-            has_other_sibling=False,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-
-    combination_care_by_mother_health_no_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="combination_care_weighted",
-            has_other_sibling=False,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-
     informal_care_by_mother_health_sibling = (
         get_caregiving_status_by_parental_health_and_presence_of_sibling(
             mother,
             parent="mother",
             moment="informal_care_child_weighted",
-            has_other_sibling=True,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-
-    home_care_by_mother_health_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="home_care_weighted",
             has_other_sibling=True,
             sibling_var=sibling_var,
             weight=weight,
@@ -1149,7 +1012,6 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
             weight=weight,
         )
     )
-
     combination_care_by_mother_health_sibling = (
         get_caregiving_status_by_parental_health_and_presence_of_sibling(
             mother,
@@ -1164,19 +1026,11 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
     return pd.concat(
         [
             informal_care_by_mother_health,
-            home_care_by_mother_health,
             formal_care_by_mother_health,
             combination_care_by_mother_health,
-            # only_home_care_by_mother_health_couple,
-            # only_home_care_by_mother_health_single,
             informal_care_by_mother_health_sibling,
-            home_care_by_mother_health_sibling,
             formal_care_by_mother_health_sibling,
             combination_care_by_mother_health_sibling,
-            informal_care_by_mother_health_no_sibling,
-            home_care_by_mother_health_no_sibling,
-            formal_care_by_mother_health_no_sibling,
-            combination_care_by_mother_health_no_sibling,
         ],
         ignore_index=False,
         axis=0,
@@ -2065,11 +1919,15 @@ def get_employment_by_caregiving_status_soep():
 
 
 def get_employment_by_age_soep():
-    """Get employment shares by age of females age 39-70."""
+    """Get employment shares by age of females age 39-70.
+
+    "not_working_age_39": 0.3873923, "part_time_age_39": 0.35843870, "full_time_age_39":
+    0.254168957,
+
+    """
     return pd.Series(
         {
             # not working
-            "not_working_age_39": 0.3873923,
             "not_working_age_40": 0.3624795,
             "not_working_age_41": 0.3429091,
             "not_working_age_42": 0.3217345,
@@ -2102,7 +1960,6 @@ def get_employment_by_age_soep():
             "not_working_age_69": 0.9747814,
             "not_working_age_70": 0.9805623,
             # part-time
-            "part_time_age_39": 0.35843870,
             "part_time_age_40": 0.37338666,
             "part_time_age_41": 0.37436364,
             "part_time_age_42": 0.38436831,
@@ -2135,7 +1992,6 @@ def get_employment_by_age_soep():
             "part_time_age_69": 0.01782112,
             "part_time_age_70": 0.01388407,
             # full-time
-            "full_time_age_39": 0.254168957,
             "full_time_age_40": 0.264133794,
             "full_time_age_41": 0.282727273,
             "full_time_age_42": 0.293897216,

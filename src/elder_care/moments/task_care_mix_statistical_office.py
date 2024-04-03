@@ -252,14 +252,14 @@ def create_moments_dictionary(
             f"{start_age}_to_{end_age}" if isinstance(end_age, int) else f"{start_age}+"
         )
 
-        out[f"share_formal_care_{sex}_age_{age_key}"] = (
+        out[f"share_informal_{sex}_age_{age_key}"] = (
+            only_informal[i] if i < len(only_informal) else []
+        )
+        out[f"share_formal_{sex}_age_{age_key}"] = (
             formal_care[i] if i < len(formal_care) else []
         )
-        out[f"share_combination_care_{sex}_age_{age_key}"] = (
+        out[f"share_combination_{sex}_age_{age_key}"] = (
             combination_care[i] if i < len(combination_care) else []
-        )
-        out[f"share_pure_informal_care_{sex}_age_{age_key}"] = (
-            only_informal[i] if i < len(only_informal) else []
         )
 
     return out

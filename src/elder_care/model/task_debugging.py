@@ -1,15 +1,20 @@
+"""Debugging tasks."""
+
+import time
 from pathlib import Path
+from typing import Annotated
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+import pytask
+from pytask import Product
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-
-from elder_care._simulate import get_share_by_age, get_share_by_type_by_age_bin
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import ALL, FULL_TIME, INFORMAL_CARE, NO_WORK, PART_TIME
@@ -19,6 +24,14 @@ from elder_care.model.utility_functions import (
     create_final_period_utility_functions,
     create_utility_functions,
 )
+from elder_care.simulation.simulate import (
+    create_simulation_array_from_df,
+    create_simulation_df_from_dict,
+    get_share_by_age,
+    get_share_by_type_by_age_bin,
+    simulate_moments,
+)
+from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
 
 jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
@@ -52,8 +65,19 @@ PARAMS = {
 }
 
 
-# @pytask.mark.skip()
-def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
+@pytask.mark.skip()
+def task_debugging(
+    path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
+    path_to_save_sim_dict: Annotated[Path, Product] = BLD
+    / "debugging"
+    / "sim_dict.pkl",
+):
+    """Debugging task.
+
+    path_to_model: Path = BLD / "model" / "model.pkl",
+
+    """
+    path_to_model = BLD / "model" / "model.pkl"
 
     options = get_options_dict()
 
@@ -75,6 +99,7 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
     )
 
     results = func(PARAMS)
+    save_dict_to_pickle(results, path_to_save_result)
 
     n_agents = 100_000
     seed = 2024
@@ -109,6 +134,7 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
         choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
         model=model_loaded,
     )
+    save_dict_to_pickle(sim_dict, path_to_save_sim_dict)
 
     df_raw = create_simulation_df(sim_dict)
     data = df_raw.notna()
@@ -163,6 +189,23 @@ def task_debug(path_to_model: Path = BLD / "model" / "model.pkl"):
         share_full_time_by_age,
         share_informal_care_by_age_bin,
     )
+
+
+def task_debug_simulate():
+    """Debug simulate.
+
+    path_to_sim_dict: Path = BLD / "debugging" / "sim_dict.pkl",
+
+    """
+    path_to_sim_dict = BLD / "debugging" / "sim_dict.pkl"
+
+    options = get_options_dict()
+    sim_dict = load_dict_from_pickle(path_to_sim_dict)
+
+    data = create_simulation_df_from_dict(sim_dict)
+
+    arr, idx = create_simulation_array_from_df(data=data, options=options)
+    return simulate_moments(arr, idx)
 
 
 # ==============================================================================
@@ -233,8 +276,8 @@ def draw_initial_states(initial_conditions, initial_wealth, n_agents, seed):
             std_dev=jnp.ones(n_agents, dtype=np.uint16)
             * float(initial_conditions.loc["experience_std"]),
         ),
-        "part_time_offer": jnp.zeros(n_agents, dtype=np.int16),
-        "full_time_offer": jnp.zeros(n_agents, dtype=np.int16),
+        "part_time_offer": jnp.ones(n_agents, dtype=np.int16),
+        "full_time_offer": jnp.ones(n_agents, dtype=np.int16),
         "care_demand": jnp.zeros(n_agents, dtype=np.int16),
         "mother_health": draw_random_array(
             seed=seed - 5,
@@ -300,3 +343,72 @@ def draw_from_discrete_normal(seed, n_agents, mean, std_dev):
 
     # Scaling and shifting to get the desired mean and standard deviation, then rounding
     return jnp.round(mean + std_dev * sample_standard_normal).astype(jnp.int16)
+
+
+# ====================================================================================
+# Criterion
+# ====================================================================================
+
+
+def criterion_solve_and_simulate(
+    options,
+    params,
+    chol_weights,
+    model_loaded,
+    emp_moments,
+    solve_func,
+    initial_conditions,
+    initial_wealth_empirical,
+    n_agents=100_000,
+):
+    """Criterion function for the estimation.
+
+    chol_weights = jnp.eye(len(emp_moments))
+
+    err = sim_moments - emp_moments
+    # crit_val = jnp.dot(jnp.dot(err.T, chol_weights), err)
+
+    # deviations = sim_moments - np.array(emp_moments)
+    root_contribs = err @ chol_weights
+    crit_val = root_contribs @ root_contribs
+
+    """
+    # ! random seed !
+    seed = int(time.time())
+
+    value, policy_left, policy_right, endog_grid = solve_func(params)
+
+    initial_resources, initial_states = draw_initial_states(
+        initial_conditions,
+        initial_wealth_empirical,
+        n_agents,
+        seed=seed - 1,
+    )
+
+    sim_dict = simulate_all_periods_for_model(
+        states_initial=initial_states,
+        resources_initial=initial_resources,
+        n_periods=options["model_params"]["n_periods"],
+        params=PARAMS,
+        seed=seed,
+        endog_grid_solved=endog_grid,
+        value_solved=value,
+        policy_left_solved=policy_left,
+        policy_right_solved=policy_right,
+        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
+        model=model_loaded,
+    )
+
+    data = create_simulation_df_from_dict(sim_dict)
+    arr, idx = create_simulation_array_from_df(data=data, options=options)
+    _sim_moments = simulate_moments(arr, idx)
+
+    sim_moments = jnp.where(jnp.isnan(_sim_moments), 0, _sim_moments)
+    sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
+
+    err = sim_moments - emp_moments
+
+    root_contribs = err @ chol_weights
+    crit_val = root_contribs @ root_contribs
+
+    return {"root_contributions": root_contribs, "value": crit_val}

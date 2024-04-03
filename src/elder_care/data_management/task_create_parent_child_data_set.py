@@ -427,8 +427,8 @@ def create_care_variables(dat):
     dat["informal_care_general"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
-        (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
+        (dat["home_care"] == 1) & (dat["informal_care_child"] == 1),
+        (dat["home_care"].isna()) & (dat["informal_care_child"].isna()),
     ]
     _val = [1, np.nan]
     dat["combination_care"] = np.select(_cond, _val, default=0)
@@ -498,8 +498,8 @@ def create_care_combinations(dat, informal_care_var):
     dat["only_nursing_home"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        (dat["nursing_home"] == 1)
-        | (dat["home_care"] == 1) & (dat[informal_care_var] == 1),
+        ((dat["nursing_home"] == 1) | (dat["home_care"] == 1))
+        & (dat[informal_care_var] == 0),
         (dat["nursing_home"].isna())
         & (dat["home_care"].isna())
         & (dat[informal_care_var].isna()),
@@ -582,18 +582,23 @@ def create_children_information(dat):
     # Iterate through the DataFrame rows
     for index, row in dat.iterrows():
         # Counting non-NaN values for 'has_two_children'
-        non_nan_count = row.filter(like="ch_gender_").notna().sum()
+        non_nan_count = row.filter(like="ch006_").notna().sum()
 
         # Counting values equal to 2 for 'has_two_daughters'
-        female_count = (row.filter(like="ch_gender_") == FEMALE).sum()
+        female_count = (row.filter(like="ch005_") == FEMALE).sum()
 
         # Update 'has_two_children_loop' based on non-NaN count
+
         if non_nan_count >= AT_LEAST_TWO:
             dat.loc[index, "has_two_children"] = DUMMY_TRUE
 
         # Update 'has_two_daughters_loop' based on female count
         if female_count >= AT_LEAST_TWO:
             dat.loc[index, "has_two_daughters"] = DUMMY_TRUE
+
+        if female_count < 1:
+            dat.loc[index, "has_two_children"] = np.nan
+            dat.loc[index, "has_two_daughters"] = np.nan
 
     return dat
 
