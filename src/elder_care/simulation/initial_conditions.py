@@ -2,8 +2,18 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+FOUR = 4
+EIGHT = 8
+TWELVE = 12
 
-def draw_initial_states(initial_conditions, initial_wealth, n_agents, seed):
+
+def draw_initial_states(
+    initial_conditions,
+    initial_wealth_low_educ,
+    initial_wealth_high_educ,
+    n_agents,
+    seed,
+):
     """Draw initial resources and states for the simulation.
 
     mother_health = get_initial_share_three(     initial_conditions,
@@ -32,50 +42,79 @@ def draw_initial_states(initial_conditions, initial_wealth, n_agents, seed):
 
     mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
 
-    initial_resources = draw_random_sequence_from_array(
-        seed,
-        initial_wealth,
-        n_agents=n_agents,
-    )
-
     initial_states = {
-        "period": jnp.zeros(n_agents, dtype=np.uint8),
+        "period": jnp.zeros(n_agents, dtype=np.int16),
         "lagged_choice": draw_random_array(
             seed=seed - 1,
             n_agents=n_agents,
             values=jnp.arange(n_choices),
             probabilities=lagged_choice_probs,
-        ).astype(np.uint8),
+        ).astype(np.int16),
         "high_educ": draw_random_array(
             seed=seed - 2,
             n_agents=n_agents,
             values=jnp.array([0, 1]),
             probabilities=high_educ,
-        ).astype(np.uint8),
+        ).astype(np.int16),
         "has_sibling": draw_random_array(
             seed=seed - 3,
             n_agents=n_agents,
             values=jnp.array([0, 1]),
             probabilities=has_sibling,
-        ).astype(np.uint8),
+        ).astype(np.int16),
         "experience": draw_from_discrete_normal(
             seed=seed - 4,
             n_agents=n_agents,
-            mean=initial_conditions["experience_mean"],
-            std_dev=initial_conditions["experience_std"],
+            mean=jnp.ones(n_agents, dtype=np.uint16)
+            * float(initial_conditions.loc["experience_mean"].iloc[0]),
+            std_dev=jnp.ones(n_agents, dtype=np.uint16)
+            * float(initial_conditions.loc["experience_std"].iloc[0]),
         ),
-        "part_time_offer": jnp.ones(n_agents, dtype=np.uint8),
-        "full_time_offer": jnp.ones(n_agents, dtype=np.uint8),
-        "care_demand": jnp.zeros(n_agents, dtype=np.uint8),
+        "mother_health": draw_random_array(
+            seed=seed - 5,
+            n_agents=n_agents,
+            values=jnp.array([0, 1, 2]),
+            probabilities=jnp.array([0.188007, 0.743285, 0.068707]),
+        ).astype(np.int16),
         "mother_alive": draw_random_array(
             seed=seed - 6,
             n_agents=n_agents,
             values=jnp.array([0, 1]),
             probabilities=mother_alive,
-        ).astype(np.uint8),
+        ).astype(np.int16),
     }
 
-    return initial_resources, initial_states
+    _initial_resources = draw_random_sequence_from_array(
+        seed,
+        initial_wealth_low_educ,
+        n_agents=n_agents,
+    )
+    _initial_resources_high_educ = draw_random_sequence_from_array(
+        seed,
+        initial_wealth_high_educ,
+        n_agents=n_agents,
+    )
+
+    initial_resources_out = _initial_resources.at[initial_states["high_educ"] == 1].set(
+        _initial_resources_high_educ[initial_states["high_educ"] == 1],
+    )
+
+    part_time_offer = jnp.where(
+        (initial_states["lagged_choice"] >= FOUR)
+        & (initial_states["lagged_choice"] < EIGHT),
+        1,
+        0,
+    )
+    full_time_offer = jnp.where(
+        (initial_states["lagged_choice"] >= EIGHT)
+        & (initial_states["lagged_choice"] < TWELVE),
+        1,
+        0,
+    )
+    initial_states["part_time_offer"] = part_time_offer
+    initial_states["full_time_offer"] = full_time_offer
+
+    return initial_resources_out, initial_states
 
 
 def get_initial_share_three(initial_conditions, shares):
@@ -124,4 +163,4 @@ def draw_from_discrete_normal(seed, n_agents, mean, std_dev):
     sample_standard_normal = jax.random.normal(key, (n_agents,))
 
     # Scaling and shifting to get the desired mean and standard deviation, then rounding
-    return jnp.round(mean + std_dev * sample_standard_normal).astype(jnp.uint16)
+    return jnp.round(mean + std_dev * sample_standard_normal).astype(jnp.int16)

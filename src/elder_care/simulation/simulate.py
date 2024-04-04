@@ -39,17 +39,17 @@ def simulate_moments(arr, idx):
     share_not_working_by_age = get_share_by_age(
         arr,
         ind=idx,
-        lagged_choice=NO_WORK,
+        choice=NO_WORK,
     )
     share_working_part_time_by_age = get_share_by_age(
         arr,
         ind=idx,
-        lagged_choice=PART_TIME,
+        choice=PART_TIME,
     )
     share_working_full_time_by_age = get_share_by_age(
         arr,
         ind=idx,
-        lagged_choice=FULL_TIME,
+        choice=FULL_TIME,
     )
 
     savings_rate_coeffs = fit_ols(
@@ -71,38 +71,38 @@ def simulate_moments(arr, idx):
     share_not_working_no_informal_care = get_share_by_type(
         arr,
         ind=idx,
-        lagged_choice=NO_WORK,
+        choice=NO_WORK,
         care_type=NO_INFORMAL_CARE,
     )
     share_part_time_no_informal_care = get_share_by_type(
         arr,
         ind=idx,
-        lagged_choice=PART_TIME,
+        choice=PART_TIME,
         care_type=NO_INFORMAL_CARE,
     )
     share_full_time_no_informal_care = get_share_by_type(
         arr,
         ind=idx,
-        lagged_choice=FULL_TIME,
+        choice=FULL_TIME,
         care_type=NO_INFORMAL_CARE,
     )
 
     share_not_working_informal_care = get_share_by_type(
         arr,
         ind=idx,
-        lagged_choice=NO_WORK,
+        choice=NO_WORK,
         care_type=INFORMAL_CARE,
     )
     share_part_time_informal_care = get_share_by_type(
         arr,
         ind=idx,
-        lagged_choice=PART_TIME,
+        choice=PART_TIME,
         care_type=INFORMAL_CARE,
     )
     share_full_time_informal_care = get_share_by_type(
         arr,
         ind=idx,
-        lagged_choice=FULL_TIME,
+        choice=FULL_TIME,
         care_type=INFORMAL_CARE,
     )
 
@@ -466,27 +466,27 @@ def fit_ols(x, y):
     return coef
 
 
-def get_share_by_age(df_arr, ind, lagged_choice):
+def get_share_by_age(df_arr, ind, choice):
     """Get share of agents choosing lagged choice by age bin."""
-    lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
+    choice_mask = jnp.isin(df_arr[:, ind["choice"]], choice)
     shares = []
 
-    for age in range(MIN_AGE, MAX_AGE + 1):
+    for age in range(MIN_AGE, MAX_AGE):
         age_mask = df_arr[:, ind["age"]] == age
 
-        share = jnp.sum(age_mask & lagged_choice_mask) / jnp.sum(age_mask)
+        share = jnp.sum(age_mask & choice_mask) / jnp.sum(age_mask)
         # period count is always larger than 0! otherwise error
         shares.append(share)
 
     return shares
 
 
-def get_share_by_type(df_arr, ind, lagged_choice, care_type):
+def get_share_by_type(df_arr, ind, choice, care_type):
     """Get share of agents of given care type choosing lagged choice by age bin."""
-    lagged_choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-    care_type_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], care_type)
+    choice_mask = jnp.isin(df_arr[:, ind["choice"]], choice)
+    care_type_mask = jnp.isin(df_arr[:, ind["choice"]], care_type)
 
-    return jnp.sum(lagged_choice_mask & care_type_mask) / jnp.sum(care_type_mask)
+    return jnp.sum(choice_mask & care_type_mask) / jnp.sum(care_type_mask)
 
 
 def get_transition(df_arr, ind, lagged_choice, current_choice):
@@ -502,8 +502,8 @@ def get_transition(df_arr, ind, lagged_choice, current_choice):
 
 def get_share_by_type_by_age_bin(df_arr, ind, choice, care_type, age_bins):
     """Get share of agents of given care type choosing lagged choice by age bin."""
-    choice_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], choice)
-    type_mask = jnp.isin(df_arr[:, ind["lagged_choice"]], care_type)
+    choice_mask = jnp.isin(df_arr[:, ind["choice"]], choice)
+    type_mask = jnp.isin(df_arr[:, ind["choice"]], care_type)
 
     shares = []
     for age_bin in age_bins:

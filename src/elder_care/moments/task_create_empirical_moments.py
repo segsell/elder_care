@@ -202,13 +202,6 @@ def task_create_moments(
             weight=weight,
         )
     )
-    # has_two_children
-    # only_informal_mother_no_sibling_health_1,0.06905436552048537
-    # only_informal_mother_no_sibling_health_2,0.09596244304706751
-    # only_formal_mother_no_sibling_health_1,0.027828958712207575
-    # only_formal_mother_no_sibling_health_2,0.11644042613563298
-    # combination_care_mother_no_sibling_health_1,0.05082939655180018
-    # combination_care_mother_no_sibling_health_2,0.15856733665240463
 
     # ================================================================================
     # Labor and caregiving transitions
@@ -1924,6 +1917,10 @@ def get_employment_by_age_soep():
     "not_working_age_39": 0.3873923, "part_time_age_39": 0.35843870, "full_time_age_39":
     0.254168957,
 
+    "not_working_age_70": 0.9805623,
+    "part_time_age_70": 0.01388407,
+    "full_time_age_70": 0.005553627,
+
     """
     return pd.Series(
         {
@@ -1958,7 +1955,6 @@ def get_employment_by_age_soep():
             "not_working_age_67": 0.9586930,
             "not_working_age_68": 0.9703130,
             "not_working_age_69": 0.9747814,
-            "not_working_age_70": 0.9805623,
             # part-time
             "part_time_age_40": 0.37338666,
             "part_time_age_41": 0.37436364,
@@ -1990,7 +1986,6 @@ def get_employment_by_age_soep():
             "part_time_age_67": 0.02897657,
             "part_time_age_68": 0.02065182,
             "part_time_age_69": 0.01782112,
-            "part_time_age_70": 0.01388407,
             # full-time
             "full_time_age_40": 0.264133794,
             "full_time_age_41": 0.282727273,
@@ -2022,7 +2017,6 @@ def get_employment_by_age_soep():
             "full_time_age_67": 0.012330456,
             "full_time_age_68": 0.009035173,
             "full_time_age_69": 0.007397445,
-            "full_time_age_70": 0.005553627,
         },
     )
 

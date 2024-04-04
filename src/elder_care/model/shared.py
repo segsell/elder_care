@@ -9,7 +9,7 @@ MALE = 1
 
 
 MIN_AGE = 40
-MAX_AGE = 75
+MAX_AGE = 70
 
 AGE_40 = 40
 AGE_45 = 45

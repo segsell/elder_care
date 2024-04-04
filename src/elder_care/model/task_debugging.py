@@ -1,6 +1,5 @@
 """Debugging tasks."""
 
-import time
 from pathlib import Path
 from typing import Annotated
 
@@ -17,13 +16,21 @@ from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
-from elder_care.model.shared import ALL, FULL_TIME, INFORMAL_CARE, NO_WORK, PART_TIME
+from elder_care.model.shared import (
+    AGE_BINS_SIM,
+    ALL,
+    FULL_TIME,
+    INFORMAL_CARE,
+    NO_WORK,
+    PART_TIME,
+)
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
 from elder_care.model.utility_functions import (
     create_final_period_utility_functions,
     create_utility_functions,
 )
+from elder_care.simulation.initial_conditions import draw_initial_states
 from elder_care.simulation.simulate import (
     create_simulation_array_from_df,
     create_simulation_df_from_dict,
@@ -76,6 +83,8 @@ def task_debugging(
 
     path_to_model: Path = BLD / "model" / "model.pkl",
 
+    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
+
     """
     path_to_model = BLD / "model" / "model.pkl"
 
@@ -104,22 +113,22 @@ def task_debugging(
     n_agents = 100_000
     seed = 2024
 
-    path = f"{BLD}/moments/initial_wealth_at_age_50.csv"
-    initial_wealth_empirical = jnp.asarray(pd.read_csv(path)).ravel() * 0.8
+    path_high_educ = f"{BLD}/moments/real_wealth_age_39_high_educ.csv"
+    initial_wealth_high_educ = jnp.asarray(pd.read_csv(path_high_educ)).ravel()
+
+    path_low_educ = f"{BLD}/moments/real_wealth_age_39_low_educ.csv"
+    initial_wealth_low_educ = jnp.asarray(pd.read_csv(path_low_educ)).ravel()
 
     path = f"{BLD}/moments/initial_discrete_conditions_at_age_40.csv"
     initial_conditions = pd.read_csv(path, index_col=0)
 
     initial_resources, initial_states = draw_initial_states(
         initial_conditions,
-        initial_wealth_empirical,
-        n_agents,
+        initial_wealth_low_educ=initial_wealth_low_educ,
+        initial_wealth_high_educ=initial_wealth_high_educ,
+        n_agents=n_agents,
         seed=seed,
     )
-
-    entries_to_remove = ("married", "care_demand", "father_alive")
-    for k in entries_to_remove:
-        initial_states.pop(k, None)
 
     sim_dict = simulate_all_periods_for_model(
         states_initial=initial_states,
@@ -153,34 +162,37 @@ def task_debugging(
             names=["period", "agent"],
         ),
     )
+    data["age"] = data["period"] + options["model_params"]["start_age"]
 
-    column_indices = {col: idx for idx, col in enumerate(data.columns)}
+    data_clean = data.dropna()
+    column_indices = {col: idx for idx, col in enumerate(data_clean.columns)}
     idx = column_indices.copy()
-    arr = jnp.asarray(data)
+    arr = jnp.asarray(data_clean)
 
     share_not_working_by_age = get_share_by_age(
         arr,
         ind=idx,
-        lagged_choice=NO_WORK,
+        choice=NO_WORK,
     )  # 15
 
     share_part_time_by_age = get_share_by_age(
         arr,
         ind=idx,
-        lagged_choice=PART_TIME,
+        choice=PART_TIME,
     )  # 15
 
     share_full_time_by_age = get_share_by_age(
         arr,
         ind=idx,
-        lagged_choice=FULL_TIME,
+        choice=FULL_TIME,
     )  # 15
 
     share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
         arr,
         ind=idx,
+        choice=INFORMAL_CARE,
         care_type=ALL,
-        lagged_choice=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
     )
 
     return (
@@ -191,6 +203,7 @@ def task_debugging(
     )
 
 
+@pytask.mark.skip()
 def task_debug_simulate():
     """Debug simulate.
 
@@ -205,210 +218,6 @@ def task_debug_simulate():
     data = create_simulation_df_from_dict(sim_dict)
 
     arr, idx = create_simulation_array_from_df(data=data, options=options)
-    return simulate_moments(arr, idx)
+    out = simulate_moments(arr, idx)
 
-
-# ==============================================================================
-# Temporary debugging
-# ==============================================================================
-
-
-def draw_initial_states(initial_conditions, initial_wealth, n_agents, seed):
-    """Draw initial resources and states for the simulation.
-
-    mother_health = get_initial_share_three(     initial_conditions,
-    ["mother_good_health", "mother_medium_health", "mother_bad_health"], ) father_health
-    = get_initial_share_three(     initial_conditions,     ["father_good_health",
-    "father_medium_health", "father_bad_health"], )
-
-    informal_care = get_initial_share_two(initial_conditions, "share_informal_care")
-
-    """
-    n_choices = 12
-
-    employment = get_initial_share_three(
-        initial_conditions,
-        ["share_not_working", "share_part_time", "share_full_time"],
-    )
-
-    informal_care = jnp.array([1, 0])  # agents start with no informal care provided
-    formal_care = jnp.array([1, 0])  # agents start with no formal care provided
-
-    informal_formal = jnp.outer(informal_care, formal_care)
-    lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
-
-    high_educ = get_initial_share_two(initial_conditions, "share_high_educ")
-    has_sibling = get_initial_share_two(initial_conditions, "share_has_sister")
-
-    mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
-
-    initial_resources = draw_random_sequence_from_array(
-        seed,
-        initial_wealth,
-        n_agents=n_agents,
-    )
-
-    initial_states = {
-        "period": jnp.zeros(n_agents, dtype=np.int16),
-        "lagged_choice": draw_random_array(
-            seed=seed - 1,
-            n_agents=n_agents,
-            values=jnp.arange(n_choices),
-            probabilities=lagged_choice_probs,
-        ).astype(np.int16),
-        "high_educ": draw_random_array(
-            seed=seed - 2,
-            n_agents=n_agents,
-            values=jnp.array([0, 1]),
-            probabilities=high_educ,
-        ).astype(np.int16),
-        "has_sibling": draw_random_array(
-            seed=seed - 3,
-            n_agents=n_agents,
-            values=jnp.array([0, 1]),
-            probabilities=has_sibling,
-        ).astype(np.int16),
-        "experience": draw_from_discrete_normal(
-            seed=seed - 4,
-            n_agents=n_agents,
-            mean=jnp.ones(n_agents, dtype=np.uint16)
-            * float(initial_conditions.loc["experience_mean"]),
-            std_dev=jnp.ones(n_agents, dtype=np.uint16)
-            * float(initial_conditions.loc["experience_std"]),
-        ),
-        "part_time_offer": jnp.ones(n_agents, dtype=np.int16),
-        "full_time_offer": jnp.ones(n_agents, dtype=np.int16),
-        "care_demand": jnp.zeros(n_agents, dtype=np.int16),
-        "mother_health": draw_random_array(
-            seed=seed - 5,
-            n_agents=n_agents,
-            values=jnp.array([0, 1, 2]),
-            probabilities=jnp.array([0.188007, 0.743285, 0.068707]),
-        ).astype(np.int16),
-        "mother_alive": draw_random_array(
-            seed=seed - 6,
-            n_agents=n_agents,
-            values=jnp.array([0, 1]),
-            probabilities=mother_alive,
-        ).astype(np.int16),
-    }
-
-    return initial_resources, initial_states
-
-
-def get_initial_share_three(initial_conditions, shares):
-    return jnp.asarray(initial_conditions.loc[shares]).ravel()
-
-
-def get_initial_share_two(initial_conditions, var):
-    share_yes = initial_conditions.loc[var]
-    return jnp.asarray([1 - share_yes, share_yes]).ravel()
-
-
-def draw_random_sequence_from_array(seed, arr, n_agents):
-    """Draw a random sequence from an array.
-
-    rand = draw_random_sequence_from_array(     seed=2024,     n_agents=10_000,
-    arr=jnp.array(initial_wealth), )
-
-    """
-    key = jax.random.PRNGKey(seed)
-    return jax.random.choice(key, arr, shape=(n_agents,), replace=True)
-
-
-def draw_random_array(seed, n_agents, values, probabilities):
-    """Draw a random array with given probabilities.
-
-    Usage:
-
-    seed = 2024
-    n_agents = 10_000
-
-    # Parameters
-    values = jnp.array([-1, 0, 1, 2])  # Values to choose from
-    probabilities = jnp.array([0.3, 0.3, 0.2, 0.2])  # Corresponding probabilities
-
-    table(pd.DataFrame(random_array)[0]) / 1000
-
-    """
-    key = jax.random.PRNGKey(seed)
-    return jax.random.choice(key, values, shape=(n_agents,), p=probabilities)
-
-
-def draw_from_discrete_normal(seed, n_agents, mean, std_dev):
-    """Draw from discrete normal distribution."""
-    key = jax.random.PRNGKey(seed)
-
-    sample_standard_normal = jax.random.normal(key, (n_agents,))
-
-    # Scaling and shifting to get the desired mean and standard deviation, then rounding
-    return jnp.round(mean + std_dev * sample_standard_normal).astype(jnp.int16)
-
-
-# ====================================================================================
-# Criterion
-# ====================================================================================
-
-
-def criterion_solve_and_simulate(
-    options,
-    params,
-    chol_weights,
-    model_loaded,
-    emp_moments,
-    solve_func,
-    initial_conditions,
-    initial_wealth_empirical,
-    n_agents=100_000,
-):
-    """Criterion function for the estimation.
-
-    chol_weights = jnp.eye(len(emp_moments))
-
-    err = sim_moments - emp_moments
-    # crit_val = jnp.dot(jnp.dot(err.T, chol_weights), err)
-
-    # deviations = sim_moments - np.array(emp_moments)
-    root_contribs = err @ chol_weights
-    crit_val = root_contribs @ root_contribs
-
-    """
-    # ! random seed !
-    seed = int(time.time())
-
-    value, policy_left, policy_right, endog_grid = solve_func(params)
-
-    initial_resources, initial_states = draw_initial_states(
-        initial_conditions,
-        initial_wealth_empirical,
-        n_agents,
-        seed=seed - 1,
-    )
-
-    sim_dict = simulate_all_periods_for_model(
-        states_initial=initial_states,
-        resources_initial=initial_resources,
-        n_periods=options["model_params"]["n_periods"],
-        params=PARAMS,
-        seed=seed,
-        endog_grid_solved=endog_grid,
-        value_solved=value,
-        policy_left_solved=policy_left,
-        policy_right_solved=policy_right,
-        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
-        model=model_loaded,
-    )
-
-    data = create_simulation_df_from_dict(sim_dict)
-    arr, idx = create_simulation_array_from_df(data=data, options=options)
-    _sim_moments = simulate_moments(arr, idx)
-
-    sim_moments = jnp.where(jnp.isnan(_sim_moments), 0, _sim_moments)
-    sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
-
-    err = sim_moments - emp_moments
-
-    root_contribs = err @ chol_weights
-    crit_val = root_contribs @ root_contribs
-
-    return {"root_contributions": root_contribs, "value": crit_val}
+    return out, arr
