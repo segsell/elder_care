@@ -36,9 +36,6 @@ def task_create_moments(
     / "data"
     / "parent_child_data_hh_weight.csv",
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
-    path_to_care_mix_moments: Path = BLD
-    / "moments"
-    / "statistical_office_care_mix.csv",
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
     """Create empirical moments for SHARE data.
@@ -137,6 +134,9 @@ def task_create_moments(
         },
     )
 
+
+    care_mix_moments = pd.read_csv(path_to_care_mix_moments, index_col=0)["0"]
+
     """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
@@ -232,8 +232,6 @@ def task_create_moments(
 
     ols_coeffs_savings_rate = get_coefficients_savings_rate_regression()
 
-    care_mix_moments = pd.read_csv(path_to_care_mix_moments, index_col=0)["0"]
-
     all_moments = pd.concat(
         [
             employment_by_age_soep,
@@ -245,8 +243,6 @@ def task_create_moments(
             care_transitions_parent_child_data,
             #
             caregiving_by_mother_health_and_presence_of_sibling,
-            #
-            care_mix_moments,
         ],
         ignore_index=False,
         axis=0,

@@ -8,7 +8,6 @@ import pandas as pd
 from elder_care.model.shared import (
     AGE_BINS_SIM,
     BAD_HEALTH,
-    CARE,
     COMBINATION_CARE,
     FORMAL_CARE,
     FULL_TIME,
@@ -19,10 +18,7 @@ from elder_care.model.shared import (
     NO_FORMAL_CARE,
     NO_INFORMAL_CARE,
     NO_WORK,
-    PARENT_AGE_BINS_SIM,
     PART_TIME,
-    PURE_FORMAL_CARE,
-    PURE_INFORMAL_CARE,
 )
 
 
@@ -35,37 +31,6 @@ def simulate_moments(arr, idx):
      # share_informal_care_by_age_bin = get_share_by_type_by_age_bin( #     arr, #
     ind=idx, #     care_type=ALL, #     lagged_choice=INFORMAL_CARE, # )
 
-    """
-    share_not_working_by_age = get_share_by_age(
-        arr,
-        ind=idx,
-        choice=NO_WORK,
-    )
-    share_working_part_time_by_age = get_share_by_age(
-        arr,
-        ind=idx,
-        choice=PART_TIME,
-    )
-    share_working_full_time_by_age = get_share_by_age(
-        arr,
-        ind=idx,
-        choice=FULL_TIME,
-    )
-
-    savings_rate_coeffs = fit_ols(
-        x=arr[
-            :,
-            [
-                idx["age"],
-                idx["age_squared"],
-                idx["high_educ"],
-                idx["choice_part_time"],
-                idx["choice_full_time"],
-                idx["choice_informal_care"],
-            ],
-        ],
-        y=arr[:, idx["savings_rate"]],
-    )
 
     #
     share_not_working_no_informal_care = get_share_by_type(
@@ -106,6 +71,38 @@ def simulate_moments(arr, idx):
         care_type=INFORMAL_CARE,
     )
 
+
+    [share_not_working_no_informal_care]
+        + [share_part_time_no_informal_care]
+        + [share_full_time_no_informal_care]
+        + [share_not_working_informal_care]
+        + [share_part_time_informal_care]
+        + [share_full_time_informal_care]
+        +
+
+
+
+    + care_mix_informal_by_mother_age_bin
+        # + care_mix_formal_by_mother_age_bin
+        # + care_mix_combination_by_mother_age_bi
+
+    """
+    share_not_working_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        choice=NO_WORK,
+    )
+    share_working_part_time_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+    )
+    share_working_full_time_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+    )
+
     # ================================================================================
     # Labor shares for informal caregivers
     # ================================================================================
@@ -130,6 +127,25 @@ def simulate_moments(arr, idx):
         choice=FULL_TIME,
         care_type=INFORMAL_CARE,
         age_bins=AGE_BINS_SIM,
+    )
+
+    # ================================================================================
+    # Savings rate
+    # ================================================================================
+
+    savings_rate_coeffs = fit_ols(
+        x=arr[
+            :,
+            [
+                idx["age"],
+                idx["age_squared"],
+                idx["high_educ"],
+                idx["choice_part_time"],
+                idx["choice_full_time"],
+                idx["choice_informal_care"],
+            ],
+        ],
+        y=arr[:, idx["savings_rate"]],
     )
 
     # ================================================================================
@@ -353,32 +369,6 @@ def simulate_moments(arr, idx):
     )
 
     # ================================================================================
-    # Care mix by parental 5-year age bins
-    # ================================================================================
-
-    care_mix_informal_by_mother_age_bin = get_care_mix_by_mother_age_bin(
-        arr,
-        ind=idx,
-        choice=PURE_INFORMAL_CARE,
-        care_type=CARE,
-        age_bins=PARENT_AGE_BINS_SIM,
-    )
-    care_mix_formal_by_mother_age_bin = get_care_mix_by_mother_age_bin(
-        arr,
-        ind=idx,
-        choice=PURE_FORMAL_CARE,
-        care_type=CARE,
-        age_bins=PARENT_AGE_BINS_SIM,
-    )
-    care_mix_combination_by_mother_age_bin = get_care_mix_by_mother_age_bin(
-        arr,
-        ind=idx,
-        choice=COMBINATION_CARE,
-        care_type=CARE,
-        age_bins=PARENT_AGE_BINS_SIM,
-    )
-
-    # ================================================================================
     # Moments matrix
     # ================================================================================
 
@@ -389,18 +379,10 @@ def simulate_moments(arr, idx):
         + share_not_working_informal_care_by_age_bin
         + share_part_time_informal_care_by_age_bin
         + share_full_time_informal_care_by_age_bin
-        + savings_rate_coeffs.tolist()
-        +
         #
-        [share_not_working_no_informal_care]
-        + [share_part_time_no_informal_care]
-        + [share_full_time_no_informal_care]
-        + [share_not_working_informal_care]
-        + [share_part_time_informal_care]
-        + [share_full_time_informal_care]
-        +
+        + savings_rate_coeffs.tolist()
         # Employment transitions
-        no_work_to_no_work
+        + no_work_to_no_work
         + no_work_to_part_time
         + no_work_to_full_time
         + part_time_to_no_work
@@ -436,11 +418,8 @@ def simulate_moments(arr, idx):
         + combination_care_mother_health
         + informal_care_mother_health_has_sibling
         + formal_care_mother_health_has_sibling
-        + combination_care_mother_health_has_sibling
+        + combination_care_mother_health_has_sibling,
         # Care mix
-        + care_mix_informal_by_mother_age_bin
-        + care_mix_formal_by_mother_age_bin
-        + care_mix_combination_by_mother_age_bin,
     )
 
 

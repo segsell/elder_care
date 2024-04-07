@@ -13,6 +13,9 @@ FEMALE = 2
 MALE = 1
 FINAL_AGE_GROUP = 99
 
+
+TWO_ROWS = 2
+
 # Prepare for future behavior of pandas with respect to downcasting
 pd.set_option("future.no_silent_downcasting", True)  # noqa: FBT003
 
@@ -137,9 +140,15 @@ def create_moments_by_age_bins(df, sex, year):
     data = data.sort_values("age_group")
 
     # Create subsets
-    only_informal = data[(data["type_of_care"] == "only_informal")]
-    informal_and_home_care = data[(data["type_of_care"] == "informal_and_home_care")]
-    nursing_home = data[(data["type_of_care"] == "nursing_home")]
+    only_informal_full = data[(data["type_of_care"] == "only_informal")]
+    informal_and_home_care_full = data[
+        (data["type_of_care"] == "informal_and_home_care")
+    ]
+    nursing_home_full = data[(data["type_of_care"] == "nursing_home")]
+
+    only_informal = condense_last_two_rows(only_informal_full)
+    informal_and_home_care = condense_last_two_rows(informal_and_home_care_full)
+    nursing_home = condense_last_two_rows(nursing_home_full)
 
     share_combination_care_in_home_care = [
         0.4026772102524974,
@@ -160,7 +169,7 @@ def create_moments_by_age_bins(df, sex, year):
     _combination_care = 0.4 * np.array(_informal_and_home_care)
     _only_home_care = 0.6 * np.array(_informal_and_home_care)
 
-    for val in (14, 15, 16, 17, 18, 19):
+    for val in (14, 15, 16, 17, 18):
         i = val - 14
         _combination_care[val] = (
             share_combination_care_in_home_care[i] * _informal_and_home_care[val]
@@ -201,7 +210,7 @@ def create_moments_by_age_bins(df, sex, year):
     return create_moments_dictionary(
         sex=sex_string,
         start_index=12,
-        end_age=95,
+        end_age=90,
         age_step=5,
         formal_care=_pure_formal_care,
         combination_care=_combination_care,
@@ -243,7 +252,7 @@ def create_moments_dictionary(
 
     """
     age_bins = [(age, age + age_step) for age in range(60, end_age, age_step)] + [
-        ("95", "+"),
+        ("90", "+"),
     ]
     out = {}
 
@@ -306,7 +315,7 @@ def create_moments_dictionary_all(
 
     """
     age_bins = [(age, age + age_step) for age in range(60, end_age, age_step)] + [
-        ("95", "+"),
+        ("90", "+"),
     ]
     out = {}
 
@@ -329,6 +338,35 @@ def create_moments_dictionary_all(
         )
 
     return out
+
+
+def condense_last_two_rows(df, column_to_sum="number"):
+    """Condenses the last two rows of a DataFrame.
+
+    Sum up the specified column's values for these rows and removing the
+    last row.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to be condensed.
+        column_to_sum (str): The name of the column for which the last two
+        rows' values will be summed.
+
+    Returns:
+        pd.DataFrame: A new pandas DataFrame with the last two rows condensed into one.
+
+    """
+    # Ensure the DataFrame is not empty and has more than one row
+    if df.empty or len(df) < TWO_ROWS:
+        raise ValueError("DataFrame must have at least two rows to condense.")
+
+    # Sum the values of the specified column for the last two rows
+    sum_last_two = df[column_to_sum].iloc[-2:].sum()
+
+    # Update the second last row with this summed value
+    df.loc[df.index[-2], column_to_sum] = sum_last_two
+
+    # Remove the last row and return the updated DataFrame
+    return df.iloc[:-1].copy()
 
 
 def _check_age_group_sums(df, year, sex, type_of_care):
