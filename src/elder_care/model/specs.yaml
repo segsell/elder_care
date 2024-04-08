@@ -13,13 +13,16 @@ mother_start_age: 65
 father_start_age: 67
 n_choices: 12
 
-max_init_experience: 2 # 40
-experience_cap: 4 # 80  # maximum of exp accumulated, times 2
+max_init_experience: 20 # 40
+experience_cap: 40 # 80  # maximum of exp accumulated, times 2
 
 # Parameters of the policy environment
+min_wage: 1.36
 unemployment_benefits: 650
 unemployment_wealth_thresh: 10_500
 consumption_floor: 500
+pension_point_value: 29.21 # year 2015
+early_retirement_penalty: 0.036
 # unemployment_benefits: 500,
 informal_care_benefits: 444.0466  # 0.4239 * 316 + 0.2793 * 545 + 728 *0.1405 + 901 * 0.0617
 formal_care_costs: 118.10658099999999  # >>> 79.31 * 0.0944 + 0.4239 * 70.77 + 0.2793 * 176.16 + 224.26 *0.1401

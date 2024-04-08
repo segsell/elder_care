@@ -57,6 +57,19 @@ def task_create_exog_wage():
     "wage_part_time": -0.0561647814,     "wage_std_regression_residual":
     0.5512142746125238, }
 
+
+    return {
+        "wage_constant": 2.2573016253,
+        "wage_age": 0.0012831865,
+        "wage_age_squared": -0.0000739820,
+        "wage_experience": 0.0280597011,
+        "wage_experience_squared": -0.0004004260,
+        "wage_high_education": 0.4614871933 ,
+        "wage_part_time": -0.0542410222,
+        "wage_above_retirement_age": -0.1460313341,
+        "wage_std_regression_residual": 0.5583539611,
+    }
+
     """
     return {
         "wage_constant": 2.0103482070,

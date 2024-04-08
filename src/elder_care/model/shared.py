@@ -59,6 +59,7 @@ MEDIUM_HEALTH = 1
 BAD_HEALTH = 2
 DEAD = 3
 
+EARLY_RETIREMENT_AGE = 60
 RETIREMENT_AGE = 65
 CHOICE_AFTER_AGE_70 = 0
 
@@ -81,6 +82,9 @@ ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
 NO_WORK = jnp.array([0, 1, 2, 3])
 PART_TIME = jnp.array([4, 5, 6, 7])
 FULL_TIME = jnp.array([8, 9, 10, 11])
+PART_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
+FULL_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 8, 9, 10, 11])
+WORK_AND_NO_WORK = ALL
 WORK = jnp.concatenate([PART_TIME, FULL_TIME])
 
 NO_CARE = jnp.array([0, 4, 8])
@@ -115,6 +119,10 @@ def is_part_time(lagged_choice):
 
 def is_full_time(lagged_choice):
     return jnp.any(lagged_choice == FULL_TIME)
+
+
+def is_working(lagged_choice):
+    return jnp.any(lagged_choice == WORK)
 
 
 def is_informal_care(lagged_choice):

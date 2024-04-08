@@ -4,12 +4,12 @@ from elder_care.model.shared import (
     BAD_HEALTH,
     CARE,
     CHOICE_AFTER_AGE_70,
-    FULL_TIME,
+    FULL_TIME_AND_NO_WORK,
     MEDIUM_HEALTH,
     NO_CARE,
     NO_WORK,
-    PART_TIME,
-    WORK,
+    PART_TIME_AND_NO_WORK,
+    WORK_AND_NO_WORK,
     is_full_time,
     is_part_time,
 )
@@ -45,7 +45,12 @@ def get_state_specific_feasible_choice_set(
     # elif period + options["start_age"] > options["retirement_age"]: #
     feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
+    # elif (age > EARLY_RETIREMENT_AGE) & lagged_choice in NO_WORK: #
+    feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
+
     """
+    age = period + options["start_age"]
+
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
     if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
@@ -53,14 +58,18 @@ def get_state_specific_feasible_choice_set(
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
-    if period + options["start_age"] >= options["age_seventy"]:
+    if age >= options["age_seventy"]:
         feasible_choice_set = [CHOICE_AFTER_AGE_70]
     elif (full_time_offer == 0) & (part_time_offer == 1):
-        feasible_choice_set = [i for i in feasible_choice_set if i in PART_TIME]
+        feasible_choice_set = [
+            i for i in feasible_choice_set if i in PART_TIME_AND_NO_WORK
+        ]
     elif (full_time_offer == 1) & (part_time_offer == 0):
-        feasible_choice_set = [i for i in feasible_choice_set if i in FULL_TIME]
+        feasible_choice_set = [
+            i for i in feasible_choice_set if i in FULL_TIME_AND_NO_WORK
+        ]
     elif (full_time_offer == 1) & (part_time_offer == 1):
-        feasible_choice_set = [i for i in feasible_choice_set if i in WORK]
+        feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
@@ -107,6 +116,7 @@ def sparsity_condition(
     experience,
     options,
 ):
+    age = period + options["start_age"]
 
     max_init_experience = options["max_init_experience"]
 
@@ -119,9 +129,7 @@ def sparsity_condition(
     ):
         cond = False
 
-    if (period + options["start_age"] >= options["age_seventy"] + 1) & (
-        lagged_choice != CHOICE_AFTER_AGE_70
-    ):
+    if (age >= options["age_seventy"] + 1) & (lagged_choice != CHOICE_AFTER_AGE_70):
         cond = False
 
     return cond

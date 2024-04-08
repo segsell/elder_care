@@ -5,7 +5,14 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import is_full_time, is_not_working, is_part_time
+from elder_care.model.shared import (
+    EARLY_RETIREMENT_AGE,
+    RETIREMENT_AGE,
+    is_full_time,
+    is_not_working,
+    is_part_time,
+    is_working,
+)
 
 # =====================================================================================
 # Exogenous savings grid
@@ -60,6 +67,8 @@ def budget_constraint(
     unemployment_benefits_yearly = means_test * options["unemployment_benefits"] * 12
 
     """
+    age = period + options["start_age"]
+
     working_hours_yearly = (
         is_part_time(lagged_choice) * 20 * 4.33 * 12  # week month year
         + is_full_time(lagged_choice) * 40 * 4.33 * 12  # week month year
@@ -74,16 +83,29 @@ def budget_constraint(
         options=options,
     )
 
-    wealth_beginning_of_period = (
-        wage_from_previous_period * working_hours_yearly
-        + options["unemployment_benefits"] * is_not_working(lagged_choice) * 12
-        + (1 + options["interest_rate"]) * savings_end_of_previous_period
+    pension_factor = 1 - (age - RETIREMENT_AGE) * options["early_retirement_penalty"]
+    retirement_income_gross = (
+        options["pension_point_value"] * experience * pension_factor * 12
+    )
+    retirement_income = calc_net_income_pensions(retirement_income_gross)
+
+    means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
+    unemployment_benefits = means_test * options["unemployment_benefits"] * 12
+
+    labor_income = wage_from_previous_period * working_hours_yearly
+    labor_income_with_min = jnp.maximum(labor_income, options["min_wage"]) * 12
+    net_labor_income = calc_net_income_working(labor_income_with_min)
+
+    income = jnp.maximum(
+        is_working(lagged_choice) * net_labor_income
+        + is_not_working(lagged_choice)
+        * (age > EARLY_RETIREMENT_AGE)
+        * retirement_income,
+        unemployment_benefits,
     )
 
-    return jnp.maximum(
-        wealth_beginning_of_period,
-        options["consumption_floor"] * 12,
-    )
+    # calculate beginning of period wealth M_t
+    return (1 + options["interest_rate"]) * savings_end_of_previous_period + income
 
 
 def get_exog_stochastic_wage(
@@ -181,3 +203,96 @@ def get_exog_spousal_income(period, options):
         + options["spousal_income_above_retirement_age"]
         * (age > options["retirement_age"])
     )
+
+
+# =====================================================================================
+# From Max & Bruno's model
+# =====================================================================================
+
+
+def calc_net_income_pensions(gross_income):
+    """Calculate net income after pension contributions."""
+    ssc = calc_health_ltc_contr(gross_income)
+    inc_tax = calc_inc_tax(gross_income - ssc)
+
+    return gross_income - inc_tax - ssc
+
+
+def calc_net_income_working(gross_income):
+    """Calculate net income after pension and health contributions."""
+    ssc = calc_pension_unempl_contr(gross_income) + calc_health_ltc_contr(gross_income)
+    inc_tax = calc_inc_tax(gross_income - ssc)
+
+    return gross_income - inc_tax - ssc
+
+
+def calc_inc_tax(gross_income):
+    """Parameters from 2010 gettsim params."""
+    thresholds = [
+        8004,
+        13469,
+        52881,
+        250730,
+    ]
+
+    rates = [0.14, 0.2397, 0.42, 0.45]
+
+    # In bracket 0 no taxes are paid
+    poss_tax_bracket_0 = 0.0
+
+    # In bracket 1 taxes are paid on income above the threshold
+    poss_tax_bracket_1 = rates[0] * (gross_income - thresholds[0])
+    tax_above_1 = (thresholds[1] - thresholds[0]) * rates[0]
+
+    # In bracket 2 taxes are paid on income above the threshold and the tax paid in
+    # bracket 1
+    poss_tax_bracket_2 = (rates[1] * (gross_income - thresholds[1])) + tax_above_1
+    tax_above_2 = (thresholds[2] - thresholds[1]) * rates[1]
+
+    # In bracket 3 taxes are paid on income above the threshold and the tax paid in
+    # brackets 1+2
+    poss_tax_bracket_3 = (
+        rates[2] * (gross_income - thresholds[2]) + tax_above_2 + tax_above_1
+    )
+    tax_above_3 = (thresholds[3] - thresholds[2]) * rates[2]
+
+    # In bracket 4 taxes are paid on income above the threshold and the tax paid in
+    # brackets 1+2+3
+    poss_tax_bracket_4 = (
+        rates[3] * (gross_income - thresholds[3])
+        + tax_above_1
+        + tax_above_2
+        + tax_above_3
+    )
+
+    # Check in which bracket the income falls and calculate the tax
+    in_bracket_0 = gross_income < thresholds[0]
+    in_bracket_1 = (gross_income >= thresholds[0]) & (gross_income < thresholds[1])
+    in_bracket_2 = (gross_income >= thresholds[1]) & (gross_income < thresholds[2])
+    in_bracket_3 = (gross_income >= thresholds[2]) & (gross_income < thresholds[3])
+    in_bracket_4 = gross_income >= thresholds[3]
+
+    return (
+        in_bracket_0 * poss_tax_bracket_0
+        + in_bracket_1 * poss_tax_bracket_1
+        + in_bracket_2 * poss_tax_bracket_2
+        + in_bracket_3 * poss_tax_bracket_3
+        + in_bracket_4 * poss_tax_bracket_4
+    )
+
+
+def calc_pension_unempl_contr(gross_income):
+    """Calculate pension and unemployment contributions."""
+    contribution_threshold = 5500 * 12
+    rate = 0.113
+
+    return jnp.minimum(gross_income, contribution_threshold) * rate
+
+
+def calc_health_ltc_contr(gross_income):
+    """Calculate health and long-term care contributions."""
+    contribution_threshold = 3750 * 12
+    rate = 0.08
+
+    # social security contribution
+    return jnp.minimum(gross_income, contribution_threshold) * rate

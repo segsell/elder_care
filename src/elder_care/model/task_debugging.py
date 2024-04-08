@@ -19,6 +19,7 @@ from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
     AGE_BINS_SIM,
     ALL,
+    FORMAL_CARE,
     FULL_TIME,
     INFORMAL_CARE,
     NO_WORK,
@@ -45,16 +46,16 @@ jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
 PARAMS = {
     "beta": 0.95,
-    "rho": 1.95,
+    "rho": 0.8,
     "lambda": 1,
-    "sigma": 1,
+    "sigma": 0.555,
     "interest_rate": 0.04,
     #
-    "utility_leisure_constant": 2,
+    "utility_leisure_constant": 1,
     "utility_leisure_age": 1,
     #
-    "disutility_part_time": -3,
-    "disutility_full_time": -5,
+    "disutility_part_time": -5,
+    "disutility_full_time": -6,
     # caregiving
     "utility_informal_care_parent_medium_health": 2,
     "utility_informal_care_parent_bad_health": 1,
@@ -72,6 +73,31 @@ PARAMS = {
 }
 
 
+NEW_PARAMS = {
+    "rho": 0.8,
+    "beta": 0.959,
+    "sigma": 0.5584583071,
+    "lambda": 1.0,
+    "interest_rate": 0.04,
+    "utility_leisure_constant": 2.2067847073033686,
+    "utility_leisure_age": 0.4974147946727394,
+    "disutility_part_time": -3.6925801847923356 + 3,
+    "disutility_full_time": -6.689874330534357 + 5,
+    "utility_informal_care_parent_medium_health": 2.7,
+    "utility_informal_care_parent_bad_health": -1.2683703103906085,
+    "utility_formal_care_parent_medium_health": -1.1846354533105516,
+    "utility_formal_care_parent_bad_health": 3.016557730696795,
+    "utility_combination_care_parent_medium_health": 2.1704034197553534,
+    "utility_combination_care_parent_bad_health": -3.464700187116794,
+    "utility_informal_care_medium_health_sibling": 4.593716029589444,
+    "utility_informal_care_bad_health_sibling": 1.7441261658057887,
+    "utility_formal_care_medium_health_sibling": 1.4162485968229126,
+    "utility_formal_care_bad_health_sibling": 1.5934083761309366,
+    "utility_combination_care_medium_health_sibling": 0.7439141316655182,
+    "utility_combination_care_bad_health_sibling": -1.5318055506617045,
+}
+
+
 @pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
@@ -86,7 +112,7 @@ def task_debugging(
     results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     """
-    path_to_model = BLD / "model" / "model.pkl"
+    path_to_model = BLD / "model" / "model_simple.pkl"
 
     options = get_options_dict()
 
@@ -195,15 +221,24 @@ def task_debugging(
         age_bins=AGE_BINS_SIM,
     )
 
+    share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FORMAL_CARE,
+        care_type=ALL,
+        age_bins=AGE_BINS_SIM,
+    )
+
     return (
         share_not_working_by_age,
         share_part_time_by_age,
         share_full_time_by_age,
         share_informal_care_by_age_bin,
+        share_formal_care_by_age_bin,
     )
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_debug_simulate():
     """Debug simulate.
 
