@@ -11,6 +11,8 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
+import numpy as np
+
 import pandas as pd
 from pytask import Product
 
@@ -137,6 +139,30 @@ def task_create_moments(
 
     care_mix_moments = pd.read_csv(path_to_care_mix_moments, index_col=0)["0"]
 
+
+    dat["mother_age_unweighted"] = dat["mother_age"] / dat[weight]
+    dat["mother_alive_unweighted"] = dat["mother_alive"] / dat[weight]
+    # len(dat.loc[dat["age"] == 44])
+    mother_mean_age_at_start = np.mean(
+        dat.loc[
+            (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
+            "mother_age_unweighted",
+        ]
+    )
+    mother_var_age_at_start = np.mean(
+        dat.loc[
+            (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
+            "mother_age_unweighted",
+        ]
+    )
+
+    mother_mean_alive_at_start = np.mean(
+        dat.loc[
+            (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
+            "mother_alive_unweighted",
+        ]
+    )
+
     """
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
@@ -147,6 +173,32 @@ def task_create_moments(
 
     weight = "hh_weight"
     intensive_care_var = "intensive_care_no_other"
+
+    dat["mother_age_unweighted"] = dat["mother_age"] / dat[weight]
+    dat["mother_alive_unweighted"] = dat["mother_alive"] / dat[weight]
+    # len(dat.loc[dat["age"] == 44])
+    mother_mean_age_at_start = np.mean(
+        dat.loc[
+            (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
+            "mother_age_unweighted",
+        ]
+    )
+    mother_std_age_at_start = np.std(
+        dat.loc[
+            (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
+            "mother_age_unweighted",
+        ]
+    )
+
+    mother_mean_alive_at_start = np.mean(
+        dat.loc[
+            (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
+            "mother_alive_unweighted",
+        ]
+    )
+
+    dat = dat.copy()
+    dat = dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < MAX_AGE)]
 
     # ================================================================================
     # Parent child data (mother)
@@ -195,6 +247,18 @@ def task_create_moments(
         parent["no_informal_care_child"] * parent[weight]
     )
 
+    mother_health_good = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)]
+    ) / len(mother.loc[mother["age"] == 76])
+    mother_health_medium = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)]
+    ) / len(mother.loc[mother["age"] == 76])
+    mother_health_bad = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)]
+    ) / len(mother.loc[mother["age"] == 76])
+
+    _total = mother_health_good + mother_health_medium + mother_health_bad
+    # breakpoint()
     caregiving_by_mother_health_and_presence_of_sibling = (
         get_caregiving_status_by_mother_health_and_presence_of_sibling(
             mother,
@@ -1460,7 +1524,7 @@ def get_share_by_age(
                 (dat["age"] == age),
                 weight,
             ].sum()
-            for age in range(MIN_AGE + 1, MAX_AGE + 1)
+            for age in range(MIN_AGE, MAX_AGE)
         },
     )
 
@@ -1547,7 +1611,7 @@ def get_income_by_age(dat, moment, weight):
                 (dat["age"] == age),
                 weight,
             ].sum()
-            for age in range(MIN_AGE + 1, MAX_AGE + 1)
+            for age in range(MIN_AGE, MAX_AGE)
         },
     )
 
@@ -1921,16 +1985,16 @@ def get_employment_by_age_soep():
     return pd.Series(
         {
             # not working
-            "not_working_age_40": 0.3624795,
-            "not_working_age_41": 0.3429091,
-            "not_working_age_42": 0.3217345,
-            "not_working_age_43": 0.3128681,
-            "not_working_age_44": 0.3001430,
-            "not_working_age_45": 0.2968833,
-            "not_working_age_46": 0.2921024,
-            "not_working_age_47": 0.2930369,
-            "not_working_age_48": 0.2827195,
-            "not_working_age_49": 0.2772086,
+            # "not_working_age_40": 0.3624795,
+            # "not_working_age_41": 0.3429091,
+            # "not_working_age_42": 0.3217345,
+            # "not_working_age_43": 0.3128681,
+            # "not_working_age_44": 0.3001430,
+            # "not_working_age_45": 0.2968833,
+            # "not_working_age_46": 0.2921024,
+            # "not_working_age_47": 0.2930369,
+            # "not_working_age_48": 0.2827195,
+            # "not_working_age_49": 0.2772086,
             "not_working_age_50": 0.2789733,
             "not_working_age_51": 0.2890753,
             "not_working_age_52": 0.2981818,
@@ -1952,16 +2016,16 @@ def get_employment_by_age_soep():
             "not_working_age_68": 0.9703130,
             "not_working_age_69": 0.9747814,
             # part-time
-            "part_time_age_40": 0.37338666,
-            "part_time_age_41": 0.37436364,
-            "part_time_age_42": 0.38436831,
-            "part_time_age_43": 0.38283063,
-            "part_time_age_44": 0.38827315,
-            "part_time_age_45": 0.38005343,
-            "part_time_age_46": 0.37396322,
-            "part_time_age_47": 0.36248392,
-            "part_time_age_48": 0.35486308,
-            "part_time_age_49": 0.36013918,
+            # "part_time_age_40": 0.37338666,
+            # "part_time_age_41": 0.37436364,
+            # "part_time_age_42": 0.38436831,
+            # "part_time_age_43": 0.38283063,
+            # "part_time_age_44": 0.38827315,
+            # "part_time_age_45": 0.38005343,
+            # "part_time_age_46": 0.37396322,
+            # "part_time_age_47": 0.36248392,
+            # "part_time_age_48": 0.35486308,
+            # "part_time_age_49": 0.36013918,
             "part_time_age_50": 0.34748272,
             "part_time_age_51": 0.33326514,
             "part_time_age_52": 0.32491979,
@@ -1983,16 +2047,16 @@ def get_employment_by_age_soep():
             "part_time_age_68": 0.02065182,
             "part_time_age_69": 0.01782112,
             # full-time
-            "full_time_age_40": 0.264133794,
-            "full_time_age_41": 0.282727273,
-            "full_time_age_42": 0.293897216,
-            "full_time_age_43": 0.304301267,
-            "full_time_age_44": 0.311583840,
-            "full_time_age_45": 0.323063224,
-            "full_time_age_46": 0.333934367,
-            "full_time_age_47": 0.344479148,
-            "full_time_age_48": 0.362417375,
-            "full_time_age_49": 0.362652233,
+            # "full_time_age_40": 0.264133794,
+            # "full_time_age_41": 0.282727273,
+            # "full_time_age_42": 0.293897216,
+            # "full_time_age_43": 0.304301267,
+            # "full_time_age_44": 0.311583840,
+            # "full_time_age_45": 0.323063224,
+            # "full_time_age_46": 0.333934367,
+            # "full_time_age_47": 0.344479148,
+            # "full_time_age_48": 0.362417375,
+            # "full_time_age_49": 0.362652233,
             "full_time_age_50": 0.373543929,
             "full_time_age_51": 0.377659574,
             "full_time_age_52": 0.376898396,
@@ -2049,22 +2113,22 @@ def get_employment_by_age_bin_informal_parental_caregivers_soep():
     """
     return pd.Series(
         {
-            "not_working_age_40_45": 0.4051896,
-            "not_working_age_45_50": 0.3209970,
+            # "not_working_age_40_45": 0.4051896,
+            # "not_working_age_45_50": 0.3209970,
             "not_working_age_50_55": 0.3302812,
             "not_working_age_55_60": 0.4206566,
             "not_working_age_60_65": 0.7387153,
             "not_working_age_65_70": 0.9545455,
             #
-            "part_time_age_40_45": 0.3702595,
-            "part_time_age_45_50": 0.3655589,
+            # "part_time_age_40_45": 0.3702595,
+            # "part_time_age_45_50": 0.3655589,
             "part_time_age_50_55": 0.3871812,
             "part_time_age_55_60": 0.3201094,
             "part_time_age_60_65": 0.1336806,
             "part_time_age_65_70": 0.0275974,
             #
-            "full_time_age_40_45": 0.2245509,
-            "full_time_age_45_50": 0.3134441,
+            # "full_time_age_40_45": 0.2245509,
+            # "full_time_age_45_50": 0.3134441,
             "full_time_age_50_55": 0.2825376,
             "full_time_age_55_60": 0.2592339,
             "full_time_age_60_65": 0.1276042,
@@ -2077,22 +2141,22 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
     """Get employment shares by age bin of non-informal caregivers."""
     return pd.Series(
         {
-            "not_working_age_40_45": 0.3199924,
-            "not_working_age_45_50": 0.2835182,
+            # "not_working_age_40_45": 0.3199924,
+            # "not_working_age_45_50": 0.2835182,
             "not_working_age_50_55": 0.2951276,
             "not_working_age_55_60": 0.3752067,
             "not_working_age_60_65": 0.6762942,
             "not_working_age_65_70": 0.9477137,
             #
-            "part_time_age_40_45": 0.38325688,
-            "part_time_age_45_50": 0.36695721,
+            # "part_time_age_40_45": 0.38325688,
+            # "part_time_age_45_50": 0.36695721,
             "part_time_age_50_55": 0.32171694,
             "part_time_age_55_60": 0.28790557,
             "part_time_age_60_65": 0.15151144,
             "part_time_age_65_70": 0.03306054,
             #
-            "full_time_age_40_45": 0.296750765,
-            "full_time_age_45_50": 0.349524564,
+            # "full_time_age_40_45": 0.296750765,
+            # "full_time_age_45_50": 0.349524564,
             "full_time_age_50_55": 0.383155452,
             "full_time_age_55_60": 0.336887723,
             "full_time_age_60_65": 0.172194346,

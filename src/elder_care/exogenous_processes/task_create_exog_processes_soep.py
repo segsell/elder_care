@@ -70,16 +70,27 @@ def task_create_exog_wage():
         "wage_std_regression_residual": 0.5583539611,
     }
 
+
+
+    return {
+    2.3573631138
+
+    [1] "-0.0022074505" "-0.0000353356" "0.0268947264"  "-0.0003828560" "0.4592584942"
+    [6] "-0.0566244884" "-0.1415122457"
+
+
+    0.5363549714
+    }
     """
     return {
-        "wage_constant": 2.0103482070,
-        "wage_age": 0.0114884074,
-        "wage_age_squared": -0.0001779835,
-        "wage_experience": 0.0280552316,
-        "wage_experience_squared": -0.0003998930,
-        "wage_high_education": 0.4617783635,
-        "wage_part_time": -0.0546509774,
-        "wage_std_regression_residual": 0.5584583071,
+        "wage_constant": 2.1189554639,
+        "wage_age": 0.0076462732,
+        "wage_age_squared": -0.0001357632,
+        "wage_experience": 0.0268874776,
+        "wage_experience_squared": -0.0003822625,
+        "wage_high_education": 0.4595438724,
+        "wage_part_time": -0.0570244287,
+        "wage_std_regression_residual": 0.5364562201,
     }
 
 

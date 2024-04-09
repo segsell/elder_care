@@ -62,6 +62,7 @@ def budget_constraint(
     + options["informal_care_benefits"] * is_informal_care(lagged_choice) * 12
     - options["formal_care_costs"] * is_formal_care(lagged_choice) * 12
 
+    net_labor_income = calc_net_income_working(labor_income_with_min)
 
     means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
     unemployment_benefits_yearly = means_test * options["unemployment_benefits"] * 12
@@ -94,17 +95,28 @@ def budget_constraint(
 
     labor_income = wage_from_previous_period * working_hours_yearly
     labor_income_with_min = jnp.maximum(labor_income, options["min_wage"]) * 12
-    net_labor_income = calc_net_income_working(labor_income_with_min)
 
     income = jnp.maximum(
-        is_working(lagged_choice) * net_labor_income
+        is_working(lagged_choice) * labor_income_with_min
         + is_not_working(lagged_choice)
         * (age > EARLY_RETIREMENT_AGE)
         * retirement_income,
         unemployment_benefits,
     )
 
-    # calculate beginning of period wealth M_t
+    # wealth_three_year_spacing = (1 + options["interest_rate"]) ** 3 * (
+    #     savings_end_of_previous_period * 3
+    # ) + retirement_income * 3
+
+    # wealth_one_year_spacing = (
+    #     1 + options["interest_rate"]
+    # ) * savings_end_of_previous_period + income
+
+    # # calculate beginning of period wealth M_t
+    # return (age <= options["age_seventy"]) * wealth_one_year_spacing + (
+    #     age > options["age_seventy"]
+    # ) * wealth_three_year_spacing
+
     return (1 + options["interest_rate"]) * savings_end_of_previous_period + income
 
 

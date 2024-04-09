@@ -50,7 +50,7 @@ def task_create_initial_conditions(
     / "initial_wealth_at_age_50.csv",
     path_discrete: Annotated[Path, Product] = BLD
     / "moments"
-    / "initial_discrete_conditions_at_age_50.csv",
+    / "_initial_discrete_conditions_SHARE_at_age_50.csv",
 ) -> None:
     """Create initial conditions at age 50.
 

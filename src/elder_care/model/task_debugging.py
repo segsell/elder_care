@@ -45,10 +45,10 @@ jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
 
 PARAMS = {
-    "beta": 0.95,
+    "beta": 0.959,
     "rho": 0.8,
     "lambda": 1,
-    "sigma": 0.555,
+    "sigma": 0.5364562201,
     "interest_rate": 0.04,
     #
     "utility_leisure_constant": 1,
@@ -76,7 +76,7 @@ PARAMS = {
 NEW_PARAMS = {
     "rho": 0.8,
     "beta": 0.959,
-    "sigma": 0.5584583071,
+    "sigma": 0.5364562201,
     "lambda": 1.0,
     "interest_rate": 0.04,
     "utility_leisure_constant": 2.2067847073033686,
@@ -127,26 +127,32 @@ def task_debugging(
 
     exog_savings_grid = create_savings_grid()
 
-    func = get_solve_func_for_model(
-        model=model_loaded,
-        exog_savings_grid=exog_savings_grid,
-        options=options,
-    )
+    # func = get_solve_func_for_model(
+    #     model=model_loaded,
+    #     exog_savings_grid=exog_savings_grid,
+    #     options=options,
+    # )
+    # results = func(PARAMS)
+    # save_dict_to_pickle(results, path_to_save_result)
 
-    results = func(PARAMS)
-    save_dict_to_pickle(results, path_to_save_result)
+    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     n_agents = 100_000
     seed = 2024
 
-    path_high_educ = f"{BLD}/moments/real_wealth_age_39_high_educ.csv"
+    path_high_educ = f"{BLD}/moments/real_wealth_age_49_high_educ.csv"
     initial_wealth_high_educ = jnp.asarray(pd.read_csv(path_high_educ)).ravel()
 
-    path_low_educ = f"{BLD}/moments/real_wealth_age_39_low_educ.csv"
+    path_low_educ = f"{BLD}/moments/real_wealth_age_49_low_educ.csv"
     initial_wealth_low_educ = jnp.asarray(pd.read_csv(path_low_educ)).ravel()
 
-    path = f"{BLD}/moments/initial_discrete_conditions_at_age_40.csv"
+    path = f"{BLD}/moments/initial_discrete_conditions_at_age_50.csv"
     initial_conditions = pd.read_csv(path, index_col=0)
+
+    _mother_health_probs = initial_conditions.loc[
+        ["mother_good_health", "mother_medium_health", "mother_bad_health"]
+    ].values
+    mother_health_probs = jnp.array(_mother_health_probs).ravel()
 
     initial_resources, initial_states = draw_initial_states(
         initial_conditions,
@@ -228,6 +234,8 @@ def task_debugging(
         care_type=ALL,
         age_bins=AGE_BINS_SIM,
     )
+
+    breakpoint()
 
     return (
         share_not_working_by_age,

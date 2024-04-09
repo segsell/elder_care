@@ -17,8 +17,8 @@ DONT_KNOW = -1
 ANSWER_YES = 1
 ANSWER_NO = 5
 
-MIN_AGE = 50
-MAX_AGE = 65
+MIN_AGE = 40
+MAX_AGE = 70
 MIN_WORKING_AGE = 14
 
 MIN_YEARS_SCHOOLING = 0
@@ -160,7 +160,6 @@ def task_create_estimation_data(
         axis=1,
     )
 
-    # Keep only those aged 55 to 68
     dat = dat[(dat["age"] >= MIN_AGE) & (dat["age"] <= MAX_AGE)]
 
     # !!! Still not 0.35 share high educ... rahter 0.25

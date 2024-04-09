@@ -8,7 +8,7 @@ FEMALE = 2
 MALE = 1
 
 
-MIN_AGE = 40
+MIN_AGE = 50
 MAX_AGE = 70
 
 AGE_40 = 40
@@ -27,8 +27,6 @@ AGE_100 = 100
 AGE_105 = 105
 
 AGE_BINS = [
-    (AGE_40 - MIN_AGE, AGE_45 - MIN_AGE),
-    (AGE_45 - MIN_AGE, AGE_50 - MIN_AGE),
     (AGE_50 - MIN_AGE, AGE_55 - MIN_AGE),
     (AGE_55 - MIN_AGE, AGE_60 - MIN_AGE),
     (AGE_60 - MIN_AGE, AGE_65 - MIN_AGE),
@@ -37,8 +35,6 @@ AGE_BINS = [
 ]
 
 AGE_BINS_SIM = [
-    (AGE_40, AGE_45),
-    (AGE_45, AGE_50),
     (AGE_50, AGE_55),
     (AGE_55, AGE_60),
     (AGE_60, AGE_65),
@@ -46,8 +42,6 @@ AGE_BINS_SIM = [
 ]
 
 PARENT_AGE_BINS_SIM = [
-    (AGE_65, AGE_70),
-    (AGE_70, AGE_75),
     (AGE_75, AGE_80),
     (AGE_80, AGE_85),
     (AGE_85, AGE_90),
@@ -80,11 +74,11 @@ MAX_LEISURE_HOURS = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
 
 NO_WORK = jnp.array([0, 1, 2, 3])
-PART_TIME = jnp.array([4, 5, 6, 7])
-FULL_TIME = jnp.array([8, 9, 10, 11])
 PART_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
 FULL_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 8, 9, 10, 11])
 WORK_AND_NO_WORK = ALL
+PART_TIME = jnp.array([4, 5, 6, 7])
+FULL_TIME = jnp.array([8, 9, 10, 11])
 WORK = jnp.concatenate([PART_TIME, FULL_TIME])
 
 NO_CARE = jnp.array([0, 4, 8])
