@@ -81,6 +81,7 @@ def task_create_exog_wage():
 
     0.5363549714
     }
+
     """
     return {
         "wage_constant": 2.1189554639,

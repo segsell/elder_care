@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Annotated
 
 import numpy as np
-
 import pandas as pd
 from pytask import Product
 
@@ -181,20 +180,20 @@ def task_create_moments(
         dat.loc[
             (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
             "mother_age_unweighted",
-        ]
+        ],
     )
     mother_std_age_at_start = np.std(
         dat.loc[
             (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
             "mother_age_unweighted",
-        ]
+        ],
     )
 
     mother_mean_alive_at_start = np.mean(
         dat.loc[
             (dat["age"] >= MIN_AGE - 3) & (dat["age"] <= MIN_AGE + 2),
             "mother_alive_unweighted",
-        ]
+        ],
     )
 
     dat = dat.copy()
@@ -248,13 +247,13 @@ def task_create_moments(
     )
 
     mother_health_good = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)]
+        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)],
     ) / len(mother.loc[mother["age"] == 76])
     mother_health_medium = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)]
+        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)],
     ) / len(mother.loc[mother["age"] == 76])
     mother_health_bad = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)]
+        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)],
     ) / len(mother.loc[mother["age"] == 76])
 
     _total = mother_health_good + mother_health_medium + mother_health_bad

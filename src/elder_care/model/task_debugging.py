@@ -11,7 +11,6 @@ import pytask
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
-from dcegm.solve import get_solve_func_for_model
 from pytask import Product
 
 from elder_care.config import BLD

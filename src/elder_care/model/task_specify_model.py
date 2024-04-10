@@ -1,6 +1,5 @@
 """Specify model for estimation and simulation."""
 
-import pytask
 from pathlib import Path
 from typing import Annotated, Any
 
