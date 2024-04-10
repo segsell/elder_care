@@ -114,7 +114,6 @@ def task_create_estimation_data(
 ) -> None:
     """Create the estimation data set.
 
-
     np.mean(dat.loc[dat["gender"] == FEMALE, "care_to_mother"]) +
         np.mean(dat.loc[dat["gender"] == FEMALE, "care_to_father"])
     0.12970807097882084
@@ -156,8 +155,6 @@ def task_create_estimation_data(
     0.09216589861751152
     (Pdb++) 0.09216589861751152 + 0.03133640552995392
     0.12350230414746544
-
-
 
     """
     # Load the data

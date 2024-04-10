@@ -12,14 +12,12 @@ from elder_care.model.shared import (
     FORMAL_CARE,
     FULL_TIME,
     INFORMAL_CARE,
-    MAX_AGE,
     MEDIUM_HEALTH,
-    MIN_AGE,
+    N_PERIODS_SIM,
     NO_FORMAL_CARE,
     NO_INFORMAL_CARE,
     NO_WORK,
     PART_TIME,
-    N_PERIODS_SIM,
 )
 
 

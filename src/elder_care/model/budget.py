@@ -9,9 +9,9 @@ from elder_care.model.shared import (
     EARLY_RETIREMENT_AGE,
     RETIREMENT_AGE,
     is_full_time,
+    is_not_working,
     is_part_time,
     is_working,
-    is_not_working,
 )
 
 TWO_YEARS = 2

@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-import numpy as np
 
 from elder_care.model.shared import (
     BAD_HEALTH,
