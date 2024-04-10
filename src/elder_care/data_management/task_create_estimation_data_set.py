@@ -112,7 +112,54 @@ def task_create_estimation_data(
     / "data"
     / "estimation_data_ind_weight.csv",
 ) -> None:
-    """Create the estimation data set."""
+    """Create the estimation data set.
+
+
+    np.mean(dat.loc[dat["gender"] == FEMALE, "care_to_mother"]) +
+        np.mean(dat.loc[dat["gender"] == FEMALE, "care_to_father"])
+    0.12970807097882084
+    np.mean(dat.loc[dat["gender"] == 1, "care_to_mother"]) +
+        np.mean(dat.loc[dat["gender"] == 1, "care_to_father"])
+    0.07805935763653613
+
+    (Pdb++) np.mean(dat.loc[dat["gender"] == 1, "care_to_mother_intensive"]) + np.mean(dat.loc[dat["gender"] == 1, "care_to_father_intensive"])
+    0.017482043637349235
+    (Pdb++) np.mean(dat.loc[dat["gender"] == 2, "care_to_mother_intensive"]) + np.mean(dat.loc[dat["gender"] == 2, "care_to_father_intensive"])
+    0.043159702346880366
+    (Pdb++)
+
+
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother_intensive"])
+    0.01935483870967742
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    0.09216589861751152
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    0.14026829842315838
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_father"])
+    0.03133640552995392
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_father"])
+    0.04330430689574018
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 65), "care_to_mother"])
+    0.1213953488372093
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 55) & (dat["age"] <= 65), "care_to_mother"])
+    0.10441514961288972
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    0.14026829842315838
+    (Pdb++)
+
+
+    (Pdb++) 0.14026829842315838 + 0.04330430689574018
+    0.18357260531889857
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    0.14026829842315838
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    0.09216589861751152
+    (Pdb++) 0.09216589861751152 + 0.03133640552995392
+    0.12350230414746544
+
+
+
+    """
     # Load the data
     dat = pd.read_csv(path_to_raw_data)
 
@@ -1411,7 +1458,12 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
         )
         | (
             (dat["sp018_"] == 1)  # or personal care in hh
-            & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+            & (
+                (dat["sp019d2"] == 1)
+                | (dat["sp019d3"] == 1)
+                | (dat["sp019d4"] == 1)
+                | (dat["sp019d5"] == 1)
+            )  # for mother or father
         ),  # include mother and father in law?
         (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
         (dat["sp008_"] == ANSWER_YES)
@@ -1739,6 +1791,33 @@ def check_share_informal_care_to_mother_father(dat):
 
     dat["care_to_mother"] = np.select(care_to_mother, [1, 1], default=0)
     dat["care_to_father"] = np.select(care_to_father, [1, 1], default=0)
+
+    # parents-in-law
+    care_to_mother = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d4"] == 1),
+        # care outside hh to mother
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == MOTHER_IN_LAW)
+            | (dat["sp009_2"] == MOTHER_IN_LAW)
+            | (dat["sp009_3"] == MOTHER_IN_LAW)
+        ),
+    ]
+    care_to_father = [
+        # personal care in hh
+        (dat["sp018_"] == 1) & (dat["sp019d5"] == 1),
+        # care outside hh to father
+        (dat["sp008_"] == 1)
+        & (
+            (dat["sp009_1"] == FATHER_IN_LAW)
+            | (dat["sp009_2"] == FATHER_IN_LAW)
+            | (dat["sp009_3"] == FATHER_IN_LAW)
+        ),
+    ]
+
+    dat["care_to_mother_in_law"] = np.select(care_to_mother, [1, 1], default=0)
+    dat["care_to_father_in_law"] = np.select(care_to_father, [1, 1], default=0)
 
     # intensive caregiving
     care_to_mother_intensive = [

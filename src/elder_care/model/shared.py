@@ -7,6 +7,8 @@ BASE_YEAR = 2015
 FEMALE = 2
 MALE = 1
 
+N_PERIODS_SIM = 15
+
 
 MIN_AGE = 50
 MAX_AGE = 70
@@ -27,6 +29,8 @@ AGE_100 = 100
 AGE_105 = 105
 
 AGE_BINS = [
+    (AGE_40 - MIN_AGE, AGE_45 - MIN_AGE),
+    (AGE_45 - MIN_AGE, AGE_50 - MIN_AGE),
     (AGE_50 - MIN_AGE, AGE_55 - MIN_AGE),
     (AGE_55 - MIN_AGE, AGE_60 - MIN_AGE),
     (AGE_60 - MIN_AGE, AGE_65 - MIN_AGE),
@@ -35,6 +39,8 @@ AGE_BINS = [
 ]
 
 AGE_BINS_SIM = [
+    (AGE_40, AGE_45),
+    (AGE_45, AGE_50),
     (AGE_50, AGE_55),
     (AGE_55, AGE_60),
     (AGE_60, AGE_65),
@@ -42,6 +48,8 @@ AGE_BINS_SIM = [
 ]
 
 PARENT_AGE_BINS_SIM = [
+    (AGE_65, AGE_70),
+    (AGE_70, AGE_75),
     (AGE_75, AGE_80),
     (AGE_80, AGE_85),
     (AGE_85, AGE_90),

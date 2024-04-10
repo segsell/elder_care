@@ -70,31 +70,52 @@ PARAMS = {
     "utility_formal_care_bad_health_sibling": 1,
     "utility_combination_care_medium_health_sibling": -0.2,
     "utility_combination_care_bad_health_sibling": -0.4,
+    # part-time job offer
+    "part_time_constant": -2.568584,
+    "part_time_not_working_last_period": 0.3201395,
+    "part_time_high_education": 0.1691369,
+    "part_time_above_retirement_age": -1.9976496,
+    # full-time job offer
+    "full_time_constant": -2.445238,
+    "full_time_not_working_last_period": -0.9964007,
+    "full_time_high_education": 0.3019138,
+    "full_time_above_retirement_age": -2.6571659,
 }
 
 
-NEW_PARAMS = {
-    "rho": 0.8,
+PROGRESS = {
+    "rho": 0.7,
     "beta": 0.959,
     "sigma": 0.5364562201,
     "lambda": 1.0,
     "interest_rate": 0.04,
-    "utility_leisure_constant": 2.2067847073033686,
-    "utility_leisure_age": 0.4974147946727394,
-    "disutility_part_time": -3.6925801847923356 + 3,
-    "disutility_full_time": -6.689874330534357 + 5,
-    "utility_informal_care_parent_medium_health": 2.7,
-    "utility_informal_care_parent_bad_health": -1.2683703103906085,
-    "utility_formal_care_parent_medium_health": -1.1846354533105516,
-    "utility_formal_care_parent_bad_health": 3.016557730696795,
-    "utility_combination_care_parent_medium_health": 2.1704034197553534,
-    "utility_combination_care_parent_bad_health": -3.464700187116794,
-    "utility_informal_care_medium_health_sibling": 4.593716029589444,
-    "utility_informal_care_bad_health_sibling": 1.7441261658057887,
-    "utility_formal_care_medium_health_sibling": 1.4162485968229126,
-    "utility_formal_care_bad_health_sibling": 1.5934083761309366,
-    "utility_combination_care_medium_health_sibling": 0.7439141316655182,
-    "utility_combination_care_bad_health_sibling": -1.5318055506617045,
+    "utility_leisure_constant": 3.2194001905695693,
+    "utility_leisure_age": 0.046916363865977045,
+    "utility_leisure_age_squared": -0.006495755962584588,
+    "disutility_part_time": -1.9337796413959372,
+    "disutility_full_time": -5.282394222692581,
+    "utility_informal_care_parent_medium_health": -0.4089331199248291,
+    "utility_informal_care_parent_bad_health": -0.3851096018741167,
+    "utility_formal_care_parent_medium_health": 0.4045081430627899,
+    "utility_formal_care_parent_bad_health": -0.4575685368898893,
+    "utility_combination_care_parent_medium_health": -4.112870982901066,
+    "utility_combination_care_parent_bad_health": -2.6130289452563393,
+    "utility_informal_care_medium_health_sibling": 1.815903823857372,
+    "utility_informal_care_bad_health_sibling": 2.439680402899742,
+    "utility_formal_care_medium_health_sibling": 0.6975043998652197,
+    "utility_formal_care_bad_health_sibling": 0.9263483706654374,
+    "utility_combination_care_medium_health_sibling": -1.6125665883276101,
+    "utility_combination_care_bad_health_sibling": -1.6952982282449929,
+    # part-time job offer
+    "part_time_constant": -2.568584,
+    "part_time_not_working_last_period": 0.3201395,
+    "part_time_high_education": 0.1691369,
+    "part_time_above_retirement_age": -1.9976496,
+    # full-time job offer
+    "full_time_constant": -2.445238,
+    "full_time_not_working_last_period": -0.9964007,
+    "full_time_high_education": 0.3019138,
+    "full_time_above_retirement_age": -2.6571659,
 }
 
 
@@ -112,9 +133,10 @@ def task_debugging(
     results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     """
-    path_to_model = BLD / "model" / "model_simple.pkl"
-
+    path_to_model = BLD / "model" / "model.pkl"
     options = get_options_dict()
+
+    params = PROGRESS
 
     model_loaded = load_and_setup_model(
         options=options,
@@ -127,26 +149,27 @@ def task_debugging(
 
     exog_savings_grid = create_savings_grid()
 
-    # func = get_solve_func_for_model(
-    #     model=model_loaded,
-    #     exog_savings_grid=exog_savings_grid,
-    #     options=options,
-    # )
-    # results = func(PARAMS)
-    # save_dict_to_pickle(results, path_to_save_result)
+    func = get_solve_func_for_model(
+        model=model_loaded,
+        exog_savings_grid=exog_savings_grid,
+        options=options,
+    )
+    results = func(params)
 
-    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
+    save_dict_to_pickle(results, path_to_save_result)
+
+    # results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     n_agents = 100_000
     seed = 2024
 
-    path_high_educ = f"{BLD}/moments/real_wealth_age_49_high_educ.csv"
+    path_high_educ = f"{BLD}/moments/real_wealth_age_39_high_educ.csv"
     initial_wealth_high_educ = jnp.asarray(pd.read_csv(path_high_educ)).ravel()
 
-    path_low_educ = f"{BLD}/moments/real_wealth_age_49_low_educ.csv"
+    path_low_educ = f"{BLD}/moments/real_wealth_age_39_low_educ.csv"
     initial_wealth_low_educ = jnp.asarray(pd.read_csv(path_low_educ)).ravel()
 
-    path = f"{BLD}/moments/initial_discrete_conditions_at_age_50.csv"
+    path = f"{BLD}/moments/initial_discrete_conditions_at_age_40.csv"
     initial_conditions = pd.read_csv(path, index_col=0)
 
     _mother_health_probs = initial_conditions.loc[
@@ -166,7 +189,7 @@ def task_debugging(
         states_initial=initial_states,
         resources_initial=initial_resources,
         n_periods=options["model_params"]["n_periods"],
-        params=PARAMS,
+        params=params,
         seed=seed,
         endog_grid_solved=results[3],
         value_solved=results[0],
@@ -232,6 +255,28 @@ def task_debugging(
         ind=idx,
         choice=FORMAL_CARE,
         care_type=ALL,
+        age_bins=AGE_BINS_SIM,
+    )
+
+    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=NO_WORK,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+        care_type=INFORMAL_CARE,
         age_bins=AGE_BINS_SIM,
     )
 

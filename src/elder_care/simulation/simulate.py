@@ -19,6 +19,7 @@ from elder_care.model.shared import (
     NO_INFORMAL_CARE,
     NO_WORK,
     PART_TIME,
+    N_PERIODS_SIM,
 )
 
 
@@ -450,8 +451,8 @@ def get_share_by_age(df_arr, ind, choice):
     choice_mask = jnp.isin(df_arr[:, ind["choice"]], choice)
     shares = []
 
-    for age in range(MIN_AGE, MAX_AGE):
-        age_mask = df_arr[:, ind["age"]] == age
+    for period in range(N_PERIODS_SIM):
+        age_mask = df_arr[:, ind["period"]] == period
 
         share = jnp.sum(age_mask & choice_mask) / jnp.sum(age_mask)
         # period count is always larger than 0! otherwise error
@@ -503,8 +504,8 @@ def get_savings_rate_by_age_bin(arr, ind, care_type):
     means = []
 
     for age_bin in AGE_BINS_SIM:
-        age_bin_mask = (arr[:, ind["period"]] >= age_bin[0]) & (
-            arr[:, ind["period"]] < age_bin[1]
+        age_bin_mask = (arr[:, ind["age"]] >= age_bin[0]) & (
+            arr[:, ind["age"]] < age_bin[1]
         )
         selected_values = jnp.take(
             arr[:, ind["savings_rate"]],
@@ -630,9 +631,10 @@ def create_simulation_array_from_df(data, options):
 
     data["agent"] = jnp.tile(jnp.arange(n_agents), n_periods)
     period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
-    data["age"] = period_indices + options["start_age"]
+
+    data["age"] = options["start_age"] + period_indices * 2 + 1
     data["age_squared"] = data["age"] ** 2
-    data["mother_age"] = period_indices + options["mother_start_age"]
+    data["mother_age"] = options["mother_start_age"] + period_indices * 2 + 1
 
     data = data.dropna()
 
@@ -715,9 +717,9 @@ def create_simulation_array(sim_dict, options):
     savings_rate = jnp.where(wealth > 0, jnp.divide(savings, wealth), 0)
     period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
 
-    age = period_indices + options["start_age"]
+    age = options["start_age"] + period_indices * 2 + 1
     age_squared = age**2
-    mother_age = period_indices + options["mother_start_age"]
+    mother_age = options["mother_start_age"] + period_indices * 2 + 1
 
     experience_squared = experience**2
 

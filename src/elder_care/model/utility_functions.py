@@ -14,9 +14,9 @@ from elder_care.model.shared import (
     is_bad_health,
     is_combination_care,
     is_formal_care,
-    is_full_time,
     is_informal_care,
     is_medium_health,
+    is_full_time,
     is_part_time,
 )
 
@@ -109,10 +109,7 @@ def utility_func(
 
     """
     rho = params["rho"]
-
-    # fac = 1 * (period == options["n_periods"] - 1) + 2 * (
-    #     period == options["n_periods"]
-    # )
+    age = options["start_age"] + period * 2 + 1
 
     informal_care = is_informal_care(choice)
     formal_care = is_formal_care(choice)
@@ -134,17 +131,16 @@ def utility_func(
         (TOTAL_WEEKLY_HOURS - working_hours_weekly - caregiving_hours_weekly)
         * N_WEEKS  # month
         * N_MONTHS  # year
+        * 2  # two-year period
     )
     total_yearly_hours = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 
     # age is a proxy for health impacting the taste for free-time.
     utility_leisure = (
-        params["utility_leisure_constant"] + params["utility_leisure_age"] * period
+        params["utility_leisure_constant"]
+        + params["utility_leisure_age"] * age
+        + params["utility_leisure_age_squared"] * age**2
     ) * jnp.log(leisure_hours)
-    # utility_leisure_three_year = (
-    #     params["utility_leisure_constant"]
-    #     + params["utility_leisure_age"] * (age + (2 * fac))
-    # ) * jnp.log(total_yearly_hours * 3)
 
     utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
 
@@ -203,15 +199,6 @@ def utility_func(
         * is_bad_health(mother_health)
         * has_sibling
     )
-
-    # utility_one_year = (
-    #     utility_consumption + utility_leisure + disutility_working + utility_caregiving
-    # )
-    # utility_three_year = utility_consumption + utility_leisure_three_year
-
-    # return (age <= options["age_seventy"]) * utility_one_year + (
-    #     age > options["age_seventy"]
-    # ) * utility_three_year
 
     return (
         utility_consumption + utility_leisure + disutility_working + utility_caregiving

@@ -80,17 +80,6 @@ def get_options_dict(
         },
     }
 
-    more_exog_params = {
-        "part_time_constant": -2.568584,
-        "part_time_not_working_last_period": 0.3201395,
-        "part_time_high_education": 0.1691369,
-        "part_time_above_retirement_age": -1.9976496,
-        "full_time_constant": -2.445238,
-        "full_time_not_working_last_period": -0.9964007,
-        "full_time_high_education": 0.3019138,
-        "full_time_above_retirement_age": -2.6571659,
-    }
-
     return {
         "state_space": {
             "n_periods": n_periods,
@@ -111,7 +100,6 @@ def get_options_dict(
         "model_params": specs
         | wage_params
         | exog_params
-        | more_exog_params
         | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 

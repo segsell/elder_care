@@ -10,8 +10,8 @@ from elder_care.model.shared import (
     NO_WORK,
     PART_TIME_AND_NO_WORK,
     WORK_AND_NO_WORK,
-    is_full_time,
     is_part_time,
+    is_full_time,
 )
 
 
@@ -49,7 +49,7 @@ def get_state_specific_feasible_choice_set(
     feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
     """
-    age = period + options["start_age"]
+    age = options["start_age"] + period * 2 + 1
 
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
@@ -89,9 +89,18 @@ def update_endog_state(
     next_state["mother_age"] = options["mother_min_age"] + mother_age + 1
     next_state["father_age"] = options["father_min_age"] + father_age + 1
 
+    below_exp_cap_part = experience + 1 < options["experience_cap"]
+    below_exp_cap_full = experience + 2 < options["experience_cap"]
+    experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
+    experience_full_time = 2 * below_exp_cap_full * is_full_time(choice)
+    next_state["experience"] = experience + experience_part_time + experience_full_time
+
     experience_cap: 15 # maximum of exp accumulated, see Adda et al (2017)
     Returns to experience are flat after 15 years of experience.
 
+    below_exp_cap = experience < options["experience_cap"]
+    experience_current = below_exp_cap * is_working(choice)
+    next_state["experience"] = experience + experience_current
     """
     next_state = {}
 
@@ -116,7 +125,7 @@ def sparsity_condition(
     experience,
     options,
 ):
-    age = period + options["start_age"]
+    age = options["start_age"] + period * 2 + 1
 
     max_init_experience = options["max_init_experience"]
 

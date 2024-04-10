@@ -27,7 +27,8 @@ def task_assemble_exog_processes(
     Exogenous processes:
     - survival probabilities
     - health transition
-    - care demand
+
+    No care demand atm! Implicit by medium and bad health of mother.
 
     """
     exog_survival_prob_female = load_dict_from_pickle(path_to_survival_prob_female)
