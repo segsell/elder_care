@@ -10,8 +10,8 @@ from elder_care.model.shared import (
     NO_WORK,
     PART_TIME_AND_NO_WORK,
     WORK_AND_NO_WORK,
-    is_part_time,
     is_full_time,
+    is_part_time,
 )
 
 
@@ -101,6 +101,7 @@ def update_endog_state(
     below_exp_cap = experience < options["experience_cap"]
     experience_current = below_exp_cap * is_working(choice)
     next_state["experience"] = experience + experience_current
+
     """
     next_state = {}
 
