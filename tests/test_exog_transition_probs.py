@@ -1,7 +1,7 @@
 import pytest
 from numpy.testing import assert_almost_equal as aaae
 
-from elder_care.config import BLD
+from elder_care.config import SRC, BLD
 from elder_care.exogenous_processes.task_create_exog_processes import (
     exog_health_transition,
 )
@@ -9,6 +9,9 @@ from elder_care.model.exogenous_processes import (
     exog_health_transition_mother_with_survival,
 )
 from elder_care.utils import load_dict_from_pickle
+
+from elder_care.model.task_specify_model import get_options_dict
+from elder_care.model.shared import GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH
 
 
 @pytest.mark.skip(reason="Outdated")
@@ -55,11 +58,22 @@ def test_exog_health_transition():
     aaae(prob_good + prob_medium + prob_bad, 1)
 
 
-def test_exog_health_transition_with_alive():
+@pytest.mark.parametrize("health_state", (BAD_HEALTH, MEDIUM_HEALTH))
+# @pytest.mark.parametrize("health_state", (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH))
+def test_exog_health_transition_with_alive(health_state):
+
+    path_to_specs = SRC / "model" / "specs.yaml"
+    path_to_exog = BLD / "model" / "exog_processes.pkl"
+
+    options = get_options_dict(path_to_specs=path_to_specs, path_to_exog=path_to_exog)
 
     path_to_survival_prob = BLD / "model" / "exog_survival_prob_female.pkl"
 
     model_params = {
+        key: options["model_params"][key]
+        for key in ["mother_medium_health", "mother_bad_health"]
+    }
+    _model_params = {
         "mother_medium_health": {
             "medium_health_age": 0.0304,
             "medium_health_age_squared": -1.31e-05,
@@ -82,10 +96,12 @@ def test_exog_health_transition_with_alive():
 
     prob_good, prob_medium, prob_bad, prob_dead = (
         exog_health_transition_mother_with_survival(
-            period=5,
-            mother_health=1,
+            period=2,
+            mother_health=health_state,
             options=options,
         )
     )
+
+    breakpoint()
 
     aaae(prob_good + prob_medium + prob_bad + prob_dead, 1)

@@ -101,8 +101,11 @@ def budget_constraint(
         means_test * options["unemployment_benefits"] * 12 * TWO_YEARS
     )
 
+    spousal_income = get_exog_spousal_income(period, options)
+
     income_two_years = jnp.maximum(
-        is_working(lagged_choice) * labor_income_two_years
+        spousal_income  # basically everyone married
+        + is_working(lagged_choice) * labor_income_two_years
         + is_not_working(lagged_choice)
         * (age >= EARLY_RETIREMENT_AGE)
         * retirement_income_two_years,
@@ -207,7 +210,7 @@ def get_exog_spousal_income(period, options):
         + options["spousal_income_age_squared"] * age**2
         + options["spousal_income_high_education"] * options["high_education"]
         + options["spousal_income_above_retirement_age"]
-        * (age > options["retirement_age"])
+        * (age >= options["retirement_age"])
     )
 
 
