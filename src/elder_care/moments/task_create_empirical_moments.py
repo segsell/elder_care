@@ -258,6 +258,7 @@ def task_create_moments(
 
     _total = mother_health_good + mother_health_medium + mother_health_bad
     # breakpoint()
+
     caregiving_by_mother_health_and_presence_of_sibling = (
         get_caregiving_status_by_mother_health_and_presence_of_sibling(
             mother,
@@ -292,6 +293,9 @@ def task_create_moments(
     employment_by_age_bin_caregivers_soep = (
         get_employment_by_age_bin_informal_parental_caregivers_soep()
     )
+    employment_by_age_bin_non_caregivers_soep = (
+        get_employment_by_age_bin_non_informal_caregivers_soep()
+    )
 
     ols_coeffs_savings_rate = get_coefficients_savings_rate_regression()
 
@@ -299,6 +303,7 @@ def task_create_moments(
         [
             employment_by_age_soep,
             employment_by_age_bin_caregivers_soep,
+            employment_by_age_bin_non_caregivers_soep,
             ols_coeffs_savings_rate,
             #
             employment_transitions_soep,
@@ -2161,6 +2166,91 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
             "full_time_age_60_65": 0.172194346,
             "full_time_age_65_70": 0.019225773,
         },
+    )
+
+
+# var
+def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
+
+    return pd.Series(
+        {
+            "not_working_age_40_45": 0.24125176,
+            "not_working_age_45_50": 0.21812266,
+            "not_working_age_50_55": 0.22134030,
+            "not_working_age_55_60": 0.24387144,
+            "not_working_age_60_65": 0.19318271,
+            "not_working_age_65_70": 0.04345898,
+            #
+            "part_time_age_40_45": 0.23340033,
+            "part_time_age_45_50": 0.23210090,
+            "part_time_age_50_55": 0.23742719,
+            "part_time_age_55_60": 0.21778835,
+            "part_time_age_60_65": 0.11591068,
+            "part_time_age_65_70": 0.02687942,
+            #
+            "full_time_age_40_45": 0.17430175,
+            "full_time_age_45_50": 0.21535956,
+            "full_time_age_50_55": 0.20284277,
+            "full_time_age_55_60": 0.19216314,
+            "full_time_age_60_65": 0.11141806,
+            "full_time_age_65_70": 0.01756678,
+        }
+    )
+
+
+def get_var_employment_by_age_bin_non_informal_caregivers_soep():
+
+    return pd.Series(
+        {
+            "not_working_age_40_45": 0.21760557,
+            "not_working_age_45_50": 0.20314369,
+            "not_working_age_50_55": 0.20803696,
+            "not_working_age_55_60": 0.23444000,
+            "not_working_age_60_65": 0.21893375,
+            "not_working_age_65_70": 0.04955567,
+            #
+            "part_time_age_40_45": 0.23638008,
+            "part_time_age_45_50": 0.23230882,
+            "part_time_age_50_55": 0.21822528,
+            "part_time_age_55_60": 0.20502764,
+            "part_time_age_60_65": 0.12856359,
+            "part_time_age_65_70": 0.03196961,
+            #
+            "full_time_age_40_45": 0.208697726,
+            "full_time_age_45_50": 0.227366151,
+            "full_time_age_50_55": 0.236358320,
+            "full_time_age_55_60": 0.223407124,
+            "full_time_age_60_65": 0.142552176,
+            "full_time_age_65_70": 0.018857367,
+        }
+    )
+
+
+def get_share_informal_maternal_care_by_age_bin_soep():
+
+    return pd.Series(
+        {
+            "share_informal_care_40_45": 0.02980982,
+            "share_informal_care_45_50": 0.04036255,
+            "share_informal_care_50_55": 0.05350986,
+            "share_informal_care_55_60": 0.06193384,
+            "share_informal_care_60_65": 0.05304824,
+            "share_informal_care_65_70": 0.03079298,
+        }
+    )
+
+
+def get_var_share_informal_maternal_care_by_age_bin_soep():
+
+    return pd.Series(
+        {
+            "share_informal_care_40_45": 0.03505911,
+            "share_informal_care_45_50": 0.04650906,
+            "share_informal_care_50_55": 0.06010956,
+            "share_informal_care_55_60": 0.06852833,
+            "share_informal_care_60_65": 0.05891915,
+            "share_informal_care_65_70": 0.03491249,
+        }
     )
 
 

@@ -104,8 +104,8 @@ def budget_constraint(
     spousal_income = get_exog_spousal_income(period, options)
 
     income_two_years = jnp.maximum(
-        spousal_income  # basically everyone married
-        + is_working(lagged_choice) * labor_income_two_years
+        # spousal_income  # basically everyone married
+        is_working(lagged_choice) * labor_income_two_years
         + is_not_working(lagged_choice)
         * (age >= EARLY_RETIREMENT_AGE)
         * retirement_income_two_years,
