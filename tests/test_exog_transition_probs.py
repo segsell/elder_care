@@ -1,17 +1,16 @@
 import pytest
 from numpy.testing import assert_almost_equal as aaae
 
-from elder_care.config import SRC, BLD
+from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes import (
     exog_health_transition,
 )
 from elder_care.model.exogenous_processes import (
     exog_health_transition_mother_with_survival,
 )
-from elder_care.utils import load_dict_from_pickle
-
+from elder_care.model.shared import BAD_HEALTH, MEDIUM_HEALTH
 from elder_care.model.task_specify_model import get_options_dict
-from elder_care.model.shared import GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH
+from elder_care.utils import load_dict_from_pickle
 
 
 @pytest.mark.skip(reason="Outdated")
