@@ -7,6 +7,7 @@ import pandas as pd
 
 from elder_care.model.shared import (
     AGE_BINS_SIM,
+    ALL,
     BAD_HEALTH,
     COMBINATION_CARE,
     FORMAL_CARE,
@@ -18,7 +19,6 @@ from elder_care.model.shared import (
     NO_INFORMAL_CARE,
     NO_WORK,
     PART_TIME,
-    ALL,
 )
 
 
