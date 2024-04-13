@@ -1945,8 +1945,7 @@ def get_employment_transitions_soep():
 
 
 def get_var_employment_transitions_soep():
-    """Get variance of employment transitions"""
-
+    """Get variance of employment transitions."""
     return pd.Series(
         {
             "not_working_to_not_working": 0.0000014030153746,
@@ -1960,7 +1959,7 @@ def get_var_employment_transitions_soep():
             "full_time_to_not_working": 0.0000015082989226,
             "full_time_to_part_time": 0.0000019227102296,
             "full_time_to_full_time": 0.0000032040667450,
-        }
+        },
     )
 
 
