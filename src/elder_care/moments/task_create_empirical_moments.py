@@ -1944,6 +1944,26 @@ def get_employment_transitions_soep():
     )
 
 
+def get_var_employment_transitions_soep():
+    """Get variance of employment transitions"""
+
+    return pd.Series(
+        {
+            "not_working_to_not_working": 0.0000014030153746,
+            "not_working_to_part_time": 0.0000011223523576,
+            "not_working_to_full_time": 0.0000003261830112,
+            #
+            "part_time_to_not_working": 0.0000026726781986,
+            "part_time_to_part_time": 0.0000041901074618,
+            "part_time_to_full_time": 0.0000019742078027,
+            #
+            "full_time_to_not_working": 0.0000015082989226,
+            "full_time_to_part_time": 0.0000019227102296,
+            "full_time_to_full_time": 0.0000032040667450,
+        }
+    )
+
+
 def get_employment_transitions_soep_51_to_65():
     """Get employment transitions of females age 51-65 from SOEP."""
     return pd.Series(
