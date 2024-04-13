@@ -5,25 +5,26 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 
-MIN_AGE = 51
-MAX_AGE = MIN_AGE + 14  # + 14
+MIN_AGE = 40
+MAX_AGE = 75
 
-
+AGE_40 = 40
+AGE_45 = 45
 AGE_50 = 50
-AGE_53 = 53
-AGE_56 = 56
-AGE_59 = 59
-AGE_62 = 62
-
 AGE_55 = 55
 AGE_60 = 60
 AGE_65 = 65
-
+AGE_70 = 70
+AGE_75 = 75
 
 AGE_BINS = [
+    (AGE_40 - MIN_AGE, AGE_45 - MIN_AGE),
+    (AGE_45 - MIN_AGE, AGE_50 - MIN_AGE),
     (AGE_50 - MIN_AGE, AGE_55 - MIN_AGE),
     (AGE_55 - MIN_AGE, AGE_60 - MIN_AGE),
     (AGE_60 - MIN_AGE, AGE_65 - MIN_AGE),
+    (AGE_65 - MIN_AGE, AGE_70 - MIN_AGE),
+    (AGE_70 - MIN_AGE, AGE_75 - MIN_AGE),
 ]
 
 PARENT_MIN_AGE = 68
@@ -665,7 +666,52 @@ def get_share_by_type(df_arr, ind, lagged_choice, care_type):
     return jnp.sum(lagged_choice_mask & care_type_mask) / jnp.sum(care_type_mask)
 
 
-def get_share_care_type_by_parental_health(
+def get_transition(df_arr, ind, lagged_choice, current_choice):
+    """Get transition probability from lagged choice to current choice."""
+    return [
+        jnp.sum(
+            jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
+            & jnp.isin(df_arr[:, ind["choice"]], current_choice),
+        )
+        / jnp.sum(jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)),
+    ]
+
+
+def get_share_care_by_parental_health(
+    df_arr,
+    ind,
+    care_choice,
+    parent="mother",
+):
+    """Get share of agents choosing given care choice by parental health."""
+    return [
+        jnp.mean(
+            jnp.isin(df_arr[:, ind["lagged_choice"]], care_choice)
+            & (df_arr[:, ind[f"{parent}_health"]], health),
+        )
+        for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
+    ]
+
+
+def get_share_care_by_parental_health_and_presence_of_sibling(
+    df_arr,
+    ind,
+    care_choice,
+    has_sibling,
+    parent,
+):
+    """Get share of agents choosing given care choice by parental health."""
+    return [
+        jnp.mean(
+            jnp.isin(df_arr[:, ind["lagged_choice"]], care_choice)
+            & (df_arr[:, ind["has_sibling"]] == has_sibling)
+            & (df_arr[:, ind[f"{parent}_health"]], health),
+        )
+        for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
+    ]
+
+
+def _get_share_care_type_by_parental_health_and_other_parent_alive(
     df_arr,
     ind,
     care_choice,
@@ -682,17 +728,6 @@ def get_share_care_type_by_parental_health(
             & (df_arr[:, ind[f"{parent}_health"]], health),
         )
         for health in (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH)
-    ]
-
-
-def get_transition(df_arr, ind, lagged_choice, current_choice):
-    """Get transition probability from lagged choice to current choice."""
-    return [
-        jnp.sum(
-            jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)
-            & jnp.isin(df_arr[:, ind["choice"]], current_choice),
-        )
-        / jnp.sum(jnp.isin(df_arr[:, ind["lagged_choice"]], lagged_choice)),
     ]
 
 

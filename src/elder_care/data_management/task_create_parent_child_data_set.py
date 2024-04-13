@@ -21,7 +21,7 @@ WAVE_8 = 8
 FEMALE = 2
 MALE = 1
 
-MIN_AGE = 60
+MIN_AGE = 65
 MAX_AGE = 105
 
 HEALTH_EXCELLENT = 1
@@ -41,6 +41,9 @@ NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD = 5
 ANSWER_NO = 5
 YES_TEMPORARILY = 1
 YES_PERMANENTLY = 3
+
+DUMMY_TRUE = 1
+AT_LEAST_TWO = 2
 
 
 def table(df_col):
@@ -98,8 +101,9 @@ def task_create_parent_child_data(
         axis=1,
     )
 
-    # Keep only those aged 65 and older
     dat = dat[(dat["age"] > MIN_AGE) & (dat["age"] <= MAX_AGE)]
+
+    dat = create_children_information(dat)
 
     dat = create_married_or_partner_alive(dat)
     dat = create_care_variables(dat)
@@ -183,21 +187,36 @@ def multiply_rows_with_weight(dat, weight):
         "int_month",
         "age",
         "only_informal",
-        "combination_care",
+        "only_formal",
         "only_home_care",
+        "combination_care",
         "informal_care_child",
         "informal_care_general",
         "home_care",
+        "formal_care",
         "no_informal_care_child",
         "no_home_care",
+        "no_formal_care",
+        "no_combination_care",
+        "no_only_formal",
+        "no_only_informal",
         "lagged_home_care",
+        "lagged_formal_care",
         "lagged_informal_care_general",
         "lagged_informal_care_child",
         "lagged_combination_care",
         "lagged_no_informal_care_child",
         "lagged_no_home_care",
+        "lagged_no_formal_care",
+        "lagged_no_combination_care",
+        "lagged_only_formal",
+        "lagged_only_informal",
+        "lagged_no_only_formal",
+        "lagged_no_only_informal",
         "health",
         "married",
+        "has_two_daughters",
+        "has_two_children",
         "wave",
         weight,
     ]
@@ -250,6 +269,25 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(22, "no_home_care", dat["no_home_care"])
     dat_weighted.insert(23, "coupleid", dat["coupleid"])
     dat_weighted.insert(24, "mergeidp", dat["mergeidp"])
+    dat_weighted.insert(25, "formal_care", dat["formal_care"])
+    dat_weighted.insert(26, "lagged_formal_care", dat["lagged_formal_care"])
+    dat_weighted.insert(27, "has_two_daughters", dat["has_two_daughters"])
+    dat_weighted.insert(28, "has_two_children", dat["has_two_children"])
+    dat_weighted.insert(29, "no_formal_care", dat["no_formal_care"])
+    dat_weighted.insert(
+        30,
+        "lagged_no_combination_care",
+        dat["lagged_no_combination_care"],
+    )
+    dat_weighted.insert(31, "lagged_no_formal_care", dat["lagged_no_formal_care"])
+    dat_weighted.insert(32, "only_formal", dat["only_formal"])
+    dat_weighted.insert(33, "lagged_only_formal", dat["lagged_only_formal"])
+    dat_weighted.insert(34, "lagged_only_informal", dat["lagged_only_informal"])
+    dat_weighted.insert(35, "no_only_formal", dat["no_only_formal"])
+    dat_weighted.insert(36, "no_only_informal", dat["no_only_informal"])
+    dat_weighted.insert(37, "lagged_no_only_formal", dat["lagged_no_only_formal"])
+    dat_weighted.insert(38, "lagged_no_only_informal", dat["lagged_no_only_informal"])
+    dat_weighted.insert(38, "no_combination_care", dat["no_combination_care"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -318,6 +356,13 @@ def create_care_variables(dat):
     _val = [1, np.nan]
     dat["home_care"] = np.select(_cond, _val, default=0)
 
+    _cond = [
+        (dat["nursing_home"] == 1) | (dat["home_care"] == 1),
+        (dat["nursing_home"].isna()) & (dat["home_care"].isna()),
+    ]
+    _val = [1, np.nan]
+    dat["formal_care"] = np.select(_cond, _val, default=0)
+
     # informal care by own children
     _cond = [
         dat["sp021d10"] == 1,  # help within household from own children
@@ -382,8 +427,8 @@ def create_care_variables(dat):
     dat["informal_care_general"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        (dat["home_care"] == 1) & (dat["informal_care_general"] == 1),
-        (dat["home_care"].isna()) & (dat["informal_care_general"].isna()),
+        (dat["home_care"] == 1) & (dat["informal_care_child"] == 1),
+        (dat["home_care"].isna()) & (dat["informal_care_child"].isna()),
     ]
     _val = [1, np.nan]
     dat["combination_care"] = np.select(_cond, _val, default=0)
@@ -406,12 +451,23 @@ def create_care_variables(dat):
     _val = [0, 1]
     dat["no_home_care"] = np.select(_cond, _val, default=np.nan)
 
+    _cond = [dat["formal_care"] == 1, dat["formal_care"] == 0]
+    _val = [0, 1]
+    dat["no_formal_care"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [dat["combination_care"] == 1, dat["combination_care"] == 0]
+    _val = [0, 1]
+    dat["no_combination_care"] = np.select(_cond, _val, default=np.nan)
+
     dat = _create_lagged_var(dat, "home_care")
+    dat = _create_lagged_var(dat, "formal_care")
     dat = _create_lagged_var(dat, "informal_care_general")
     dat = _create_lagged_var(dat, "informal_care_child")
     dat = _create_lagged_var(dat, "combination_care")
     dat = _create_lagged_var(dat, "any_care")
     dat = _create_lagged_var(dat, "no_informal_care_child")
+    dat = _create_lagged_var(dat, "no_formal_care")
+    dat = _create_lagged_var(dat, "no_combination_care")
     return _create_lagged_var(dat, "no_home_care")
 
 
@@ -442,8 +498,8 @@ def create_care_combinations(dat, informal_care_var):
     dat["only_nursing_home"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        (dat["nursing_home"] == 1)
-        | (dat["home_care"] == 1) & (dat[informal_care_var] == 1),
+        ((dat["nursing_home"] == 1) | (dat["home_care"] == 1))
+        & (dat[informal_care_var] == 0),
         (dat["nursing_home"].isna())
         & (dat["home_care"].isna())
         & (dat[informal_care_var].isna()),
@@ -451,7 +507,18 @@ def create_care_combinations(dat, informal_care_var):
     _val = [1, np.nan]
     dat["only_formal"] = np.select(_cond, _val, default=0)
 
-    return dat
+    _cond = [dat["only_formal"] == 1, dat["only_formal"] == 0]
+    _val = [0, 1]
+    dat["no_only_formal"] = np.select(_cond, _val, default=np.nan)
+
+    _cond = [dat["only_informal"] == 1, dat["only_informal"] == 0]
+    _val = [0, 1]
+    dat["no_only_informal"] = np.select(_cond, _val, default=np.nan)
+
+    dat = _create_lagged_var(dat, "only_formal")
+    dat = _create_lagged_var(dat, "only_informal")
+    dat = _create_lagged_var(dat, "no_only_formal")
+    return _create_lagged_var(dat, "no_only_informal")
 
 
 def replace_negative_values_with_nan(dat, col):
@@ -495,6 +562,43 @@ def create_married_or_partner_alive(dat):
         values_married_or_partner,
         np.nan,
     )
+
+    return dat
+
+
+def create_children_information(dat):
+    """Create information on number of children (and daughters).
+
+    # Handling the all-NaN case separately for both columns ch_gender_cols = [col for
+    col in dat.columns if col.startswith("ch_gender_")]
+
+    all_nan_indices = dat[ch_gender_cols].isna().all(axis=1) dat.loc[all_nan_indices,
+    ["has_two_daughters", "has_two_children"]] = np.nan
+
+    """
+    dat["has_two_daughters"] = 0  # Assuming less than two daughters by default
+    dat["has_two_children"] = 0  # Assuming less than two children by default
+
+    # Iterate through the DataFrame rows
+    for index, row in dat.iterrows():
+        # Counting non-NaN values for 'has_two_children'
+        non_nan_count = row.filter(like="ch006_").notna().sum()
+
+        # Counting values equal to 2 for 'has_two_daughters'
+        female_count = (row.filter(like="ch005_") == FEMALE).sum()
+
+        # Update 'has_two_children_loop' based on non-NaN count
+
+        if non_nan_count >= AT_LEAST_TWO:
+            dat.loc[index, "has_two_children"] = DUMMY_TRUE
+
+        # Update 'has_two_daughters_loop' based on female count
+        if female_count >= AT_LEAST_TWO:
+            dat.loc[index, "has_two_daughters"] = DUMMY_TRUE
+
+        if female_count < 1:
+            dat.loc[index, "has_two_children"] = np.nan
+            dat.loc[index, "has_two_daughters"] = np.nan
 
     return dat
 
