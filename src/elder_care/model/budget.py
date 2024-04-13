@@ -8,13 +8,13 @@ import numpy as np
 from elder_care.model.shared import (
     EARLY_RETIREMENT_AGE,
     RETIREMENT_AGE,
+    is_bad_health,
     is_full_time,
+    is_informal_care,
+    is_medium_health,
     is_not_working,
     is_part_time,
     is_working,
-    is_medium_health,
-    is_bad_health,
-    is_informal_care,
 )
 
 TWO_YEARS = 2
