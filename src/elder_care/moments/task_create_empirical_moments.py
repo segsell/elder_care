@@ -8,6 +8,8 @@ are used.
 
 """
 
+import pytask
+
 from pathlib import Path
 from typing import Annotated
 
@@ -31,6 +33,7 @@ def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
+# @pytask.mark.skip(reason="Respecifying moments.")
 def task_create_moments(
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
     path_to_parent_child_hh_weight: Path = BLD
@@ -259,7 +262,6 @@ def task_create_moments(
     ) / len(mother.loc[mother["age"] == 76])
 
     _total = mother_health_good + mother_health_medium + mother_health_bad
-    # breakpoint()
 
     caregiving_by_mother_health_and_presence_of_sibling = (
         get_caregiving_status_by_mother_health_and_presence_of_sibling(
@@ -1858,7 +1860,7 @@ def get_caregiving_status_by_parental_health_and_presence_of_sibling(
 
     return pd.Series(
         {
-            f"{moment_string}_{parent}_{sibling_status}_health_{health}": dat.loc[
+            f"{moment_string}_{sibling_status}_{parent}_health_{health}": dat.loc[
                 (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
                 moment,
             ].sum()
@@ -1941,26 +1943,6 @@ def get_employment_transitions_soep():
             "full_time_to_part_time": 0.07111375,
             "full_time_to_full_time": 0.873058,
         },
-    )
-
-
-def get_var_employment_transitions_soep():
-    """Get variance of employment transitions"""
-
-    return pd.Series(
-        {
-            "not_working_to_not_working": 0.0000014030153746,
-            "not_working_to_part_time": 0.0000011223523576,
-            "not_working_to_full_time": 0.0000003261830112,
-            #
-            "part_time_to_not_working": 0.0000026726781986,
-            "part_time_to_part_time": 0.0000041901074618,
-            "part_time_to_full_time": 0.0000019742078027,
-            #
-            "full_time_to_not_working": 0.0000015082989226,
-            "full_time_to_part_time": 0.0000019227102296,
-            "full_time_to_full_time": 0.0000032040667450,
-        }
     )
 
 
@@ -2192,63 +2174,6 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
     )
 
 
-# var
-def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
-
-    return pd.Series(
-        {
-            "not_working_age_40_45": 0.24125176,
-            "not_working_age_45_50": 0.21812266,
-            "not_working_age_50_55": 0.22134030,
-            "not_working_age_55_60": 0.24387144,
-            "not_working_age_60_65": 0.19318271,
-            "not_working_age_65_70": 0.04345898,
-            #
-            "part_time_age_40_45": 0.23340033,
-            "part_time_age_45_50": 0.23210090,
-            "part_time_age_50_55": 0.23742719,
-            "part_time_age_55_60": 0.21778835,
-            "part_time_age_60_65": 0.11591068,
-            "part_time_age_65_70": 0.02687942,
-            #
-            "full_time_age_40_45": 0.17430175,
-            "full_time_age_45_50": 0.21535956,
-            "full_time_age_50_55": 0.20284277,
-            "full_time_age_55_60": 0.19216314,
-            "full_time_age_60_65": 0.11141806,
-            "full_time_age_65_70": 0.01756678,
-        },
-    )
-
-
-def get_var_employment_by_age_bin_non_informal_caregivers_soep():
-
-    return pd.Series(
-        {
-            "not_working_age_40_45": 0.21760557,
-            "not_working_age_45_50": 0.20314369,
-            "not_working_age_50_55": 0.20803696,
-            "not_working_age_55_60": 0.23444000,
-            "not_working_age_60_65": 0.21893375,
-            "not_working_age_65_70": 0.04955567,
-            #
-            "part_time_age_40_45": 0.23638008,
-            "part_time_age_45_50": 0.23230882,
-            "part_time_age_50_55": 0.21822528,
-            "part_time_age_55_60": 0.20502764,
-            "part_time_age_60_65": 0.12856359,
-            "part_time_age_65_70": 0.03196961,
-            #
-            "full_time_age_40_45": 0.208697726,
-            "full_time_age_45_50": 0.227366151,
-            "full_time_age_50_55": 0.236358320,
-            "full_time_age_55_60": 0.223407124,
-            "full_time_age_60_65": 0.142552176,
-            "full_time_age_65_70": 0.018857367,
-        },
-    )
-
-
 def get_share_informal_maternal_care_by_age_bin_soep():
 
     return pd.Series(
@@ -2259,20 +2184,6 @@ def get_share_informal_maternal_care_by_age_bin_soep():
             "share_informal_care_55_60": 0.06193384,
             "share_informal_care_60_65": 0.05304824,
             "share_informal_care_65_70": 0.03079298,
-        },
-    )
-
-
-def get_var_share_informal_maternal_care_by_age_bin_soep():
-
-    return pd.Series(
-        {
-            "share_informal_care_40_45": 0.03505911,
-            "share_informal_care_45_50": 0.04650906,
-            "share_informal_care_50_55": 0.06010956,
-            "share_informal_care_55_60": 0.06852833,
-            "share_informal_care_60_65": 0.05891915,
-            "share_informal_care_65_70": 0.03491249,
         },
     )
 

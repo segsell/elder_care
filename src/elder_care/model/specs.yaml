@@ -24,6 +24,8 @@ consumption_floor: 500
 pension_point_value: 29.21 # year 2015
 early_retirement_penalty: 0.036
 # unemployment_benefits: 500,
+cash_benefits_medium: 316
+cash_benefits_bad: 644.017 # (0.2793 * 545 + 728 *0.1405 + 901 * 0.0617) / (0.2793 + 0.1405 + 0.0617)
 informal_care_benefits: 444.0466  # 0.4239 * 316 + 0.2793 * 545 + 728 *0.1405 + 901 * 0.0617
 formal_care_costs: 118.10658099999999  # >>> 79.31 * 0.0944 + 0.4239 * 70.77 + 0.2793 * 176.16 + 224.26 *0.1401
 interest_rate: 0.04  # Adda et al (2017)
