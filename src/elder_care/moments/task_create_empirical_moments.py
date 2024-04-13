@@ -199,6 +199,8 @@ def task_create_moments(
     dat = dat.copy()
     dat = dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < MAX_AGE)]
 
+    share_informal_care_by_age_bin = get_share_informal_maternal_care_by_age_bin_soep()
+
     # ================================================================================
     # Parent child data (mother)
     # ================================================================================
@@ -302,15 +304,16 @@ def task_create_moments(
     all_moments = pd.concat(
         [
             employment_by_age_soep,
-            employment_by_age_bin_caregivers_soep,
-            employment_by_age_bin_non_caregivers_soep,
             ols_coeffs_savings_rate,
+            employment_by_age_bin_non_caregivers_soep,
+            employment_by_age_bin_caregivers_soep,
+            #
+            share_informal_care_by_age_bin,
+            caregiving_by_mother_health_and_presence_of_sibling,
             #
             employment_transitions_soep,
             care_transitions_estimation_data,
             care_transitions_parent_child_data,
-            #
-            caregiving_by_mother_health_and_presence_of_sibling,
         ],
         ignore_index=False,
         axis=0,
@@ -2194,7 +2197,7 @@ def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
             "full_time_age_55_60": 0.19216314,
             "full_time_age_60_65": 0.11141806,
             "full_time_age_65_70": 0.01756678,
-        }
+        },
     )
 
 
@@ -2222,7 +2225,7 @@ def get_var_employment_by_age_bin_non_informal_caregivers_soep():
             "full_time_age_55_60": 0.223407124,
             "full_time_age_60_65": 0.142552176,
             "full_time_age_65_70": 0.018857367,
-        }
+        },
     )
 
 
@@ -2236,7 +2239,7 @@ def get_share_informal_maternal_care_by_age_bin_soep():
             "share_informal_care_55_60": 0.06193384,
             "share_informal_care_60_65": 0.05304824,
             "share_informal_care_65_70": 0.03079298,
-        }
+        },
     )
 
 
@@ -2250,7 +2253,7 @@ def get_var_share_informal_maternal_care_by_age_bin_soep():
             "share_informal_care_55_60": 0.06852833,
             "share_informal_care_60_65": 0.05891915,
             "share_informal_care_65_70": 0.03491249,
-        }
+        },
     )
 
 

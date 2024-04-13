@@ -18,6 +18,7 @@ from elder_care.model.shared import (
     NO_INFORMAL_CARE,
     NO_WORK,
     PART_TIME,
+    ALL,
 )
 
 
@@ -103,8 +104,49 @@ def simulate_moments(arr, idx):
     )
 
     # ================================================================================
-    # Labor shares for informal caregivers
+    # Savings rate
     # ================================================================================
+
+    savings_rate_coeffs = fit_ols(
+        x=arr[
+            :,
+            [
+                idx["age"],
+                idx["age_squared"],
+                idx["high_educ"],
+                idx["choice_part_time"],
+                idx["choice_full_time"],
+                idx["choice_informal_care"],
+            ],
+        ],
+        y=arr[:, idx["savings_rate"]],
+    )
+
+    # ================================================================================
+    # Labor shares by informal caregiving status
+    # ================================================================================
+
+    share_not_working_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=NO_WORK,
+        care_type=NO_INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_part_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_full_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+        care_type=NO_INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
 
     share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
         arr,
@@ -129,26 +171,70 @@ def simulate_moments(arr, idx):
     )
 
     # ================================================================================
-    # Savings rate
+    # Share caregiving by age bin
     # ================================================================================
 
-    savings_rate_coeffs = fit_ols(
-        x=arr[
-            :,
-            [
-                idx["age"],
-                idx["age_squared"],
-                idx["high_educ"],
-                idx["choice_part_time"],
-                idx["choice_full_time"],
-                idx["choice_informal_care"],
-            ],
-        ],
-        y=arr[:, idx["savings_rate"]],
+    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=INFORMAL_CARE,
+        care_type=ALL,
+        age_bins=AGE_BINS_SIM,
     )
 
     # ================================================================================
-    # Work transitions
+    # Share care by mother's health
+    # ================================================================================
+
+    informal_care_mother_health = get_share_care_by_parental_health(
+        arr,
+        ind=idx,
+        care_choice=INFORMAL_CARE,
+        parent="mother",
+    )
+    formal_care_mother_health = get_share_care_by_parental_health(
+        arr,
+        ind=idx,
+        care_choice=FORMAL_CARE,
+        parent="mother",
+    )
+    combination_care_mother_health = get_share_care_by_parental_health(
+        arr,
+        ind=idx,
+        care_choice=COMBINATION_CARE,
+        parent="mother",
+    )
+
+    informal_care_mother_health_has_sibling = (
+        get_share_care_by_parental_health_and_presence_of_sibling(
+            arr,
+            ind=idx,
+            care_choice=INFORMAL_CARE,
+            has_sibling=True,
+            parent="mother",
+        )
+    )
+    formal_care_mother_health_has_sibling = (
+        get_share_care_by_parental_health_and_presence_of_sibling(
+            arr,
+            ind=idx,
+            care_choice=FORMAL_CARE,
+            has_sibling=True,
+            parent="mother",
+        )
+    )
+    combination_care_mother_health_has_sibling = (
+        get_share_care_by_parental_health_and_presence_of_sibling(
+            arr,
+            ind=idx,
+            care_choice=COMBINATION_CARE,
+            has_sibling=True,
+            parent="mother",
+        )
+    )
+
+    # ================================================================================
+    # Employment transitions
     # ================================================================================
 
     no_work_to_no_work = get_transition(
@@ -317,71 +403,38 @@ def simulate_moments(arr, idx):
     )
 
     # ================================================================================
-    # Share care by mother's health
-    # ================================================================================
-
-    informal_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=INFORMAL_CARE,
-        parent="mother",
-    )
-    formal_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=FORMAL_CARE,
-        parent="mother",
-    )
-    combination_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=COMBINATION_CARE,
-        parent="mother",
-    )
-
-    informal_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=INFORMAL_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
-    formal_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=FORMAL_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
-    combination_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=COMBINATION_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
-
-    # ================================================================================
     # Moments matrix
     # ================================================================================
 
     return jnp.asarray(
+        # employment shares
         share_not_working_by_age
         + share_working_part_time_by_age
         + share_working_full_time_by_age
+        # assets and savings
+        + savings_rate_coeffs.tolist()
+        # employment shares by caregiving status
+        # no informal care
+        + share_not_working_no_informal_care_by_age_bin
+        + share_part_time_no_informal_care_by_age_bin
+        + share_full_time_no_informal_care_by_age_bin
+        # informal care
         + share_not_working_informal_care_by_age_bin
         + share_part_time_informal_care_by_age_bin
         + share_full_time_informal_care_by_age_bin
         #
-        + savings_rate_coeffs.tolist()
+        # share of informal care in total population by age bin
+        + share_informal_care_by_age_bin
+        # Care by mother's health by presence of sister
+        + informal_care_mother_health
+        + formal_care_mother_health
+        + combination_care_mother_health
+        + informal_care_mother_health_has_sibling
+        + formal_care_mother_health_has_sibling
+        + combination_care_mother_health_has_sibling,
+        #
         # Employment transitions
-        + no_work_to_no_work
+        +no_work_to_no_work
         + no_work_to_part_time
         + no_work_to_full_time
         + part_time_to_no_work
@@ -409,16 +462,7 @@ def simulate_moments(arr, idx):
         + no_formal_care_to_no_formal_care
         + no_formal_care_to_formal_care
         + formal_care_to_no_formal_care
-        + formal_care_to_formal_care
-        +
-        # Care by mother's health
-        informal_care_mother_health
-        + formal_care_mother_health
-        + combination_care_mother_health
-        + informal_care_mother_health_has_sibling
-        + formal_care_mother_health_has_sibling
-        + combination_care_mother_health_has_sibling,
-        # Care mix
+        + formal_care_to_formal_care,
     )
 
 
