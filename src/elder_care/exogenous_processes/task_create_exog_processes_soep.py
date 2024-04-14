@@ -51,16 +51,47 @@ def task_create_exog_wage():
 
     Include variance of wage unobservable.
 
+     return {     "wage_constant": 1.997354,     "wage_age": 0.0124007328,
+    "wage_age_squared": -0.0001872683,     "wage_experience": 0.0272860557,
+    "wage_experience_squared": -0.0003839528,     "wage_high_education": 0.4582799360,
+    "wage_part_time": -0.0561647814,     "wage_std_regression_residual":
+    0.5512142746125238, }
+
+
+    return {
+        "wage_constant": 2.2573016253,
+        "wage_age": 0.0012831865,
+        "wage_age_squared": -0.0000739820,
+        "wage_experience": 0.0280597011,
+        "wage_experience_squared": -0.0004004260,
+        "wage_high_education": 0.4614871933 ,
+        "wage_part_time": -0.0542410222,
+        "wage_above_retirement_age": -0.1460313341,
+        "wage_std_regression_residual": 0.5583539611,
+    }
+
+
+
+    return {
+    2.3573631138
+
+    [1] "-0.0022074505" "-0.0000353356" "0.0268947264"  "-0.0003828560" "0.4592584942"
+    [6] "-0.0566244884" "-0.1415122457"
+
+
+    0.5363549714
+    }
+
     """
     return {
-        "wage_constant": 1.997354,
-        "wage_age": 0.0124007328,
-        "wage_age_squared": -0.0001872683,
-        "wage_experience": 0.0272860557,
-        "wage_experience_squared": -0.0003839528,
-        "wage_high_education": 0.4582799360,
-        "wage_part_time": -0.0561647814,
-        "wage_std_regression_residual": 0.5512142746125238,
+        "wage_constant": 2.1189554639,
+        "wage_age": 0.0076462732,
+        "wage_age_squared": -0.0001357632,
+        "wage_experience": 0.0268874776,
+        "wage_experience_squared": -0.0003822625,
+        "wage_high_education": 0.4595438724,
+        "wage_part_time": -0.0570244287,
+        "wage_std_regression_residual": 0.5364562201,
     }
 
 
