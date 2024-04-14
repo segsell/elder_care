@@ -11,6 +11,7 @@ import pytask
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
+from dcegm.solve import get_solve_func_for_model
 from pytask import Product
 
 from elder_care.config import BLD
@@ -131,6 +132,16 @@ def task_debugging(
 
     results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
+
+    # check initial labor shares
+    jnp.unique(initial_states["lagged_choice"], return_counts=True)
+
+
+    _mother_health_probs = initial_conditions.loc[
+        ["mother_good_health", "mother_medium_health", "mother_bad_health"]
+    ].to_numpy()
+    mother_health_probs = jnp.array(_mother_health_probs).ravel()
+
     """
     path_to_model = BLD / "model" / "model.pkl"
     options = get_options_dict()
@@ -157,8 +168,6 @@ def task_debugging(
 
     save_dict_to_pickle(results, path_to_save_result)
 
-    # results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
-
     n_agents = 100_000
     seed = 2024
 
@@ -170,11 +179,6 @@ def task_debugging(
 
     path = f"{BLD}/moments/initial_discrete_conditions_at_age_40.csv"
     initial_conditions = pd.read_csv(path, index_col=0)
-
-    _mother_health_probs = initial_conditions.loc[
-        ["mother_good_health", "mother_medium_health", "mother_bad_health"]
-    ].values
-    mother_health_probs = jnp.array(_mother_health_probs).ravel()
 
     initial_resources, initial_states = draw_initial_states(
         initial_conditions,
@@ -279,14 +283,15 @@ def task_debugging(
         age_bins=AGE_BINS_SIM,
     )
 
-    breakpoint()
-
     return (
         share_not_working_by_age,
         share_part_time_by_age,
         share_full_time_by_age,
         share_informal_care_by_age_bin,
         share_formal_care_by_age_bin,
+        share_not_working_informal_care_by_age_bin,
+        share_part_time_informal_care_by_age_bin,
+        share_full_time_informal_care_by_age_bin,
     )
 
 

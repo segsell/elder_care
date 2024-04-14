@@ -121,37 +121,49 @@ def task_create_estimation_data(
         np.mean(dat.loc[dat["gender"] == 1, "care_to_father"])
     0.07805935763653613
 
-    (Pdb++) np.mean(dat.loc[dat["gender"] == 1, "care_to_mother_intensive"]) + np.mean(dat.loc[dat["gender"] == 1, "care_to_father_intensive"])
+    (Pdb++) np.mean(dat.loc[dat["gender"] == 1, "care_to_mother_intensive"])
+    + np.mean(dat.loc[dat["gender"] == 1, "care_to_father_intensive"])
     0.017482043637349235
-    (Pdb++) np.mean(dat.loc[dat["gender"] == 2, "care_to_mother_intensive"]) + np.mean(dat.loc[dat["gender"] == 2, "care_to_father_intensive"])
+    (Pdb++) np.mean(dat.loc[dat["gender"] == 2, "care_to_mother_intensive"])
+    + np.mean(dat.loc[dat["gender"] == 2, "care_to_father_intensive"])
     0.043159702346880366
     (Pdb++)
 
 
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother_intensive"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (
+    dat["age"] <= 60), "care_to_mother_intensive"])
     0.01935483870967742
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_mother"])
     0.09216589861751152
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_mother"])
     0.14026829842315838
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_father"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_father"])
     0.03133640552995392
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_father"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_father"])
     0.04330430689574018
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 65), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) &
+    (dat["age"] <= 65), "care_to_mother"])
     0.1213953488372093
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 55) & (dat["age"] <= 65), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 55) &
+    (dat["age"] <= 65), "care_to_mother"])
     0.10441514961288972
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_mother"])
     0.14026829842315838
     (Pdb++)
 
 
     (Pdb++) 0.14026829842315838 + 0.04330430689574018
     0.18357260531889857
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 2) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_mother"])
     0.14026829842315838
-    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) & (dat["age"] <= 60), "care_to_mother"])
+    (Pdb++) np.mean(dat.loc[(dat["gender"] == 1) & (dat["age"] >= 50) &
+    (dat["age"] <= 60), "care_to_mother"])
     0.09216589861751152
     (Pdb++) 0.09216589861751152 + 0.03133640552995392
     0.12350230414746544

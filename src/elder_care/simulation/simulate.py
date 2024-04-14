@@ -431,10 +431,10 @@ def simulate_moments(arr, idx):
         + combination_care_mother_health
         + informal_care_mother_health_has_sibling
         + formal_care_mother_health_has_sibling
-        + combination_care_mother_health_has_sibling,
+        + combination_care_mother_health_has_sibling
         #
         # Employment transitions
-        +no_work_to_no_work
+        + no_work_to_no_work
         + no_work_to_part_time
         + no_work_to_full_time
         + part_time_to_no_work

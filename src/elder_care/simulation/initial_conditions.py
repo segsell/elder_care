@@ -46,7 +46,7 @@ def draw_initial_states(
 
     _mother_health_probs = initial_conditions.loc[
         ["mother_good_health", "mother_medium_health", "mother_bad_health"]
-    ].values
+    ].to_numpy()
     mother_health_probs = jnp.array(_mother_health_probs).ravel()
 
     _experience = draw_from_discrete_normal(

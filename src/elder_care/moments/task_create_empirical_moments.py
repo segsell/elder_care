@@ -11,7 +11,6 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
-import numpy as np
 import pandas as pd
 from pytask import Product
 
@@ -31,6 +30,7 @@ def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
+# @pytask.mark.skip(reason="Respecifying moments.")
 def task_create_moments(
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
     path_to_parent_child_hh_weight: Path = BLD
@@ -162,16 +162,8 @@ def task_create_moments(
         ]
     )
 
-    """
-    dat_hh_weight = pd.read_csv(path_to_hh_weight)
-    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
-    cpi_data = pd.read_csv(path_to_cpi)
 
-    dat = dat_hh_weight.copy()
-    dat = deflate_income_and_wealth(dat, cpi_data)
-
-    weight = "hh_weight"
-    intensive_care_var = "intensive_care_no_other"
+    # 10.04.2024
 
     dat["mother_age_unweighted"] = dat["mother_age"] / dat[weight]
     dat["mother_alive_unweighted"] = dat["mother_alive"] / dat[weight]
@@ -195,6 +187,29 @@ def task_create_moments(
             "mother_alive_unweighted",
         ],
     )
+
+    mother_health_good = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)],
+    ) / len(mother.loc[mother["age"] == 76])
+    mother_health_medium = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)],
+    ) / len(mother.loc[mother["age"] == 76])
+    mother_health_bad = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)],
+    ) / len(mother.loc[mother["age"] == 76])
+
+    _total = mother_health_good + mother_health_medium + mother_health_bad
+
+    """
+    dat_hh_weight = pd.read_csv(path_to_hh_weight)
+    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    cpi_data = pd.read_csv(path_to_cpi)
+
+    dat = dat_hh_weight.copy()
+    dat = deflate_income_and_wealth(dat, cpi_data)
+
+    weight = "hh_weight"
+    intensive_care_var = "intensive_care_no_other"
 
     dat = dat.copy()
     dat = dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < MAX_AGE)]
@@ -247,19 +262,6 @@ def task_create_moments(
     parent["no_informal_care_child_weighted"] = (
         parent["no_informal_care_child"] * parent[weight]
     )
-
-    mother_health_good = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)],
-    ) / len(mother.loc[mother["age"] == 76])
-    mother_health_medium = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)],
-    ) / len(mother.loc[mother["age"] == 76])
-    mother_health_bad = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)],
-    ) / len(mother.loc[mother["age"] == 76])
-
-    _total = mother_health_good + mother_health_medium + mother_health_bad
-    # breakpoint()
 
     caregiving_by_mother_health_and_presence_of_sibling = (
         get_caregiving_status_by_mother_health_and_presence_of_sibling(
@@ -320,39 +322,6 @@ def task_create_moments(
     )
 
     all_moments.to_csv(path_to_save)
-
-
-# ================================================================================
-# Variance-Covariance matrix
-# ================================================================================
-
-
-def task_calcualte_variance_covariance_matrix(
-    path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
-    path_to_parent_child_hh_weight: Path = BLD
-    / "data"
-    / "parent_child_data_hh_weight.csv",
-    path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
-):
-    """Calculate variance-covariance matrix of moments.
-
-    moments_cov = em.get_moments_cov(     data, calculate_moments,
-    bootstrap_kwargs={"n_draws": 5_000, "seed": 0} )
-
-    """
-    dat_hh_weight = pd.read_csv(path_to_hh_weight)
-    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
-    cpi_data = pd.read_csv(path_to_cpi)
-
-    dat = dat_hh_weight.copy()
-    dat = deflate_income_and_wealth(dat, cpi_data)
-
-    parent = parent_hh_weight.copy()
-
-    dat["data"] = "estimation"
-    parent["data"] = "parent_child"
-
-    return pd.concat([dat, parent], ignore_index=True)
 
 
 # ================================================================================
@@ -1222,13 +1191,9 @@ def get_caregiving_status_by_father_health_and_marital_status(
             informal_care_by_father_health_couple,
             combination_care_by_father_health_couple,
             home_care_by_father_health_couple,
-            # only_informal_care_by_father_health_couple,
-            # only_informal_care_by_father_health_single,
             informal_care_by_father_health_single,
             home_care_by_father_health_single,
             combination_care_by_father_health_single,
-            #     only_home_care_by_father_health_couple,
-            #     only_home_care_by_father_health_single,
         ],
         ignore_index=False,
         axis=0,
@@ -1858,7 +1823,7 @@ def get_caregiving_status_by_parental_health_and_presence_of_sibling(
 
     return pd.Series(
         {
-            f"{moment_string}_{parent}_{sibling_status}_health_{health}": dat.loc[
+            f"{moment_string}_{sibling_status}_{parent}_health_{health}": dat.loc[
                 (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
                 moment,
             ].sum()
@@ -2191,63 +2156,6 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
     )
 
 
-# var
-def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
-
-    return pd.Series(
-        {
-            "not_working_age_40_45": 0.24125176,
-            "not_working_age_45_50": 0.21812266,
-            "not_working_age_50_55": 0.22134030,
-            "not_working_age_55_60": 0.24387144,
-            "not_working_age_60_65": 0.19318271,
-            "not_working_age_65_70": 0.04345898,
-            #
-            "part_time_age_40_45": 0.23340033,
-            "part_time_age_45_50": 0.23210090,
-            "part_time_age_50_55": 0.23742719,
-            "part_time_age_55_60": 0.21778835,
-            "part_time_age_60_65": 0.11591068,
-            "part_time_age_65_70": 0.02687942,
-            #
-            "full_time_age_40_45": 0.17430175,
-            "full_time_age_45_50": 0.21535956,
-            "full_time_age_50_55": 0.20284277,
-            "full_time_age_55_60": 0.19216314,
-            "full_time_age_60_65": 0.11141806,
-            "full_time_age_65_70": 0.01756678,
-        },
-    )
-
-
-def get_var_employment_by_age_bin_non_informal_caregivers_soep():
-
-    return pd.Series(
-        {
-            "not_working_age_40_45": 0.21760557,
-            "not_working_age_45_50": 0.20314369,
-            "not_working_age_50_55": 0.20803696,
-            "not_working_age_55_60": 0.23444000,
-            "not_working_age_60_65": 0.21893375,
-            "not_working_age_65_70": 0.04955567,
-            #
-            "part_time_age_40_45": 0.23638008,
-            "part_time_age_45_50": 0.23230882,
-            "part_time_age_50_55": 0.21822528,
-            "part_time_age_55_60": 0.20502764,
-            "part_time_age_60_65": 0.12856359,
-            "part_time_age_65_70": 0.03196961,
-            #
-            "full_time_age_40_45": 0.208697726,
-            "full_time_age_45_50": 0.227366151,
-            "full_time_age_50_55": 0.236358320,
-            "full_time_age_55_60": 0.223407124,
-            "full_time_age_60_65": 0.142552176,
-            "full_time_age_65_70": 0.018857367,
-        },
-    )
-
-
 def get_share_informal_maternal_care_by_age_bin_soep():
 
     return pd.Series(
@@ -2258,20 +2166,6 @@ def get_share_informal_maternal_care_by_age_bin_soep():
             "share_informal_care_55_60": 0.06193384,
             "share_informal_care_60_65": 0.05304824,
             "share_informal_care_65_70": 0.03079298,
-        },
-    )
-
-
-def get_var_share_informal_maternal_care_by_age_bin_soep():
-
-    return pd.Series(
-        {
-            "share_informal_care_40_45": 0.03505911,
-            "share_informal_care_45_50": 0.04650906,
-            "share_informal_care_50_55": 0.06010956,
-            "share_informal_care_55_60": 0.06852833,
-            "share_informal_care_60_65": 0.05891915,
-            "share_informal_care_65_70": 0.03491249,
         },
     )
 

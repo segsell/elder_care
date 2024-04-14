@@ -206,9 +206,9 @@ def criterion_solve_and_simulate(
     sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
     sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
 
-    err = sim_moments - emp_moments
+    err_vec = (sim_moments - emp_moments) / emp_moments
 
-    root_contribs = err @ chol_weights
+    root_contribs = err_vec @ chol_weights
     crit_val = root_contribs @ root_contribs
 
     return {"root_contributions": root_contribs, "value": crit_val}
