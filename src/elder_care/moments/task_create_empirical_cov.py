@@ -1,24 +1,14 @@
 """Empirical Variance-Covariance Matrix."""
 
-import pytask
 from pathlib import Path
 from typing import Annotated
 
-import numpy as np
 import pandas as pd
 from pytask import Product
 
-from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
 from elder_care.config import BLD
-from elder_care.model.shared import (
-    BAD_HEALTH,
-    BASE_YEAR,
-    FEMALE,
-    GOOD_HEALTH,
-    MAX_AGE,
-    MEDIUM_HEALTH,
-    MIN_AGE,
-)
+from elder_care.model.shared import BAD_HEALTH, FEMALE, MEDIUM_HEALTH
+from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
 
 
 # @pytask.mark.skip(reason="Compare mean with other module")
@@ -33,7 +23,6 @@ def task_create_empirical_var(
     / "empirical_moments_var.csv",
 ) -> None:
     """Create empirical covariance matrix for the model."""
-
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
     cpi_data = pd.read_csv(path_to_cpi)
@@ -67,7 +56,6 @@ def task_create_empirical_var(
     dat["intensive_care_no_other_weighted"] = (
         dat["intensive_care_no_other"] * dat[weight]
     )
-    intensive_care_var_weighted = "intensive_care_no_other_weighted"
 
     parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
     parent["no_informal_care_child_weighted"] = (
@@ -129,7 +117,7 @@ def task_create_empirical_var(
         intensive_care_var=intensive_care_var,
     )
     care_transitions_parent_child_data = get_care_transitions_from_parent_child_data(
-        parent
+        parent,
     )
 
     # ================================================================================
@@ -162,7 +150,6 @@ def get_var_care_transitions_from_estimation_data(
     intensive_care_var,
 ):
     """Calculate transitions and their unweighted variances."""
-
     # Collecting transitions and associated data for variance calculation
     transitions = {
         "no_care_to_no_informal_care": get_care_transition_unweighted(
@@ -212,7 +199,6 @@ def get_var_care_transitions_from_estimation_data(
 
 def get_care_transitions_from_parent_child_data(parent):
     """Get unweighted care transitions from parent-child dataset."""
-
     # Define transitions and their transitions
     transitions = {
         "no_informal_to_no_formal": get_care_transition_unweighted(
@@ -231,7 +217,9 @@ def get_care_transitions_from_parent_child_data(parent):
             current_choice="no_formal_care",
         ),
         "informal_to_formal": get_care_transition_unweighted(
-            parent, previous_choice="informal_care_child", current_choice="formal_care"
+            parent,
+            previous_choice="informal_care_child",
+            current_choice="formal_care",
         ),
         "no_formal_to_no_informal": get_care_transition_unweighted(
             parent,
@@ -249,7 +237,9 @@ def get_care_transitions_from_parent_child_data(parent):
             current_choice="no_informal_care_child",
         ),
         "formal_to_informal": get_care_transition_unweighted(
-            parent, previous_choice="formal_care", current_choice="informal_care_child"
+            parent,
+            previous_choice="formal_care",
+            current_choice="informal_care_child",
         ),
         #
         "no_formal_to_no_formal": get_care_transition_unweighted(
@@ -268,7 +258,9 @@ def get_care_transitions_from_parent_child_data(parent):
             current_choice="no_formal_care",
         ),
         "formal_to_formal": get_care_transition_unweighted(
-            parent, previous_choice="formal_care", current_choice="formal_care"
+            parent,
+            previous_choice="formal_care",
+            current_choice="formal_care",
         ),
     }
 
@@ -310,7 +302,7 @@ def get_care_transitions_from_parent_child_data(parent):
         transitions["formal_to_formal"],
     )
 
-    out = pd.Series(
+    return pd.Series(
         {
             "no_informal_to_no_formal": var_no_informal_to_no_formal,
             "no_informal_to_formal": var_no_informal_to_formal,
@@ -329,8 +321,6 @@ def get_care_transitions_from_parent_child_data(parent):
         },
     )
 
-    return out
-
 
 def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
     mother,
@@ -338,14 +328,14 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
     weight,
 ):
 
-    var_informal_care_mother_medium_health = get_weighted_variance_one_condition(
+    informal_care_mother_medium_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="informal_care_child",
         condition_var="health",
         condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
-    var_informal_care_mother_bad_health = get_weighted_variance_one_condition(
+    informal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="informal_care_child",
         condition_var="health",
@@ -353,14 +343,14 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    var_formal_care_mother_medium_health = get_weighted_variance_one_condition(
+    formal_care_mother_medium_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="formal_care",
         condition_var="health",
         condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
-    var_formal_care_mother_bad_health = get_weighted_variance_one_condition(
+    formal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="formal_care",
         condition_var="health",
@@ -368,14 +358,14 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    var_combination_care_mother_medium_health = get_weighted_variance_one_condition(
+    comb_care_mother_medium_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="combination_care",
         condition_var="health",
         condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
-    var_combination_care_mother_bad_health = get_weighted_variance_one_condition(
+    comb_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="combination_care",
         condition_var="health",
@@ -383,18 +373,16 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    var_informal_care_mother_medium_health_sibling = (
-        get_weighted_variance_two_conditions(
-            dat=mother,
-            moment_unweighted="informal_care_child",
-            condition_var_one="health",
-            condition_val_one=MEDIUM_HEALTH,
-            condition_var_two=sibling_var,
-            condition_val_two=True,
-            weight=weight,
-        )
+    informal_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="informal_care_child",
+        condition_var_one="health",
+        condition_val_one=MEDIUM_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
     )
-    var_informal_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+    informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
         moment_unweighted="informal_care_child",
         condition_var_one="health",
@@ -404,7 +392,7 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    var_formal_care_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+    formal_mother_medium_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
         moment_unweighted="formal_care",
         condition_var_one="health",
@@ -413,7 +401,7 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         condition_val_two=True,
         weight=weight,
     )
-    var_formal_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+    formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
         moment_unweighted="formal_care",
         condition_var_one="health",
@@ -423,43 +411,39 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    var_combination_care_mother_medium_health_sibling = (
-        get_weighted_variance_two_conditions(
-            dat=mother,
-            moment_unweighted="combination_care",
-            condition_var_one="health",
-            condition_val_one=MEDIUM_HEALTH,
-            condition_var_two=sibling_var,
-            condition_val_two=True,
-            weight=weight,
-        )
+    comb_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="combination_care",
+        condition_var_one="health",
+        condition_val_one=MEDIUM_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
     )
-    var_combination_care_mother_bad_health_sibling = (
-        get_weighted_variance_two_conditions(
-            dat=mother,
-            moment_unweighted="combination_care",
-            condition_var_one="health",
-            condition_val_one=BAD_HEALTH,
-            condition_var_two=sibling_var,
-            condition_val_two=True,
-            weight=weight,
-        )
+    comb_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="combination_care",
+        condition_var_one="health",
+        condition_val_one=BAD_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
     )
 
     return pd.Series(
         {
-            "informal_care_mother_health_1": var_informal_care_mother_medium_health,
-            "informal_care_mother_health_2": var_informal_care_mother_bad_health,
-            "formal_care_mother_health_1": var_formal_care_mother_medium_health,
-            "formal_care_mother_health_2": var_formal_care_mother_bad_health,
-            "combination_care_mother_health_1": var_combination_care_mother_medium_health,
-            "combination_care_mother_health_2": var_combination_care_mother_bad_health,
-            "informal_care_sibling_mother_health_1": var_informal_care_mother_medium_health_sibling,
-            "informal_care_sibling_mother_health_2": var_informal_care_mother_bad_health_sibling,
-            "formal_care_sibling_mother_health_1": var_formal_care_mother_medium_health_sibling,
-            "formal_care_sibling_mother_health_2": var_formal_care_mother_bad_health_sibling,
-            "combination_care_sibling_mother_health_1": var_combination_care_mother_medium_health_sibling,
-            "combination_care_sibling_mother_health_2": var_combination_care_mother_bad_health_sibling,
+            "informal_care_mother_health_1": informal_care_mother_medium_health,
+            "informal_care_mother_health_2": informal_care_mother_bad_health,
+            "formal_care_mother_health_1": formal_care_mother_medium_health,
+            "formal_care_mother_health_2": formal_care_mother_bad_health,
+            "combination_care_mother_health_1": comb_care_mother_medium_health,
+            "combination_care_mother_health_2": comb_care_mother_bad_health,
+            "informal_care_sibling_mother_health_1": informal_mother_medium_health_sibling,  # noqa: E501
+            "informal_care_sibling_mother_health_2": informal_mother_bad_health_sibling,
+            "formal_care_sibling_mother_health_1": formal_mother_medium_health_sibling,
+            "formal_care_sibling_mother_health_2": formal_mother_bad_health_sibling,
+            "combination_care_sibling_mother_health_1": comb_mother_medium_health_sibling,  # noqa: E501
+            "combination_care_sibling_mother_health_2": comb_mother_bad_health_sibling,
         },
     )
 
@@ -470,12 +454,16 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
 
 
 def get_weighted_variance_one_condition(
-    dat, moment_unweighted, condition_var, condition_val, weight
+    dat,
+    moment_unweighted,
+    condition_var,
+    condition_val,
+    weight,
 ):
     """Calculate the weighted variance of a moment.
 
-
     https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
+
     """
     subset = dat.loc[
         (dat[condition_var] == condition_val),
@@ -487,11 +475,9 @@ def get_weighted_variance_one_condition(
     weighted_mean = (subset[moment_unweighted] * subset[weight]).sum() / total_weight
 
     # Calculate the unbiased weighted variance
-    weighted_variance = (
-        (subset[moment_unweighted] - weighted_mean) ** 2 * subset[weight]
-    ).sum() / (total_weight - 1)
-
-    return weighted_variance
+    return ((subset[moment_unweighted] - weighted_mean) ** 2 * subset[weight]).sum() / (
+        total_weight - 1
+    )
 
 
 def get_weighted_variance_two_conditions(
@@ -505,8 +491,8 @@ def get_weighted_variance_two_conditions(
 ):
     """Calculate the weighted variance of a moment.
 
-
     https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
+
     """
     subset = dat.loc[
         (dat[condition_var_one] == condition_val_one)
@@ -519,11 +505,9 @@ def get_weighted_variance_two_conditions(
     weighted_mean = (subset[moment_unweighted] * subset[weight]).sum() / total_weight
 
     # Calculate the unbiased weighted variance
-    weighted_variance = (
-        (subset[moment_unweighted] - weighted_mean) ** 2 * subset[weight]
-    ).sum() / (total_weight - 1)
-
-    return weighted_variance
+    return ((subset[moment_unweighted] - weighted_mean) ** 2 * subset[weight]).sum() / (
+        total_weight - 1
+    )
 
 
 # ================================================================================
@@ -532,7 +516,7 @@ def get_weighted_variance_two_conditions(
 
 
 def get_care_transition_unweighted(dat, previous_choice, current_choice):
-    """Calculate the unweighted transition probability from previous to current care state."""
+    """Calculate unweighted transition probability."""
     transition_cases = dat.loc[
         (dat[f"lagged_{previous_choice}"] == True) & (dat[current_choice] == True)
     ].shape[0]
@@ -551,11 +535,12 @@ def get_care_transition_unweighted(dat, previous_choice, current_choice):
 
 
 def get_care_transition_weighted(dat, previous_choice, current_choice, weight):
-    """Get transition from previous to current caregiving status using weights and return needed sums for variance calculation."""
+    """Get weighted caregiving transition probabilities."""
     lagged_choice_true = dat.loc[dat[f"lagged_{previous_choice}"] == True]
 
     sum_weights_lagged = lagged_choice_true.loc[
-        lagged_choice_true[current_choice].notna(), weight
+        lagged_choice_true[current_choice].notna(),
+        weight,
     ].sum()
     weighted_sum_current = (
         lagged_choice_true[current_choice] * lagged_choice_true[weight]
@@ -578,22 +563,23 @@ def calculate_unweighted_variance(transition_info):
     if n == 0:
         return None  # Avoid division by zero
 
-    variance = (p * (1 - p)) / n
-    return variance
+    return (p * (1 - p)) / n
 
 
 def calculate_weighted_variance(dat, transition_info, current_choice, weight):
+    """Calculate variance of a weighted transition probability.
+
+    # weighted_variance = variance_numerator / sum_weights if sum_weights != 0 else None
+
+    """
     sum_weights = transition_info["sum_weights"]
     weighted_prob_sum = transition_info["weighted_prob_sum"]
     weighted_mean_prob = weighted_prob_sum / sum_weights
 
     # Calculate variance
-    weighted_variance = (
+    return (
         (dat[current_choice] - weighted_mean_prob) ** 2 * dat[weight]
     ).sum() / sum_weights
-    # weighted_variance = variance_numerator / sum_weights if sum_weights != 0 else None
-
-    return weighted_variance
 
 
 # ================================================================================
@@ -792,8 +778,7 @@ def get_var_share_informal_maternal_care_by_age_bin_soep():
 
 
 def get_var_employment_transitions_soep():
-    """Get variance of employment transitions"""
-
+    """Get variance of employment transitions."""
     return pd.Series(
         {
             "not_working_to_not_working": 0.0000014030153746,
@@ -807,5 +792,5 @@ def get_var_employment_transitions_soep():
             "full_time_to_not_working": 0.0000015082989226,
             "full_time_to_part_time": 0.0000019227102296,
             "full_time_to_full_time": 0.0000032040667450,
-        }
+        },
     )

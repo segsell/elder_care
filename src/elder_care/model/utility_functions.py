@@ -80,6 +80,8 @@ def utility_func(
         / 4_000
     )
 
+    total_yearly_hours = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
+
     Args:
         period (int): Current period.
         consumption (jnp.array): Level of the agent's consumption.
@@ -133,7 +135,6 @@ def utility_func(
         * N_MONTHS  # year
         * 2  # two-year period
     )
-    total_yearly_hours = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 
     # age is a proxy for health impacting the taste for free-time.
     utility_leisure = (

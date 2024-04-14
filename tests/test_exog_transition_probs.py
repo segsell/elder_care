@@ -8,7 +8,7 @@ from elder_care.exogenous_processes.task_create_exog_processes import (
 from elder_care.model.exogenous_processes import (
     exog_health_transition_mother_with_survival,
 )
-from elder_care.model.shared import BAD_HEALTH, MEDIUM_HEALTH
+from elder_care.model.shared import BAD_HEALTH, GOOD_HEALTH, MEDIUM_HEALTH
 from elder_care.model.task_specify_model import get_options_dict
 from elder_care.utils import load_dict_from_pickle
 
@@ -57,8 +57,7 @@ def test_exog_health_transition():
     aaae(prob_good + prob_medium + prob_bad, 1)
 
 
-@pytest.mark.parametrize("health_state", (BAD_HEALTH, MEDIUM_HEALTH))
-# @pytest.mark.parametrize("health_state", (GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH))
+@pytest.mark.parametrize("health_state", [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH])
 def test_exog_health_transition_with_alive(health_state):
 
     path_to_specs = SRC / "model" / "specs.yaml"
@@ -100,7 +99,5 @@ def test_exog_health_transition_with_alive(health_state):
             options=options,
         )
     )
-
-    breakpoint()
 
     aaae(prob_good + prob_medium + prob_bad + prob_dead, 1)

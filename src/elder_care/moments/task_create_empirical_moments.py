@@ -11,7 +11,6 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
-import numpy as np
 import pandas as pd
 from pytask import Product
 
@@ -163,16 +162,8 @@ def task_create_moments(
         ]
     )
 
-    """
-    dat_hh_weight = pd.read_csv(path_to_hh_weight)
-    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
-    cpi_data = pd.read_csv(path_to_cpi)
 
-    dat = dat_hh_weight.copy()
-    dat = deflate_income_and_wealth(dat, cpi_data)
-
-    weight = "hh_weight"
-    intensive_care_var = "intensive_care_no_other"
+    # 10.04.2024
 
     dat["mother_age_unweighted"] = dat["mother_age"] / dat[weight]
     dat["mother_alive_unweighted"] = dat["mother_alive"] / dat[weight]
@@ -196,6 +187,29 @@ def task_create_moments(
             "mother_alive_unweighted",
         ],
     )
+
+    mother_health_good = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)],
+    ) / len(mother.loc[mother["age"] == 76])
+    mother_health_medium = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)],
+    ) / len(mother.loc[mother["age"] == 76])
+    mother_health_bad = len(
+        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)],
+    ) / len(mother.loc[mother["age"] == 76])
+
+    _total = mother_health_good + mother_health_medium + mother_health_bad
+
+    """
+    dat_hh_weight = pd.read_csv(path_to_hh_weight)
+    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    cpi_data = pd.read_csv(path_to_cpi)
+
+    dat = dat_hh_weight.copy()
+    dat = deflate_income_and_wealth(dat, cpi_data)
+
+    weight = "hh_weight"
+    intensive_care_var = "intensive_care_no_other"
 
     dat = dat.copy()
     dat = dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < MAX_AGE)]
@@ -248,18 +262,6 @@ def task_create_moments(
     parent["no_informal_care_child_weighted"] = (
         parent["no_informal_care_child"] * parent[weight]
     )
-
-    mother_health_good = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == GOOD_HEALTH)],
-    ) / len(mother.loc[mother["age"] == 76])
-    mother_health_medium = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == MEDIUM_HEALTH)],
-    ) / len(mother.loc[mother["age"] == 76])
-    mother_health_bad = len(
-        mother.loc[(mother["age"] == 76) & (mother["health"] == BAD_HEALTH)],
-    ) / len(mother.loc[mother["age"] == 76])
-
-    _total = mother_health_good + mother_health_medium + mother_health_bad
 
     caregiving_by_mother_health_and_presence_of_sibling = (
         get_caregiving_status_by_mother_health_and_presence_of_sibling(
@@ -320,39 +322,6 @@ def task_create_moments(
     )
 
     all_moments.to_csv(path_to_save)
-
-
-# ================================================================================
-# Variance-Covariance matrix
-# ================================================================================
-
-
-def task_calcualte_variance_covariance_matrix(
-    path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
-    path_to_parent_child_hh_weight: Path = BLD
-    / "data"
-    / "parent_child_data_hh_weight.csv",
-    path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
-):
-    """Calculate variance-covariance matrix of moments.
-
-    moments_cov = em.get_moments_cov(     data, calculate_moments,
-    bootstrap_kwargs={"n_draws": 5_000, "seed": 0} )
-
-    """
-    dat_hh_weight = pd.read_csv(path_to_hh_weight)
-    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
-    cpi_data = pd.read_csv(path_to_cpi)
-
-    dat = dat_hh_weight.copy()
-    dat = deflate_income_and_wealth(dat, cpi_data)
-
-    parent = parent_hh_weight.copy()
-
-    dat["data"] = "estimation"
-    parent["data"] = "parent_child"
-
-    return pd.concat([dat, parent], ignore_index=True)
 
 
 # ================================================================================
@@ -1222,13 +1191,9 @@ def get_caregiving_status_by_father_health_and_marital_status(
             informal_care_by_father_health_couple,
             combination_care_by_father_health_couple,
             home_care_by_father_health_couple,
-            # only_informal_care_by_father_health_couple,
-            # only_informal_care_by_father_health_single,
             informal_care_by_father_health_single,
             home_care_by_father_health_single,
             combination_care_by_father_health_single,
-            #     only_home_care_by_father_health_couple,
-            #     only_home_care_by_father_health_single,
         ],
         ignore_index=False,
         axis=0,
