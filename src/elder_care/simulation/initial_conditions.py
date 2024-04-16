@@ -79,7 +79,7 @@ def draw_initial_states(
             values=jnp.array([0, 1]),
             probabilities=has_sibling,
         ).astype(np.int16),
-        "experience": experience,
+        "experience": jnp.zeros(n_agents, dtype=np.int16),
         "mother_health": draw_random_array(
             seed=seed - 5,
             n_agents=n_agents,

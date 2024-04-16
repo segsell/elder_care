@@ -6,10 +6,10 @@ from functools import partial
 import estimagic as em
 import jax.numpy as jnp
 import pandas as pd
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.state_space import create_state_space_functions
@@ -156,6 +156,59 @@ def estimate_msm():
 # ====================================================================================
 # Criterion function
 # ====================================================================================
+
+
+def get_moment_error_vec(
+    params,
+    params_fixed,
+    options,
+    model_loaded,
+    emp_moments,
+    solve_func,
+    initial_states,
+    initial_resources,
+):
+    """Criterion function for the estimation.
+
+    chol_weights = jnp.eye(len(emp_moments))
+
+    err = sim_moments - emp_moments
+    # crit_val = jnp.dot(jnp.dot(err.T, chol_weights), err)
+
+    # deviations = sim_moments - np.array(emp_moments)
+    root_contribs = err @ chol_weights
+    crit_val = root_contribs @ root_contribs
+
+    """
+    # ! random seed !
+    seed = int(time.time())
+
+    params_all = params | params_fixed
+
+    value, policy_left, policy_right, endog_grid = solve_func(params_all)
+
+    sim_dict = simulate_all_periods_for_model(
+        states_initial=initial_states,
+        resources_initial=initial_resources,
+        n_periods=options["model_params"]["n_periods"],
+        params=params_all,
+        seed=seed,
+        endog_grid_solved=endog_grid,
+        value_solved=value,
+        policy_left_solved=policy_left,
+        policy_right_solved=policy_right,
+        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
+        model=model_loaded,
+    )
+
+    data = create_simulation_df_from_dict(sim_dict)
+    arr, idx = create_simulation_array_from_df(data=data, options=options)
+
+    _sim_raw = simulate_moments(arr, idx)
+
+    err_vec = _sim_raw - emp_moments
+
+    return err_vec
 
 
 def criterion_solve_and_simulate(

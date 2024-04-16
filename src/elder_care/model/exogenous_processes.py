@@ -19,7 +19,7 @@ from elder_care.model.shared import (
 
 def prob_part_time_offer(period, lagged_choice, high_educ, options, params):
     """Compute logit probability of part time offer."""
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     logit = (
         params["part_time_constant"]
@@ -43,7 +43,7 @@ def prob_full_time_offer(period, lagged_choice, high_educ, options, params):
     _prob = jnp.exp(logit) / (1 + jnp.exp(logit))
 
     """
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     logit = (
         params["full_time_constant"]
@@ -91,7 +91,7 @@ def prob_survival_mother(period, mother_health, mother_alive, options):
         float: Predicted binary survival probability.
 
     """
-    mother_age = options["mother_start_age"] + period * 2 + 1
+    mother_age = options["mother_start_age"] + period
 
     logit = (
         options["survival_prob_mother_constant"]
@@ -134,7 +134,7 @@ def prob_survival_father(period, father_health, father_alive, options):
         float: Predicted binary survival probability.
 
     """
-    father_age = options["father_start_age"] + period * 2 + 1
+    father_age = options["father_start_age"] + period
 
     logit = (
         options["survival_prob_father_constant"]
@@ -169,7 +169,7 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
             transitioning to good, medium, and bad health states, respectively.
 
     """
-    mother_age = options["mother_start_age"] + period * 2 + 1
+    mother_age = options["mother_start_age"] + period
     mother_age_squared = mother_age**2
 
     good_health = mother_health == GOOD_HEALTH
@@ -241,7 +241,7 @@ def exog_health_transition_mother(period, mother_health, options):
             transitioning to good, medium, and bad health states, respectively.
 
     """
-    mother_age = options["mother_start_age"] + period * 2 + 1
+    mother_age = options["mother_start_age"] + period
     mother_age_squared = mother_age**2
 
     good_health = mother_health == GOOD_HEALTH
@@ -401,7 +401,7 @@ def _exog_care_demand_mother(period, mother_health, options):
         float: Probability of needing care given health state.
 
     """
-    mother_age = options["mother_start_age"] + period * 2 + 1
+    mother_age = options["mother_start_age"] + period
 
     logit = (
         options["exog_care_single_mother_constant"]
@@ -421,7 +421,7 @@ def _exog_care_demand_father(period, father_health, options):
         float: Probability of needing care given health state.
 
     """
-    father_age = options["father_start_age"] + period * 2 + 1
+    father_age = options["father_start_age"] + period
 
     logit = (
         options["exog_care_single_father_constant"]
@@ -441,8 +441,8 @@ def _exog_care_demand_couple(period, mother_health, father_health, options):
         float: Probability of needing care given health state.
 
     """
-    mother_age = options["mother_start_age"] + period * 2 + 1
-    father_age = options["father_start_age"] + period * 2 + 1
+    mother_age = options["mother_start_age"] + period
+    father_age = options["father_start_age"] + period
 
     logit = (
         options["exog_care_couple_constant"]

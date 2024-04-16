@@ -4,11 +4,10 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import numpy as np
-import pytask
 import yaml
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
 
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
@@ -30,11 +29,11 @@ from elder_care.model.utility_functions import (
 from elder_care.utils import load_dict_from_pickle
 
 
-@pytask.mark.skip(reason="Respecifying model.")
+# @pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
-    path_to_save: Annotated[Path, Product] = BLD / "model" / "model.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_short_exp.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
 

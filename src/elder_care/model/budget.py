@@ -83,11 +83,11 @@ def budget_constraint(
     )
 
     """
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
-    working_hours_two_years = (
-        is_part_time(lagged_choice) * 20 * 4.33 * 12 * TWO_YEARS  # week month year
-        + is_full_time(lagged_choice) * 40 * 4.33 * 12 * TWO_YEARS  # week month year
+    working_hours = (
+        is_part_time(lagged_choice) * 20 * 4.33 * 12  # week month year
+        + is_full_time(lagged_choice) * 40 * 4.33 * 12  # week month year
     )
 
     wage_from_previous_period = get_exog_stochastic_wage(
@@ -99,32 +99,26 @@ def budget_constraint(
         options=options,
     )
     wage = jnp.maximum(wage_from_previous_period, options["min_wage"])
-    labor_income_two_years = wage * working_hours_two_years
+    labor_income = wage * working_hours
 
     pension_factor = 1 - (age - RETIREMENT_AGE) * options["early_retirement_penalty"]
     retirement_income_gross_one_year = (
         options["pension_point_value"] * experience * pension_factor * 12
     )
-    retirement_income_two_years = (
-        calc_net_income_pensions(retirement_income_gross_one_year) * TWO_YEARS
-    )
+    retirement_income = calc_net_income_pensions(retirement_income_gross_one_year)
 
     means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
-    unemployment_benefits_two_years = (
-        means_test * options["unemployment_benefits"] * 12  # * TWO_YEARS
-    )
+    unemployment_benefits = means_test * options["unemployment_benefits"] * 12
 
-    income_two_years = jnp.maximum(
-        is_working(lagged_choice) * labor_income_two_years
+    income = jnp.maximum(
+        is_working(lagged_choice) * labor_income
         + is_not_working(lagged_choice)
         * (age >= EARLY_RETIREMENT_AGE)
-        * retirement_income_two_years,
-        unemployment_benefits_two_years,
+        * retirement_income,
+        unemployment_benefits,
     )
 
-    return (
-        1 + options["interest_rate"]
-    ) ** 2 * savings_end_of_previous_period + income_two_years
+    return (1 + options["interest_rate"]) * savings_end_of_previous_period + income
 
 
 def get_exog_stochastic_wage(
@@ -195,7 +189,7 @@ def get_exog_stochastic_wage(
             and a stochastic shock.
 
     """
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     log_wage = (
         options["wage_constant"]
@@ -212,7 +206,7 @@ def get_exog_stochastic_wage(
 
 def get_exog_spousal_income(period, options):
     """Income from the spouse."""
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     return (
         options["spousal_income_constant"]
