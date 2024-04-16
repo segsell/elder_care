@@ -8,10 +8,7 @@ import numpy as np
 from elder_care.model.shared import (
     EARLY_RETIREMENT_AGE,
     RETIREMENT_AGE,
-    is_bad_health,
     is_full_time,
-    is_informal_care,
-    is_medium_health,
     is_not_working,
     is_part_time,
     is_working,
@@ -47,7 +44,6 @@ def budget_constraint(
     lagged_choice: int,
     experience: int,
     high_educ: int,
-    mother_health: int,
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
@@ -72,6 +68,19 @@ def budget_constraint(
 
     means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
     unemployment_benefits_yearly = means_test * options["unemployment_benefits"] * 12
+
+    cash_benefits_informal_care = (
+        (
+            is_informal_care(lagged_choice)
+            * is_medium_health(mother_health)
+            * options["cash_benefits_medium"]
+            + is_informal_care(lagged_choice)
+            * is_bad_health(mother_health)
+            * options["cash_benefits_bad"]
+        )
+        * 12
+        * TWO_YEARS
+    )
 
     """
     age = options["start_age"] + period * 2 + 1
@@ -102,28 +111,14 @@ def budget_constraint(
 
     means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
     unemployment_benefits_two_years = (
-        means_test * options["unemployment_benefits"] * 12 * TWO_YEARS
-    )
-
-    cash_benefits_informal_care = (
-        (
-            is_informal_care(lagged_choice)
-            * is_medium_health(mother_health)
-            * options["cash_benefits_medium"]
-            + is_informal_care(lagged_choice)
-            * is_bad_health(mother_health)
-            * options["cash_benefits_bad"]
-        )
-        * 12
-        * TWO_YEARS
+        means_test * options["unemployment_benefits"] * 12  # * TWO_YEARS
     )
 
     income_two_years = jnp.maximum(
         is_working(lagged_choice) * labor_income_two_years
         + is_not_working(lagged_choice)
         * (age >= EARLY_RETIREMENT_AGE)
-        * retirement_income_two_years
-        + cash_benefits_informal_care,
+        * retirement_income_two_years,
         unemployment_benefits_two_years,
     )
 
