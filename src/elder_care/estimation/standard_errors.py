@@ -34,7 +34,10 @@ def get_analytical_standard_errors(
     )
 
     jac = first_derivative(
-        func=get_error_partial, params=params, base_steps=0.01, method="forward",
+        func=get_error_partial,
+        params=params,
+        base_steps=0.01,
+        method="forward",
     )
     _jacobian = list(jac["derivative"].values())
 
