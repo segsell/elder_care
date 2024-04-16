@@ -86,7 +86,6 @@ def simulate_moments(arr, idx):
         # + care_mix_formal_by_mother_age_bin
         # + care_mix_combination_by_mother_age_bi
 
-    """
     share_not_working_by_age = get_share_by_age(
         arr,
         ind=idx,
@@ -103,6 +102,7 @@ def simulate_moments(arr, idx):
         choice=FULL_TIME,
     )
 
+    """
     # ================================================================================
     # Savings rate
     # ================================================================================
@@ -408,11 +408,11 @@ def simulate_moments(arr, idx):
 
     return jnp.asarray(
         # employment shares
-        share_not_working_by_age
-        + share_working_part_time_by_age
-        + share_working_full_time_by_age
+        # share_not_working_by_age
+        # + share_working_part_time_by_age
+        # + share_working_full_time_by_age
         # assets and savings
-        + savings_rate_coeffs.tolist()
+        +savings_rate_coeffs.tolist()
         # employment shares by caregiving status
         # no informal care
         + share_not_working_no_informal_care_by_age_bin

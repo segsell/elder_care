@@ -293,7 +293,7 @@ def task_create_moments(
         )
     )
 
-    employment_by_age_soep = get_employment_by_age_soep()
+    # employment_by_age_soep = get_employment_by_age_soep()
     employment_by_age_bin_caregivers_soep = (
         get_employment_by_age_bin_informal_parental_caregivers_soep()
     )
@@ -305,7 +305,7 @@ def task_create_moments(
 
     all_moments = pd.concat(
         [
-            employment_by_age_soep,
+            # employment_by_age_soep,
             ols_coeffs_savings_rate,
             employment_by_age_bin_non_caregivers_soep,
             employment_by_age_bin_caregivers_soep,
