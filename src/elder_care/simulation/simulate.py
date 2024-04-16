@@ -667,48 +667,52 @@ def get_care_mix_by_mother_age_bin(df_arr, ind, choice, care_type, age_bins):
 
 def create_simulation_array_from_df(data, options):
     """Create simulation array from dict."""
+    data = data.copy()  # Make a copy to avoid modifying a slice
+
     options = options["model_params"]
     n_agents = options["n_agents"]
     n_periods = options["n_periods"]
 
-    data["agent"] = jnp.tile(jnp.arange(n_agents), n_periods)
+    # Assigning the 'agent' and age-related calculations
+    data.loc[:, "agent"] = jnp.tile(jnp.arange(n_agents), n_periods)
     period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
 
-    data["age"] = options["start_age"] + period_indices * 2 + 1
-    data["age_squared"] = data["age"] ** 2
-    data["mother_age"] = options["mother_start_age"] + period_indices * 2 + 1
+    data.loc[:, "age"] = options["start_age"] + period_indices * 2 + 1
+    data.loc[:, "age_squared"] = data["age"] ** 2
+    data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices * 2 + 1
 
-    data = data.dropna()
-
-    data["wealth"] = data["savings"] + data["consumption"]
-    data["savings_rate"] = jnp.where(
+    # Financial calculations
+    data.loc[:, "wealth"] = data["savings"] + data["consumption"]
+    data.loc[:, "savings_rate"] = jnp.where(
         jnp.array(data["wealth"]) > 0,
         jnp.divide(jnp.array(data["savings"]), jnp.array(data["wealth"])),
         0,
     )
 
-    data["experience_squared"] = data["experience"] ** 2
+    # Squared experience
+    data.loc[:, "experience_squared"] = data["experience"] ** 2
 
-    # Adjusting the logic for PART_TIME and FULL_TIME checks
-    data["lagged_part_time"] = jnp.isin(
+    # Employment status
+    data.loc[:, "lagged_part_time"] = jnp.isin(
         jnp.array(data["lagged_choice"]),
         PART_TIME,
-    ).astype(
-        np.int8,
-    )
+    ).astype(np.int8)
 
-    data["choice_part_time"] = jnp.isin(jnp.array(data["choice"]), PART_TIME).astype(
-        np.int8,
-    )
-    data["choice_full_time"] = jnp.isin(jnp.array(data["choice"]), FULL_TIME).astype(
-        np.int8,
-    )
-    data["choice_informal_care"] = jnp.isin(
+    data.loc[:, "choice_part_time"] = jnp.isin(
+        jnp.array(data["choice"]),
+        PART_TIME,
+    ).astype(np.int8)
+    data.loc[:, "choice_full_time"] = jnp.isin(
+        jnp.array(data["choice"]),
+        FULL_TIME,
+    ).astype(np.int8)
+    data.loc[:, "choice_informal_care"] = jnp.isin(
         jnp.array(data["choice"]),
         INFORMAL_CARE,
     ).astype(np.int8)
 
-    data["log_wage"] = (
+    # Wage calculations
+    data.loc[:, "log_wage"] = (
         options["wage_constant"]
         + options["wage_age"] * data["age"]
         + options["wage_age_squared"] * data["age_squared"]
@@ -718,22 +722,21 @@ def create_simulation_array_from_df(data, options):
         + options["wage_part_time"] * data["lagged_part_time"]
     )
 
-    data["wage"] = jnp.exp(
+    data.loc[:, "wage"] = jnp.exp(
         jnp.array(data["log_wage"]) + jnp.array(data["income_shock"]),
     )
 
-    # For the _assign_working_hours part, it's assumed _assign_working_hours_vectorized
-    # is an adapted version suitable for vector operations
-    # Since jax.vmap expects functions that operate on JAX arrays,
-    # ensure that your DataFrame operations are compatible or consider converting
-    # relevant parts to JAX arrays
-    data["working_hours"] = jax.vmap(_assign_working_hours_vectorized)(
+    # Working hours and income calculation
+    data.loc[:, "working_hours"] = jax.vmap(_assign_working_hours_vectorized)(
         data["lagged_choice"].values,
     )
 
-    data["income"] = data["working_hours"] * data["wage"]
+    data.loc[:, "income"] = data["working_hours"] * data["wage"]
 
+    # Create a mapping of column indices
     column_indices = {col: idx for idx, col in enumerate(data.columns)}
+
+    data = data.dropna()
 
     return jnp.array(data), column_indices
 
