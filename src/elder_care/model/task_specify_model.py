@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import numpy as np
+import pytask
 import yaml
 from pytask import Product
 
@@ -29,7 +30,7 @@ from elder_care.model.utility_functions import (
 from elder_care.utils import load_dict_from_pickle
 
 
-# @pytask.mark.skip(reason="Respecifying model.")
+@pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",

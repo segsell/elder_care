@@ -1143,9 +1143,9 @@ def create_simulation_array_from_df(data, options):
     data.loc[:, "agent"] = jnp.tile(jnp.arange(n_agents), n_periods)
     period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
 
-    data.loc[:, "age"] = options["start_age"] + period_indices * 2 + 1
+    data.loc[:, "age"] = options["start_age"] + period_indices
     data.loc[:, "age_squared"] = data["age"] ** 2
-    data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices * 2 + 1
+    data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
 
     # Financial calculations
     data.loc[:, "wealth"] = data["savings"] + data["consumption"]
@@ -1228,9 +1228,9 @@ def create_simulation_array(sim_dict, options):
     savings_rate = jnp.where(wealth > 0, jnp.divide(savings, wealth), 0)
     period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
 
-    age = options["start_age"] + period_indices * 2 + 1
+    age = options["start_age"] + period_indices
     age_squared = age**2
-    mother_age = options["mother_start_age"] + period_indices * 2 + 1
+    mother_age = options["mother_start_age"] + period_indices
 
     experience_squared = experience**2
 

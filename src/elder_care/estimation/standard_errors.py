@@ -17,10 +17,13 @@ def get_analytical_standard_errors(
     initial_states: dict,
     initial_resources: jnp.array,
 ):
-    """Get analytical standard errors."""
+    """Get analytical standard errors.
+
+    weighting_mat = jnp.linalg.inv(covariance)
+
+    """
     covariance = jnp.diag(emp_var)
     weighting_mat = jnp.diag(emp_var ** (-1))
-    # weighting_mat = jnp.linalg.inv(covariance)
 
     get_error_partial = partial(
         get_moment_error_vec,
@@ -34,7 +37,10 @@ def get_analytical_standard_errors(
     )
 
     jac = first_derivative(
-        func=get_error_partial, params=params, base_steps=0.01, method="forward",
+        func=get_error_partial,
+        params=params,
+        base_steps=0.01,
+        method="forward",
     )
     _jacobian = list(jac["derivative"].values())
 

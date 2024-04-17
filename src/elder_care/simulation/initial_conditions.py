@@ -25,6 +25,16 @@ def draw_initial_states(
 
     informal_care = get_initial_share_two(initial_conditions, "share_informal_care")
 
+    _experience = draw_from_discrete_normal(
+        seed=seed - 4,
+        n_agents=n_agents,
+        mean=jnp.ones(n_agents, dtype=np.uint16)
+        * float(initial_conditions.loc["experience_mean"].iloc[0]),
+        std_dev=jnp.ones(n_agents, dtype=np.uint16)
+        * float(initial_conditions.loc["experience_std"].iloc[0]),
+    )
+    experience = jnp.clip(_experience * 2, a_min=0, a_max=MAX_INIT_EXPER)
+
     """
     n_choices = 12
 
@@ -48,16 +58,6 @@ def draw_initial_states(
         ["mother_good_health", "mother_medium_health", "mother_bad_health"]
     ].to_numpy()
     mother_health_probs = jnp.array(_mother_health_probs).ravel()
-
-    _experience = draw_from_discrete_normal(
-        seed=seed - 4,
-        n_agents=n_agents,
-        mean=jnp.ones(n_agents, dtype=np.uint16)
-        * float(initial_conditions.loc["experience_mean"].iloc[0]),
-        std_dev=jnp.ones(n_agents, dtype=np.uint16)
-        * float(initial_conditions.loc["experience_std"].iloc[0]),
-    )
-    experience = jnp.clip(_experience * 2, a_min=0, a_max=MAX_INIT_EXPER)
 
     initial_states = {
         "period": jnp.zeros(n_agents, dtype=np.int16),

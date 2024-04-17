@@ -1,4 +1,4 @@
-"""Analytical standard errors."""
+"""Analytical standard errors a la Della Vigna et al (2016)."""
 
 import jax.numpy as jnp
 import pandas as pd
@@ -56,14 +56,14 @@ PARAMS = {
 }
 
 PROGRESS = {
-    "rho": 0.7,
+    "rho": 1.98,
     "beta": 0.959,
     "sigma": 0.5364562201,
     "lambda": 1.0,
     "interest_rate": 0.04,
     "utility_leisure_constant": 3.2194001905695693,
-    "utility_leisure_age": 0.046916363865977045,
-    "utility_leisure_age_squared": -0.006495755962584588,
+    "utility_leisure_age": 0.04691636386597703,
+    "utility_leisure_age_squared": -0.006495755962584587,
     "disutility_part_time": -1.9337796413959372,
     "disutility_full_time": -5.282394222692581,
     "utility_informal_care_parent_medium_health": -0.4089331199248291,
@@ -78,27 +78,28 @@ PROGRESS = {
     "utility_formal_care_bad_health_sibling": 0.9263483706654374,
     "utility_combination_care_medium_health_sibling": -1.6125665883276101,
     "utility_combination_care_bad_health_sibling": -1.6952982282449929,
-    # part-time job offer
     "part_time_constant": -2.568584,
     "part_time_not_working_last_period": 0.3201395,
     "part_time_high_education": 0.1691369,
     "part_time_above_retirement_age": -1.9976496,
-    # full-time job offer
     "full_time_constant": -2.445238,
     "full_time_not_working_last_period": -0.9964007,
     "full_time_high_education": 0.3019138,
     "full_time_above_retirement_age": -2.6571659,
 }
-
-FIXED_PARAMS = {"beta", "rho", "lambda", "sigma", "interest_rate"}
+FIXED_PARAMS = ["beta", "rho", "lambda", "sigma", "interest_rate"]
 
 
 @pytask.mark.skip(reason="No local GPU.")
 def task_estimate_standard_errors():
-    """Estimate standard errors."""
-    path_to_emp_moments = BLD / "moments" / "empirical_moments.csv"
-    path_to_emp_var = BLD / "moments" / "empirical_moments_var.csv"
-    path_to_model = BLD / "model" / "model.pkl"
+    """Estimate standard errors.
+
+    PARAMS = load_dict_from_pickle(BLD / "output" / "result_params.pkl")
+
+    """
+    path_to_emp_moments = BLD / "moments" / "empirical_moments_long.csv"
+    path_to_emp_var = BLD / "moments" / "empirical_moments_var_long.csv"
+    path_to_model = BLD / "model" / "model_short_exp.pkl"
 
     emp_moments = jnp.asarray(pd.read_csv(path_to_emp_moments, index_col=0).iloc[:, 0])
     emp_var = jnp.asarray(pd.read_csv(path_to_emp_var, index_col=0).iloc[:, 0])
@@ -145,7 +146,7 @@ def task_estimate_standard_errors():
         seed=seed,
     )
 
-    se = get_analytical_standard_errors(
+    return get_analytical_standard_errors(
         params=params,
         params_fixed=params_fixed,
         options=options,
@@ -156,5 +157,3 @@ def task_estimate_standard_errors():
         initial_states=initial_states,
         initial_resources=initial_resources,
     )
-
-    return se

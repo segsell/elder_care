@@ -23,6 +23,7 @@ from elder_care.simulation.simulate import (
     create_simulation_array_from_df,
     create_simulation_df_from_dict,
     simulate_moments,
+    simulate_moments_long,
 )
 from elder_care.utils import save_dict_to_pickle
 
@@ -204,11 +205,9 @@ def get_moment_error_vec(
     data = create_simulation_df_from_dict(sim_dict)
     arr, idx = create_simulation_array_from_df(data=data, options=options)
 
-    _sim_raw = simulate_moments(arr, idx)
+    _sim_raw = simulate_moments_long(arr, idx)
 
-    err_vec = _sim_raw - emp_moments
-
-    return err_vec
+    return _sim_raw - emp_moments
 
 
 def criterion_solve_and_simulate(
@@ -255,6 +254,62 @@ def criterion_solve_and_simulate(
     data = create_simulation_df_from_dict(sim_dict)
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     _sim_moments_raw = simulate_moments(arr, idx)
+
+    sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
+    sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
+
+    err_vec = (sim_moments - emp_moments) / emp_moments
+
+    root_contribs = err_vec @ chol_weights
+    crit_val = root_contribs @ root_contribs
+
+    return {"root_contributions": root_contribs, "value": crit_val}
+
+
+def criterion_solve_and_simulate_long(
+    params,
+    options,
+    chol_weights,
+    model_loaded,
+    emp_moments,
+    solve_func,
+    initial_states,
+    initial_resources,
+):
+    """Criterion function for the estimation.
+
+    chol_weights = jnp.eye(len(emp_moments))
+
+    err = sim_moments - emp_moments
+    # crit_val = jnp.dot(jnp.dot(err.T, chol_weights), err)
+
+    # deviations = sim_moments - np.array(emp_moments)
+    root_contribs = err @ chol_weights
+    crit_val = root_contribs @ root_contribs
+
+    """
+    # ! random seed !
+    seed = int(time.time())
+
+    value, policy_left, policy_right, endog_grid = solve_func(params)
+
+    sim_dict = simulate_all_periods_for_model(
+        states_initial=initial_states,
+        resources_initial=initial_resources,
+        n_periods=options["model_params"]["n_periods"],
+        params=params,
+        seed=seed,
+        endog_grid_solved=endog_grid,
+        value_solved=value,
+        policy_left_solved=policy_left,
+        policy_right_solved=policy_right,
+        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
+        model=model_loaded,
+    )
+
+    data = create_simulation_df_from_dict(sim_dict)
+    arr, idx = create_simulation_array_from_df(data=data, options=options)
+    _sim_moments_raw = simulate_moments_long(arr, idx)
 
     sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
     sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)

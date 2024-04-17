@@ -108,9 +108,6 @@ def update_endog_state(
     next_state["period"] = period + 1
     next_state["lagged_choice"] = choice
 
-    # below_exp_cap_part = experience + 1 < options["experience_cap"]
-    # below_exp_cap_full = experience + 2 < options["experience_cap"]
-    # experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
     below_exp_cap_full = experience + 1 < options["experience_cap"]
     experience_full_time = 1 * below_exp_cap_full * is_full_time(choice)
     next_state["experience"] = experience + experience_full_time
