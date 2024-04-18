@@ -49,7 +49,7 @@ def get_state_specific_feasible_choice_set(
     feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
 
     """
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
@@ -108,11 +108,9 @@ def update_endog_state(
     next_state["period"] = period + 1
     next_state["lagged_choice"] = choice
 
-    below_exp_cap_part = experience + 1 < options["experience_cap"]
-    below_exp_cap_full = experience + 2 < options["experience_cap"]
-    experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
-    experience_full_time = 2 * below_exp_cap_full * is_full_time(choice)
-    next_state["experience"] = experience + experience_part_time + experience_full_time
+    below_exp_cap_full = experience + 1 < options["experience_cap"]
+    experience_full_time = 1 * below_exp_cap_full * is_full_time(choice)
+    next_state["experience"] = experience + experience_full_time
 
     next_state["has_sibling"] = has_sibling
     next_state["high_educ"] = high_educ
@@ -126,7 +124,7 @@ def sparsity_condition(
     experience,
     options,
 ):
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     max_init_experience = options["max_init_experience"]
 

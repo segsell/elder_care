@@ -38,6 +38,7 @@ from elder_care.simulation.simulate import (
     get_share_by_age,
     get_share_by_type_by_age_bin,
     simulate_moments,
+    simulate_moments_long,
 )
 from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
 
@@ -84,14 +85,14 @@ PARAMS = {
 
 
 PROGRESS = {
-    "rho": 0.7,
+    "rho": 1.98,
     "beta": 0.959,
     "sigma": 0.5364562201,
     "lambda": 1.0,
     "interest_rate": 0.04,
     "utility_leisure_constant": 3.2194001905695693,
-    "utility_leisure_age": 0.046916363865977045,
-    "utility_leisure_age_squared": -0.006495755962584588,
+    "utility_leisure_age": 0.04691636386597703,
+    "utility_leisure_age_squared": -0.006495755962584587,
     "disutility_part_time": -1.9337796413959372,
     "disutility_full_time": -5.282394222692581,
     "utility_informal_care_parent_medium_health": -0.4089331199248291,
@@ -106,12 +107,10 @@ PROGRESS = {
     "utility_formal_care_bad_health_sibling": 0.9263483706654374,
     "utility_combination_care_medium_health_sibling": -1.6125665883276101,
     "utility_combination_care_bad_health_sibling": -1.6952982282449929,
-    # part-time job offer
     "part_time_constant": -2.568584,
     "part_time_not_working_last_period": 0.3201395,
     "part_time_high_education": 0.1691369,
     "part_time_above_retirement_age": -1.9976496,
-    # full-time job offer
     "full_time_constant": -2.445238,
     "full_time_not_working_last_period": -0.9964007,
     "full_time_high_education": 0.3019138,
@@ -142,8 +141,10 @@ def task_debugging(
     ].to_numpy()
     mother_health_probs = jnp.array(_mother_health_probs).ravel()
 
+    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
+
     """
-    path_to_model = BLD / "model" / "model.pkl"
+    path_to_model = BLD / "model" / "model_short_exp.pkl"
     options = get_options_dict()
 
     params = PROGRESS
@@ -165,7 +166,6 @@ def task_debugging(
         options=options,
     )
     results = func(params)
-
     save_dict_to_pickle(results, path_to_save_result)
 
     n_agents = 100_000
@@ -312,4 +312,6 @@ def task_debug_simulate():
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
 
-    return out, arr
+    out_long = simulate_moments_long(arr, idx)
+
+    return out, out_long, arr
