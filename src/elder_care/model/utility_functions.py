@@ -111,7 +111,7 @@ def utility_func(
 
     """
     rho = params["rho"]
-    age = options["start_age"] + period * 2 + 1
+    age = options["start_age"] + period
 
     informal_care = is_informal_care(choice)
     formal_care = is_formal_care(choice)
@@ -133,7 +133,6 @@ def utility_func(
         (TOTAL_WEEKLY_HOURS - working_hours_weekly - caregiving_hours_weekly)
         * N_WEEKS  # month
         * N_MONTHS  # year
-        * 2  # two-year period
     )
 
     # age is a proxy for health impacting the taste for free-time.
