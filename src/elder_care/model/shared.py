@@ -7,7 +7,7 @@ BASE_YEAR = 2015
 FEMALE = 2
 MALE = 1
 
-N_PERIODS_SIM = 15
+N_PERIODS_SIM = 30
 
 
 MIN_AGE_SIM = 40
@@ -81,14 +81,24 @@ FULL_TIME_HOURS = 40 * N_WEEKS * N_MONTHS
 
 MAX_LEISURE_HOURS = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 
-ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+# ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+ALL = jnp.array([0, 1, 2])
 
-NO_WORK = jnp.array([0, 1, 2, 3])
-PART_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
-FULL_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 8, 9, 10, 11])
+# NO_WORK = jnp.array([0, 1, 2, 3])
+# PART_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
+# FULL_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 8, 9, 10, 11])
+# WORK_AND_NO_WORK = ALL
+# PART_TIME = jnp.array([4, 5, 6, 7])
+# FULL_TIME = jnp.array([8, 9, 10, 11])
+# WORK = jnp.concatenate([PART_TIME, FULL_TIME])
+
+
+NO_WORK = jnp.array([0])
+PART_TIME_AND_NO_WORK = jnp.array([0, 1])
+FULL_TIME_AND_NO_WORK = jnp.array([0, 2])
 WORK_AND_NO_WORK = ALL
-PART_TIME = jnp.array([4, 5, 6, 7])
-FULL_TIME = jnp.array([8, 9, 10, 11])
+PART_TIME = jnp.array([1])
+FULL_TIME = jnp.array([2])
 WORK = jnp.concatenate([PART_TIME, FULL_TIME])
 
 NO_CARE = jnp.array([0, 4, 8])

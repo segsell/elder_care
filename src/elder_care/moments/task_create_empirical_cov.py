@@ -20,7 +20,7 @@ def task_create_empirical_var(
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD
     / "moments"
-    / "empirical_moments_var_long.csv",
+    / "empirical_moments_var.csv",
 ) -> None:
     """Create empirical covariance matrix for the model."""
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
@@ -127,16 +127,16 @@ def task_create_empirical_var(
     all_vars = pd.concat(
         [
             employment_by_age_soep,
-            ols_coeffs_savings_rate,
-            employment_by_age_bin_non_caregivers_soep,
-            employment_by_age_bin_caregivers_soep,
-            #
-            share_informal_care_by_age_bin,
-            caregiving_by_mother_health_and_presence_of_sibling,
-            #
+            #     ols_coeffs_savings_rate,
+            #     employment_by_age_bin_non_caregivers_soep,
+            #     employment_by_age_bin_caregivers_soep,
+            #     #
+            #     share_informal_care_by_age_bin,
+            #     caregiving_by_mother_health_and_presence_of_sibling,
+            #     #
             employment_transitions_soep,
-            care_transitions_estimation_data,
-            care_transitions_parent_child_data,
+            #     care_transitions_estimation_data,
+            #     care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,

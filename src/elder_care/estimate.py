@@ -23,7 +23,6 @@ from elder_care.simulation.simulate import (
     create_simulation_array_from_df,
     create_simulation_df_from_dict,
     simulate_moments,
-    simulate_moments_long,
 )
 from elder_care.utils import save_dict_to_pickle
 
@@ -205,12 +204,12 @@ def get_moment_error_vec(
     data = create_simulation_df_from_dict(sim_dict)
     arr, idx = create_simulation_array_from_df(data=data, options=options)
 
-    _sim_raw = simulate_moments_long(arr, idx)
+    _sim_raw = simulate_moments(arr, idx)
 
     return _sim_raw - emp_moments
 
 
-def criterion_solve_and_simulate(
+def criterion_solve_and_simulate_short(
     params,
     options,
     chol_weights,
@@ -234,6 +233,7 @@ def criterion_solve_and_simulate(
     """
     # ! random seed !
     seed = int(time.time())
+    # seed = 2024
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 
@@ -266,7 +266,7 @@ def criterion_solve_and_simulate(
     return {"root_contributions": root_contribs, "value": crit_val}
 
 
-def criterion_solve_and_simulate_long(
+def criterion_solve_and_simulate(
     params,
     options,
     chol_weights,
@@ -290,6 +290,7 @@ def criterion_solve_and_simulate_long(
     """
     # ! random seed !
     seed = int(time.time())
+    # seed = 2024
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 
@@ -309,7 +310,7 @@ def criterion_solve_and_simulate_long(
 
     data = create_simulation_df_from_dict(sim_dict)
     arr, idx = create_simulation_array_from_df(data=data, options=options)
-    _sim_moments_raw = simulate_moments_long(arr, idx)
+    _sim_moments_raw = simulate_moments(arr, idx)
 
     sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
     sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)

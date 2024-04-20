@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from typing import Annotated, Any
-
+import jax.numpy as jnp
 import numpy as np
 import pytask
 import yaml
@@ -34,7 +34,7 @@ from elder_care.utils import load_dict_from_pickle
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
-    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_short_exp.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_work.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
 
@@ -74,10 +74,10 @@ def get_options_dict(
             "states": np.arange(2, dtype=np.int8),
             "transition": prob_full_time_offer,
         },
-        "mother_health": {
-            "states": np.arange(4, dtype=np.int8),
-            "transition": exog_health_transition_mother_with_survival,
-        },
+        # "mother_health": {
+        #     "states": np.arange(4, dtype=np.int8),
+        #     "transition": exog_health_transition_mother_with_survival,
+        # },
     }
 
     return {
@@ -88,7 +88,7 @@ def get_options_dict(
             "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
-                "has_sibling": np.arange(2, dtype=np.uint8),
+                # "has_sibling": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
                     stop=specs["experience_cap"] + 1,
                     dtype=np.uint8,
@@ -114,3 +114,7 @@ def load_specs(path_to_specs):
     specs["income_shock_scale"] = wage_params.pop("wage_std_regression_residual")
 
     return specs, wage_params
+
+
+def _dummy_func(period):
+    return jnp.array([1], dtype=np.int8)

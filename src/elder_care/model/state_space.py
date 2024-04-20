@@ -31,7 +31,7 @@ def get_state_specific_feasible_choice_set(
     period,
     part_time_offer,
     full_time_offer,
-    mother_health,
+    # mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.
@@ -51,12 +51,13 @@ def get_state_specific_feasible_choice_set(
     """
     age = options["start_age"] + period
 
-    _feasible_choice_set_all = list(np.arange(options["n_choices"]))
+    # _feasible_choice_set_all = list(np.arange(options["n_choices"]))
+    feasible_choice_set = np.arange(options["n_choices"])
 
-    if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
-        feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
-    else:
-        feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
+    # if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
+    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
+    # else:
+    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
     if age >= options["age_seventy"]:
         feasible_choice_set = [CHOICE_AFTER_AGE_70]
@@ -80,7 +81,7 @@ def update_endog_state(
     period,
     choice,
     experience,
-    has_sibling,
+    # has_sibling,
     high_educ,
     options,
 ):
@@ -89,11 +90,6 @@ def update_endog_state(
     next_state["mother_age"] = options["mother_min_age"] + mother_age + 1
     next_state["father_age"] = options["father_min_age"] + father_age + 1
 
-    below_exp_cap_part = experience + 1 < options["experience_cap"]
-    below_exp_cap_full = experience + 2 < options["experience_cap"]
-    experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
-    experience_full_time = 2 * below_exp_cap_full * is_full_time(choice)
-    next_state["experience"] = experience + experience_part_time + experience_full_time
 
     experience_cap: 15 # maximum of exp accumulated, see Adda et al (2017)
     Returns to experience are flat after 15 years of experience.
@@ -108,11 +104,16 @@ def update_endog_state(
     next_state["period"] = period + 1
     next_state["lagged_choice"] = choice
 
-    below_exp_cap_full = experience + 1 < options["experience_cap"]
-    experience_full_time = 1 * below_exp_cap_full * is_full_time(choice)
-    next_state["experience"] = experience + experience_full_time
+    below_exp_cap_part = experience + 1 < options["experience_cap"]
+    below_exp_cap_full = experience + 2 < options["experience_cap"]
+    experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
+    experience_full_time = 2 * below_exp_cap_full * is_full_time(choice)
+    next_state["experience"] = experience + experience_part_time + experience_full_time
+    # below_exp_cap_full = experience + 1 < options["experience_cap"]
+    # experience_full_time = 1 * below_exp_cap_full * is_full_time(choice)
+    # next_state["experience"] = experience + experience_full_time
 
-    next_state["has_sibling"] = has_sibling
+    # next_state["has_sibling"] = has_sibling
     next_state["high_educ"] = high_educ
 
     return next_state

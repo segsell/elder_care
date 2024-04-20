@@ -103,7 +103,7 @@ def budget_constraint(
 
     pension_factor = 1 - (age - RETIREMENT_AGE) * options["early_retirement_penalty"]
     retirement_income_gross_one_year = (
-        options["pension_point_value"] * experience * pension_factor * 12
+        options["pension_point_value"] * (experience / 2) * pension_factor * 12
     )
     retirement_income = calc_net_income_pensions(retirement_income_gross_one_year)
 
@@ -195,8 +195,8 @@ def get_exog_stochastic_wage(
         options["wage_constant"]
         + options["wage_age"] * age
         + options["wage_age_squared"] * age**2
-        + options["wage_experience"] * experience
-        + options["wage_experience_squared"] * experience**2
+        + options["wage_experience"] * (experience / 2)
+        + options["wage_experience_squared"] * (experience / 2) ** 2
         + options["wage_high_education"] * high_educ
         + options["wage_part_time"] * is_part_time(lagged_choice)
     )

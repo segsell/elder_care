@@ -38,7 +38,6 @@ from elder_care.simulation.simulate import (
     get_share_by_age,
     get_share_by_type_by_age_bin,
     simulate_moments,
-    simulate_moments_long,
 )
 from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
 
@@ -53,10 +52,11 @@ PARAMS = {
     "interest_rate": 0.04,
     #
     "utility_leisure_constant": 1,
-    "utility_leisure_age": 1,
+    "utility_leisure_age": 0.05,
+    "utility_leisure_age_squared": -0.005,
     #
-    "disutility_part_time": -5,
-    "disutility_full_time": -6,
+    "disutility_part_time": -3,
+    "disutility_full_time": -8,
     # caregiving
     "utility_informal_care_parent_medium_health": 2,
     "utility_informal_care_parent_bad_health": 1,
@@ -144,10 +144,10 @@ def task_debugging(
     results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     """
-    path_to_model = BLD / "model" / "model_short_exp.pkl"
+    path_to_model = BLD / "model" / "model_work.pkl"
     options = get_options_dict()
 
-    params = PROGRESS
+    params = PARAMS
 
     model_loaded = load_and_setup_model(
         options=options,
@@ -245,53 +245,55 @@ def task_debugging(
         choice=FULL_TIME,
     )  # 15
 
-    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=INFORMAL_CARE,
-        care_type=ALL,
-        age_bins=AGE_BINS_SIM,
-    )
+    # share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=INFORMAL_CARE,
+    #     care_type=ALL,
+    #     age_bins=AGE_BINS_SIM,
+    # )
 
-    share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=FORMAL_CARE,
-        care_type=ALL,
-        age_bins=AGE_BINS_SIM,
-    )
+    # share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=FORMAL_CARE,
+    #     care_type=ALL,
+    #     age_bins=AGE_BINS_SIM,
+    # )
 
-    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=NO_WORK,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
-    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=PART_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
-    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=FULL_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
+    # share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=NO_WORK,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+    # share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=PART_TIME,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+    # share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=FULL_TIME,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+
+    breakpoint()
 
     return (
         share_not_working_by_age,
         share_part_time_by_age,
         share_full_time_by_age,
-        share_informal_care_by_age_bin,
-        share_formal_care_by_age_bin,
-        share_not_working_informal_care_by_age_bin,
-        share_part_time_informal_care_by_age_bin,
-        share_full_time_informal_care_by_age_bin,
+        # share_informal_care_by_age_bin,
+        # share_formal_care_by_age_bin,
+        # share_not_working_informal_care_by_age_bin,
+        # share_part_time_informal_care_by_age_bin,
+        # share_full_time_informal_care_by_age_bin,
     )
 
 
@@ -312,6 +314,4 @@ def task_debug_simulate():
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
 
-    out_long = simulate_moments_long(arr, idx)
-
-    return out, out_long, arr
+    return out, arr

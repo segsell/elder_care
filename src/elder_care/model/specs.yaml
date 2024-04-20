@@ -11,10 +11,10 @@ age_seventy: 70
 
 mother_start_age: 65
 father_start_age: 67
-n_choices: 12
+n_choices: 3
 
-max_init_experience: 0
-experience_cap: 15
+max_init_experience: 40
+experience_cap: 80 # 30 * 2
 
 # Parameters of the policy environment
 min_wage: 7.5 # 8.5 in 2015
