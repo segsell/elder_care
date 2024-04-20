@@ -908,7 +908,7 @@ def simulate_moments(arr, idx):
         + part_time_to_full_time
         + full_time_to_no_work
         + full_time_to_part_time
-        + full_time_to_full_time
+        + full_time_to_full_time,
         # +
         # # Caregiving transitions
         # no_informal_care_to_no_informal_care

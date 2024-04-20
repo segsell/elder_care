@@ -17,11 +17,7 @@ from pytask import Product
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
-    AGE_BINS_SIM,
-    ALL,
-    FORMAL_CARE,
     FULL_TIME,
-    INFORMAL_CARE,
     NO_WORK,
     PART_TIME,
 )
@@ -36,7 +32,6 @@ from elder_care.simulation.simulate import (
     create_simulation_array_from_df,
     create_simulation_df_from_dict,
     get_share_by_age,
-    get_share_by_type_by_age_bin,
     simulate_moments,
 )
 from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
