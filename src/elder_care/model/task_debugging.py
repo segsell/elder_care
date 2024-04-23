@@ -24,6 +24,8 @@ from elder_care.model.shared import (
     INFORMAL_CARE,
     NO_WORK,
     PART_TIME,
+    RETIREMENT,
+    OUT_OF_LABOR,
 )
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
@@ -51,26 +53,26 @@ PARAMS = {
     "sigma": 0.5364562201,
     "interest_rate": 0.04,
     #
-    "utility_leisure_constant": 1,
-    "utility_leisure_age": 0.05,
-    "utility_leisure_age_squared": -0.005,
+    # "utility_leisure_constant": 1,
+    # "utility_leisure_age": 0.05,
+    # "utility_leisure_age_squared": -0.005,
     #
     "disutility_part_time": -3,
     "disutility_full_time": -8,
     # caregiving
-    "utility_informal_care_parent_medium_health": 2,
-    "utility_informal_care_parent_bad_health": 1,
-    "utility_formal_care_parent_medium_health": 0.7,
-    "utility_formal_care_parent_bad_health": 1,
-    "utility_combination_care_parent_medium_health": -0.8,
-    "utility_combination_care_parent_bad_health": -1.5,
-    # caregiving if sibling present
-    "utility_informal_care_medium_health_sibling": 2.5,
-    "utility_informal_care_bad_health_sibling": 2,
-    "utility_formal_care_medium_health_sibling": 1,
-    "utility_formal_care_bad_health_sibling": 1,
-    "utility_combination_care_medium_health_sibling": -0.2,
-    "utility_combination_care_bad_health_sibling": -0.4,
+    # "utility_informal_care_parent_medium_health": 2,
+    # "utility_informal_care_parent_bad_health": 1,
+    # "utility_formal_care_parent_medium_health": 0.7,
+    # "utility_formal_care_parent_bad_health": 1,
+    # "utility_combination_care_parent_medium_health": -0.8,
+    # "utility_combination_care_parent_bad_health": -1.5,
+    # # caregiving if sibling present
+    # "utility_informal_care_medium_health_sibling": 2.5,
+    # "utility_informal_care_bad_health_sibling": 2,
+    # "utility_formal_care_medium_health_sibling": 1,
+    # "utility_formal_care_bad_health_sibling": 1,
+    # "utility_combination_care_medium_health_sibling": -0.2,
+    # "utility_combination_care_bad_health_sibling": -0.4,
     # part-time job offer
     "part_time_constant": -2.568584,
     "part_time_not_working_last_period": 0.3201395,
@@ -118,7 +120,7 @@ PROGRESS = {
 }
 
 
-@pytask.mark.skip()
+# @pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD
@@ -232,17 +234,25 @@ def task_debugging(
         ind=idx,
         choice=NO_WORK,
     )  # 15
-
     share_part_time_by_age = get_share_by_age(
         arr,
         ind=idx,
         choice=PART_TIME,
     )  # 15
-
     share_full_time_by_age = get_share_by_age(
         arr,
         ind=idx,
         choice=FULL_TIME,
+    )  # 15
+    share_retired_by_age = get_share_by_age(
+        arr,
+        ind=idx,
+        choice=RETIREMENT,
+    )  # 15
+    share_out_of_labor_force = get_share_by_age(
+        arr,
+        ind=idx,
+        choice=OUT_OF_LABOR,
     )  # 15
 
     # share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
@@ -289,6 +299,8 @@ def task_debugging(
         share_not_working_by_age,
         share_part_time_by_age,
         share_full_time_by_age,
+        share_retired_by_age,
+        share_out_of_labor_force,
         # share_informal_care_by_age_bin,
         # share_formal_care_by_age_bin,
         # share_not_working_informal_care_by_age_bin,
@@ -313,5 +325,7 @@ def task_debug_simulate():
 
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
+
+    breakpoint()
 
     return out, arr

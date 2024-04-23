@@ -65,7 +65,6 @@ DEAD = 3
 
 EARLY_RETIREMENT_AGE = 60
 RETIREMENT_AGE = 65
-CHOICE_AFTER_AGE_70 = 0
 
 
 TOTAL_WEEKLY_HOURS = 80
@@ -82,7 +81,7 @@ FULL_TIME_HOURS = 40 * N_WEEKS * N_MONTHS
 MAX_LEISURE_HOURS = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 
 # ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-ALL = jnp.array([0, 1, 2])
+ALL = jnp.array([0, 1, 2, 3])
 
 # NO_WORK = jnp.array([0, 1, 2, 3])
 # PART_TIME_AND_NO_WORK = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
@@ -94,12 +93,15 @@ ALL = jnp.array([0, 1, 2])
 
 
 NO_WORK = jnp.array([0])
-PART_TIME_AND_NO_WORK = jnp.array([0, 1])
-FULL_TIME_AND_NO_WORK = jnp.array([0, 2])
+PART_TIME_AND_NO_WORK = jnp.array([0, 1, 3])  # include retirement
+FULL_TIME_AND_NO_WORK = jnp.array([0, 2, 3])  # include retirement
 WORK_AND_NO_WORK = ALL
 PART_TIME = jnp.array([1])
 FULL_TIME = jnp.array([2])
 WORK = jnp.concatenate([PART_TIME, FULL_TIME])
+RETIREMENT = jnp.array([3])
+NO_RETIREMENT = jnp.concatenate([NO_WORK, PART_TIME, FULL_TIME])
+OUT_OF_LABOR = jnp.concatenate([NO_WORK, RETIREMENT])
 
 NO_CARE = jnp.array([0, 4, 8])
 FORMAL_CARE = jnp.array([1, 3, 5, 7, 9, 11])
@@ -121,6 +123,10 @@ NO_FORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(FORMAL_CARE.tolist())))
 # ==============================================================================
 # Choices
 # ==============================================================================
+
+
+def is_retired(lagged_choice):
+    return jnp.any(lagged_choice == RETIREMENT)
 
 
 def is_not_working(lagged_choice):

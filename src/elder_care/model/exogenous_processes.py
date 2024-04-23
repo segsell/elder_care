@@ -32,7 +32,7 @@ def prob_part_time_offer(period, lagged_choice, high_educ, options, params):
     prob_part_time = (
         is_part_time(lagged_choice) * 1 + (1 - is_part_time(lagged_choice)) * prob_logit
     )
-    prob_part_time = (options["age_seventy"] > age) * prob_part_time
+    prob_part_time = (age < options["max_ret_age"]) * prob_part_time
 
     return jnp.array([1 - prob_part_time, prob_part_time])
 
@@ -56,7 +56,7 @@ def prob_full_time_offer(period, lagged_choice, high_educ, options, params):
     prob_full_time = (
         is_full_time(lagged_choice) * 1 + (1 - is_full_time(lagged_choice)) * prob_logit
     )
-    prob_full_time = (options["age_seventy"] > age) * prob_full_time
+    prob_full_time = (age < options["max_ret_age"]) * prob_full_time
 
     return jnp.array([1 - prob_full_time, prob_full_time])
 

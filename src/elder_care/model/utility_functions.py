@@ -136,11 +136,11 @@ def utility_func(
     )
 
     # age is a proxy for health impacting the taste for free-time.
-    utility_leisure = (
-        params["utility_leisure_constant"]
-        + params["utility_leisure_age"] * age
-        + params["utility_leisure_age_squared"] * age**2
-    ) * jnp.log(leisure_hours)
+    # utility_leisure = (
+    #     params["utility_leisure_constant"]
+    #     + params["utility_leisure_age"] * age
+    #     + params["utility_leisure_age_squared"] * age**2
+    # ) * jnp.log(leisure_hours)
 
     utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
 
@@ -202,7 +202,7 @@ def utility_func(
 
     return (
         utility_consumption
-        + utility_leisure
+        # + utility_leisure
         + disutility_working  # + utility_caregiving
     )
 

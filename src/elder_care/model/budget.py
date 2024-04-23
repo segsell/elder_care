@@ -9,7 +9,7 @@ from elder_care.model.shared import (
     EARLY_RETIREMENT_AGE,
     RETIREMENT_AGE,
     is_full_time,
-    is_not_working,
+    is_retired,
     is_part_time,
     is_working,
 )
@@ -112,9 +112,7 @@ def budget_constraint(
 
     income = jnp.maximum(
         is_working(lagged_choice) * labor_income
-        + is_not_working(lagged_choice)
-        * (age >= EARLY_RETIREMENT_AGE)
-        * retirement_income,
+        + is_retired(lagged_choice) * retirement_income,
         unemployment_benefits,
     )
 

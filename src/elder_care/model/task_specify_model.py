@@ -85,7 +85,7 @@ def get_options_dict(
             "n_periods": n_periods,
             "choices": choices,
             "income_shock_scale": specs["income_shock_scale"],
-            "taste_shock_scale": specs["lambda"],
+            # "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
                 # "has_sibling": np.arange(2, dtype=np.uint8),

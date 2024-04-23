@@ -3,15 +3,18 @@ import numpy as np
 from elder_care.model.shared import (
     BAD_HEALTH,
     CARE,
-    CHOICE_AFTER_AGE_70,
     FULL_TIME_AND_NO_WORK,
     MEDIUM_HEALTH,
     NO_CARE,
+    RETIREMENT,
+    NO_RETIREMENT,
     NO_WORK,
+    OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
     WORK_AND_NO_WORK,
     is_full_time,
     is_part_time,
+    is_retired,
 )
 
 
@@ -29,6 +32,7 @@ def create_state_space_functions():
 
 def get_state_specific_feasible_choice_set(
     period,
+    lagged_choice,
     part_time_offer,
     full_time_offer,
     # mother_health,
@@ -59,8 +63,13 @@ def get_state_specific_feasible_choice_set(
     # else:
     #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
-    if age >= options["age_seventy"]:
-        feasible_choice_set = [CHOICE_AFTER_AGE_70]
+    if age < options["min_ret_age"]:
+        feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]
+
+    if age >= options["max_ret_age"]:
+        feasible_choice_set = [RETIREMENT]
+    elif is_retired(lagged_choice):
+        feasible_choice_set = [i for i in feasible_choice_set if i in RETIREMENT]
     elif (full_time_offer == 0) & (part_time_offer == 1):
         feasible_choice_set = [
             i for i in feasible_choice_set if i in PART_TIME_AND_NO_WORK
@@ -72,7 +81,7 @@ def get_state_specific_feasible_choice_set(
     elif (full_time_offer == 1) & (part_time_offer == 1):
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
     else:
-        feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
+        feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
 
     return np.array(feasible_choice_set)
 
@@ -131,14 +140,21 @@ def sparsity_condition(
 
     cond = True
 
-    if (
+    # You cannot retire before the earliest retirement age
+    if (age <= options["min_ret_age"]) & is_retired(lagged_choice):
+        cond = False
+    # After the maximum retirement age, you must be retired
+    elif (age > options["max_ret_age"]) & (is_retired(lagged_choice) is False):
+        cond = False
+    #  If you have not worked last period, you can't have worked all your live
+    elif (
         (is_full_time(lagged_choice) is False) & (is_part_time(lagged_choice) is False)
     ) & (period + max_init_experience == experience) & (period > 0) | (
         experience > options["experience_cap"]
     ):
         cond = False
 
-    if (age >= options["age_seventy"] + 1) & (lagged_choice != CHOICE_AFTER_AGE_70):
+    if (age >= options["max_ret_age"] + 1) & (lagged_choice != RETIREMENT):
         cond = False
 
     return cond
