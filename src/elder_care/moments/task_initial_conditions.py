@@ -13,6 +13,7 @@ from pytask import Product
 
 from elder_care.config import BLD
 from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
+from elder_care.model.shared import GOOD_HEALTH, BAD_HEALTH
 
 BASE_YEAR = 2015
 
@@ -32,10 +33,6 @@ AGE_62 = 62
 AGE_55 = 55
 AGE_60 = 60
 AGE_65 = 65
-
-GOOD_HEALTH = 0
-MEDIUM_HEALTH = 1
-BAD_HEALTH = 2
 
 
 def table(df_col):
@@ -99,17 +96,13 @@ def task_create_initial_conditions(
     dat["father_alive_unweighted"] = dat["father_alive"] / dat[weight]
 
     dat["father_health_good"] = dat["father_health_unweighted"] == GOOD_HEALTH
-    dat["father_health_medium"] = dat["father_health_unweighted"] == MEDIUM_HEALTH
     dat["father_health_bad"] = dat["father_health_unweighted"] == BAD_HEALTH
     dat["father_health_good_weighted"] = dat["father_health_good"] * dat[weight]
-    dat["father_health_medium_weighted"] = dat["father_health_medium"] * dat[weight]
     dat["father_health_bad_weighted"] = dat["father_health_bad"] * dat[weight]
 
     dat["mother_health_good"] = dat["mother_health_unweighted"] == GOOD_HEALTH
-    dat["mother_health_medium"] = dat["mother_health_unweighted"] == MEDIUM_HEALTH
     dat["mother_health_bad"] = dat["mother_health_unweighted"] == BAD_HEALTH
     dat["mother_health_good_weighted"] = dat["mother_health_good"] * dat[weight]
-    dat["mother_health_medium_weighted"] = dat["mother_health_medium"] * dat[weight]
     dat["mother_health_bad_weighted"] = dat["mother_health_bad"] * dat[weight]
 
     employment_shares_age_50 = get_employment_shares_age_50_soep()
@@ -132,10 +125,8 @@ def task_create_initial_conditions(
 
     (
         mother_good_health,
-        mother_medium_health,
         mother_bad_health,
         father_good_health,
-        father_medium_health,
         father_bad_health,
     ) = get_initial_parental_health(
         dat,
@@ -170,10 +161,8 @@ def task_create_initial_conditions(
             "share_mother_alive": share_mother_alive,
             "share_father_alive": share_father_alive,
             "mother_good_health": mother_good_health,
-            "mother_medium_health": mother_medium_health,
             "mother_bad_health": mother_bad_health,
             "father_good_health": father_good_health,
-            "father_medium_health": father_medium_health,
             "father_bad_health": father_bad_health,
         },
     )
@@ -400,11 +389,6 @@ def get_initial_parental_health(dat, weight):
         weight,
         moment="mother_health_good_weighted",
     )
-    share_mother_medium_health = _get_share_parental_health_at_min_age(
-        dat,
-        weight,
-        moment="mother_health_medium_weighted",
-    )
     share_mother_bad_health = _get_share_parental_health_at_min_age(
         dat,
         weight,
@@ -416,48 +400,35 @@ def get_initial_parental_health(dat, weight):
         weight,
         moment="father_health_good_weighted",
     )
-    share_father_medium_health = _get_share_parental_health_at_min_age(
-        dat,
-        weight,
-        moment="father_health_medium_weighted",
-    )
     share_father_bad_health = _get_share_parental_health_at_min_age(
         dat,
         weight,
         moment="father_health_bad_weighted",
     )
 
-    sum_mother_health = (
-        share_mother_good_health + share_mother_medium_health + share_mother_bad_health
-    )
-    sum_father_health = (
-        share_father_good_health + share_father_medium_health + share_father_bad_health
-    )
+    sum_mother_health = share_mother_good_health + share_mother_bad_health
+    sum_father_health = share_father_good_health + share_father_bad_health
 
     mother_good_health = share_mother_good_health / sum_mother_health
-    mother_medium_health = share_mother_medium_health / sum_mother_health
     mother_bad_health = share_mother_bad_health / sum_mother_health
 
     father_good_health = share_father_good_health / sum_father_health
-    father_medium_health = share_father_medium_health / sum_father_health
     father_bad_health = share_father_bad_health / sum_father_health
 
     assert np.allclose(
-        mother_good_health + mother_medium_health + mother_bad_health,
+        mother_good_health + mother_bad_health,
         # share_mother_alive,
         1,
     )
     assert np.allclose(
-        father_good_health + father_medium_health + father_bad_health,
+        father_good_health + father_bad_health,
         # share_father_alive,
         1,
     )
 
     return (
         mother_good_health,
-        mother_medium_health,
         mother_bad_health,
         father_good_health,
-        father_medium_health,
         father_bad_health,
     )

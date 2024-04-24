@@ -59,9 +59,8 @@ PARENT_AGE_BINS_SIM = [
 ]
 
 GOOD_HEALTH = 0
-MEDIUM_HEALTH = 1
-BAD_HEALTH = 2
-DEAD = 3
+BAD_HEALTH = 1
+DEAD = 2
 
 EARLY_RETIREMENT_AGE = 60
 RETIREMENT_AGE = 65
@@ -174,10 +173,6 @@ def is_combination_care(lagged_choice):
 
 def is_good_health(parental_health):
     return jnp.any(parental_health == GOOD_HEALTH)
-
-
-def is_medium_health(parental_health):
-    return jnp.any(parental_health == MEDIUM_HEALTH)
 
 
 def is_bad_health(parental_health):

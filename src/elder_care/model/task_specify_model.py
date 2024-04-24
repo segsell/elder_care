@@ -30,11 +30,11 @@ from elder_care.model.utility_functions import (
 from elder_care.utils import load_dict_from_pickle
 
 
-@pytask.mark.skip(reason="Respecifying model.")
+# @pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
-    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_work.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_leisure.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
 
@@ -75,7 +75,7 @@ def get_options_dict(
             "transition": prob_full_time_offer,
         },
         # "mother_health": {
-        #     "states": np.arange(4, dtype=np.int8),
+        #     "states": np.arange(3, dtype=np.int8),
         #     "transition": exog_health_transition_mother_with_survival,
         # },
     }

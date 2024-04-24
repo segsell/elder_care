@@ -130,11 +130,11 @@ def utility_func(
     )
 
     # age is a proxy for health impacting the taste for free-time.
-    # utility_leisure = (
-    #     params["utility_leisure_constant"]
-    #     + params["utility_leisure_age"] * age
-    #     + params["utility_leisure_age_squared"] * age**2
-    # ) * jnp.log(leisure_hours)
+    utility_leisure = (
+        params["utility_leisure_constant"]
+        + params["utility_leisure_age"] * age
+        + params["utility_leisure_age_squared"] * age**2
+    ) * jnp.log(leisure_hours)
 
     utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
 
@@ -145,59 +145,44 @@ def utility_func(
 
     # utility_caregiving = (
     #     # informal care by parental health status
-    #     params["utility_informal_care_parent_medium_health"]
-    #     * informal_care
-    #     * is_medium_health(mother_health)
-    #     + params["utility_informal_care_parent_bad_health"]
+    #     params["utility_informal_care_parent_bad_health"]
     #     * informal_care
     #     * is_bad_health(mother_health)
-    #     + params["utility_formal_care_parent_medium_health"]
-    #     * formal_care
-    #     * is_medium_health(mother_health)
+    #     # formal care by parental health status
     #     + params["utility_formal_care_parent_bad_health"]
     #     * formal_care
     #     * is_bad_health(mother_health)
     #     # combination care by parental health status
-    #     + params["utility_combination_care_parent_medium_health"]
-    #     * combination_care
-    #     * is_medium_health(mother_health)
     #     + params["utility_combination_care_parent_bad_health"]
     #     * combination_care
     #     * is_bad_health(mother_health)
     #     #
     #     # informal care if sibling present
-    #     + params["utility_informal_care_medium_health_sibling"]
-    #     * informal_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
     #     + params["utility_informal_care_bad_health_sibling"]
     #     * informal_care
     #     * is_bad_health(mother_health)
     #     * has_sibling
     #     # formal care if sibling present
-    #     + params["utility_formal_care_medium_health_sibling"]
-    #     * formal_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
     #     + params["utility_formal_care_bad_health_sibling"]
     #     * formal_care
     #     * is_medium_health(mother_health)
     #     * has_sibling
     #     # combination care if sibling present
-    #     + params["utility_combination_care_medium_health_sibling"]
-    #     * combination_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
     #     + params["utility_combination_care_bad_health_sibling"]
     #     * combination_care
     #     * is_bad_health(mother_health)
     #     * has_sibling
     # )
 
+    # utility_working_and_caregiving = (
+    #     params["utility_part_time_and_informal_care"] * part_time * informal_care
+    #     + params["utility_full_time_and_informal_care"] * full_time * informal_care
+    # )
+
     return (
         utility_consumption
-        # + utility_leisure
-        + disutility_working  # + utility_caregiving
+        + utility_leisure
+        + disutility_working  # + utility_caregiving + utility_working_and_caregiving
     )
 
 

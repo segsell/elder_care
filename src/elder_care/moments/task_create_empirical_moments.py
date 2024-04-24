@@ -21,7 +21,6 @@ from elder_care.model.shared import (
     FEMALE,
     GOOD_HEALTH,
     MAX_AGE,
-    MEDIUM_HEALTH,
     MIN_AGE,
 )
 
@@ -1796,7 +1795,7 @@ def get_caregiving_status_by_parental_health_any_sibling(
                 dat["health"] == health,
                 weight,
             ].sum()
-            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [BAD_HEALTH]
         },
     )
 
@@ -1831,7 +1830,7 @@ def get_caregiving_status_by_parental_health_and_presence_of_sibling(
                 (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
                 weight,
             ].sum()
-            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [BAD_HEALTH]
         },
     )
 
@@ -1859,7 +1858,7 @@ def get_caregiving_status_by_parental_health(
                 (dat["health"] == health) & (dat["married"] == is_other_parent_alive),
                 weight,
             ].sum()
-            for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [GOOD_HEALTH, BAD_HEALTH]
         },
     )
 

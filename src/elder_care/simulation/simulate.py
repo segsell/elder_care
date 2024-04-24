@@ -14,7 +14,6 @@ from elder_care.model.shared import (
     FULL_TIME,
     INFORMAL_CARE,
     MAX_AGE_SIM,
-    MEDIUM_HEALTH,
     MIN_AGE_SIM,
     NO_FORMAL_CARE,
     NO_INFORMAL_CARE,
@@ -1045,7 +1044,7 @@ def get_share_care_by_parental_health_old(
             jnp.isin(df_arr[:, ind["choice"]], care_choice)
             & (df_arr[:, ind[f"{parent}_health"]], health),
         )
-        for health in (MEDIUM_HEALTH, BAD_HEALTH)
+        for health in (BAD_HEALTH)
     ]
 
 
@@ -1063,7 +1062,7 @@ def get_share_care_by_parental_health_and_presence_of_sibling_old(
             & (df_arr[:, ind["has_sibling"]] == has_sibling)
             & (df_arr[:, ind[f"{parent}_health"]], health),
         )
-        for health in (MEDIUM_HEALTH, BAD_HEALTH)
+        for health in (BAD_HEALTH)
     ]
 
 
@@ -1079,7 +1078,7 @@ def get_share_care_by_parental_health_and_presence_of_sibling(
     sibling_mask = df_arr[:, ind["has_sibling"]] == has_sibling
 
     shares = []
-    for health in (MEDIUM_HEALTH, BAD_HEALTH):
+    for health in BAD_HEALTH:
         health_mask = df_arr[:, ind[f"{parent}_health"]] == health
 
         share = jnp.sum(care_choice_mask & sibling_mask & health_mask) / jnp.sum(
@@ -1100,7 +1099,7 @@ def get_share_care_by_parental_health(
     care_choice_mask = jnp.isin(df_arr[:, ind["choice"]], care_choice)
 
     shares = []
-    for health in (MEDIUM_HEALTH, BAD_HEALTH):
+    for health in BAD_HEALTH:
         health_mask = df_arr[:, ind[f"{parent}_health"]] == health
 
         share = jnp.sum(care_choice_mask & health_mask) / jnp.sum(health_mask)

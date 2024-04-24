@@ -305,6 +305,27 @@ def create_health_variables(dat):
     dat = replace_negative_values_with_nan(dat, "ph003_")
 
     _cond = [
+        (dat["ph003_"] == HEALTH_EXCELLENT)
+        | (dat["ph003_"] == HEALTH_VERY_GOOD)
+        | (dat["ph003_"] == HEALTH_GOOD),
+        (dat["ph003_"] == HEALTH_FAIR) | (dat["ph003_"] == HEALTH_POOR),
+    ]
+    _val = [0, 1]
+
+    dat["health"] = np.select(_cond, _val, default=np.nan)
+
+    return dat
+
+
+def create_health_variables_good_medium_bad(dat):
+    """Create dummy for health status.
+
+    Impute missing values!!!
+
+    """
+    dat = replace_negative_values_with_nan(dat, "ph003_")
+
+    _cond = [
         (dat["ph003_"] == HEALTH_EXCELLENT) | (dat["ph003_"] == HEALTH_VERY_GOOD),
         (dat["ph003_"] == HEALTH_GOOD) | (dat["ph003_"] == HEALTH_FAIR),
         (dat["ph003_"] == HEALTH_POOR),

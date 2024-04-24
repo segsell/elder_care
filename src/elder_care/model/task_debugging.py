@@ -48,9 +48,9 @@ PARAMS = {
     "sigma": 0.5364562201,
     "interest_rate": 0.04,
     #
-    # "utility_leisure_constant": 1,
-    # "utility_leisure_age": 0.05,
-    # "utility_leisure_age_squared": -0.005,
+    "utility_leisure_constant": 1,
+    "utility_leisure_age": 0.05,
+    "utility_leisure_age_squared": -0.005,
     #
     "disutility_part_time": -3,
     "disutility_full_time": -8,
@@ -115,7 +115,7 @@ PROGRESS = {
 }
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD
