@@ -198,15 +198,6 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
     # )
 
     # Linear combination for bad health
-    outcome_bad_health = (
-        options["mother_bad_health"]["bad_health_age"] * mother_age
-        + options["mother_bad_health"]["bad_health_age_squared"] * mother_age_squared
-        + options["mother_bad_health"]["bad_health_lagged_good_health"] * good_health
-        + options["mother_bad_health"]["bad_health_lagged_medium_health"]
-        * medium_health
-        + options["mother_bad_health"]["bad_health_lagged_bad_health"] * bad_health
-        + options["mother_bad_health"]["bad_health_constant"]
-    )
 
     # options_bad_health = {
     #     "bad_health_age": 0.0812661362,
@@ -222,6 +213,13 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
     #     + options_bad_health["bad_health_lagged_bad_health"] * bad_health
     #     + options_bad_health["bad_health_constant"]
     # )
+    outcome_bad_health = (
+        options["mother_bad_health"]["bad_health_age"] * mother_age
+        + options["mother_bad_health"]["bad_health_age_squared"] * mother_age_squared
+        + options["mother_bad_health"]["bad_health_lagged_good_health"] * good_health
+        + options["mother_bad_health"]["bad_health_lagged_bad_health"] * bad_health
+        + options["mother_bad_health"]["bad_health_constant"]
+    )
 
     linear_comb = jnp.array([0, outcome_bad_health])
     health_trans_probs = _softmax(linear_comb)
