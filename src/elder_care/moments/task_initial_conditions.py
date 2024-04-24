@@ -12,8 +12,8 @@ import seaborn as sns
 from pytask import Product
 
 from elder_care.config import BLD
+from elder_care.model.shared import BAD_HEALTH, GOOD_HEALTH
 from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
-from elder_care.model.shared import GOOD_HEALTH, BAD_HEALTH
 
 BASE_YEAR = 2015
 
