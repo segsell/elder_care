@@ -7,9 +7,9 @@ import jax.numpy as jnp
 import numpy as np
 import pytask
 import yaml
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
 
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,

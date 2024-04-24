@@ -136,10 +136,16 @@ def sparsity_condition(
     cond = True
 
     # You cannot retire before the earliest retirement age
-    if (age <= options["min_ret_age"]) & is_retired(lagged_choice) or (age > options["max_ret_age"]) & (is_retired(lagged_choice) is False) or (
-        (is_full_time(lagged_choice) is False) & (is_part_time(lagged_choice) is False)
-    ) & (period + max_init_experience == experience) & (period > 0) | (
-        experience > options["experience_cap"]
+    if (
+        (age <= options["min_ret_age"]) & is_retired(lagged_choice)
+        or (age > options["max_ret_age"]) & (is_retired(lagged_choice) is False)
+        or (
+            (is_full_time(lagged_choice) is False)
+            & (is_part_time(lagged_choice) is False)
+        )
+        & (period + max_init_experience == experience)
+        & (period > 0)
+        | (experience > options["experience_cap"])
     ):
         cond = False
 
