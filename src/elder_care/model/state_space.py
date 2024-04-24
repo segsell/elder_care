@@ -1,16 +1,11 @@
 import numpy as np
 
 from elder_care.model.shared import (
-    BAD_HEALTH,
-    CARE,
     FULL_TIME_AND_NO_WORK,
-    MEDIUM_HEALTH,
-    NO_CARE,
-    RETIREMENT,
     NO_RETIREMENT,
-    NO_WORK,
     OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
+    RETIREMENT,
     WORK_AND_NO_WORK,
     is_full_time,
     is_part_time,
@@ -141,13 +136,7 @@ def sparsity_condition(
     cond = True
 
     # You cannot retire before the earliest retirement age
-    if (age <= options["min_ret_age"]) & is_retired(lagged_choice):
-        cond = False
-    # After the maximum retirement age, you must be retired
-    elif (age > options["max_ret_age"]) & (is_retired(lagged_choice) is False):
-        cond = False
-    #  If you have not worked last period, you can't have worked all your live
-    elif (
+    if (age <= options["min_ret_age"]) & is_retired(lagged_choice) or (age > options["max_ret_age"]) & (is_retired(lagged_choice) is False) or (
         (is_full_time(lagged_choice) is False) & (is_part_time(lagged_choice) is False)
     ) & (period + max_init_experience == experience) & (period > 0) | (
         experience > options["experience_cap"]
