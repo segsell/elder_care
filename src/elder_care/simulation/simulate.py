@@ -18,8 +18,8 @@ from elder_care.model.shared import (
     NO_FORMAL_CARE,
     NO_INFORMAL_CARE,
     NO_WORK,
-    PART_TIME,
     OUT_OF_LABOR,
+    PART_TIME,
     RETIREMENT,
 )
 
