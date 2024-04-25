@@ -1,17 +1,15 @@
 import numpy as np
 
 from elder_care.model.shared import (
-    BAD_HEALTH,
-    CARE,
-    CHOICE_AFTER_AGE_70,
     FULL_TIME_AND_NO_WORK,
-    MEDIUM_HEALTH,
-    NO_CARE,
-    NO_WORK,
+    NO_RETIREMENT,
+    OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
+    RETIREMENT,
     WORK_AND_NO_WORK,
     is_full_time,
     is_part_time,
+    is_retired,
 )
 
 
@@ -29,9 +27,10 @@ def create_state_space_functions():
 
 def get_state_specific_feasible_choice_set(
     period,
+    lagged_choice,
     part_time_offer,
     full_time_offer,
-    mother_health,
+    # mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.
@@ -51,15 +50,21 @@ def get_state_specific_feasible_choice_set(
     """
     age = options["start_age"] + period
 
-    _feasible_choice_set_all = list(np.arange(options["n_choices"]))
+    # _feasible_choice_set_all = list(np.arange(options["n_choices"]))
+    feasible_choice_set = np.arange(options["n_choices"])
 
-    if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
-        feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
-    else:
-        feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
+    # if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
+    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
+    # else:
+    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
-    if age >= options["age_seventy"]:
-        feasible_choice_set = [CHOICE_AFTER_AGE_70]
+    if age < options["min_ret_age"]:
+        feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]
+
+    if age >= options["max_ret_age"]:
+        feasible_choice_set = [RETIREMENT]
+    elif is_retired(lagged_choice):
+        feasible_choice_set = [i for i in feasible_choice_set if i in RETIREMENT]
     elif (full_time_offer == 0) & (part_time_offer == 1):
         feasible_choice_set = [
             i for i in feasible_choice_set if i in PART_TIME_AND_NO_WORK
@@ -71,7 +76,7 @@ def get_state_specific_feasible_choice_set(
     elif (full_time_offer == 1) & (part_time_offer == 1):
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
     else:
-        feasible_choice_set = [i for i in feasible_choice_set if i in NO_WORK]
+        feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
 
     return np.array(feasible_choice_set)
 
@@ -80,7 +85,7 @@ def update_endog_state(
     period,
     choice,
     experience,
-    has_sibling,
+    # has_sibling,
     high_educ,
     options,
 ):
@@ -89,11 +94,6 @@ def update_endog_state(
     next_state["mother_age"] = options["mother_min_age"] + mother_age + 1
     next_state["father_age"] = options["father_min_age"] + father_age + 1
 
-    below_exp_cap_part = experience + 1 < options["experience_cap"]
-    below_exp_cap_full = experience + 2 < options["experience_cap"]
-    experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
-    experience_full_time = 2 * below_exp_cap_full * is_full_time(choice)
-    next_state["experience"] = experience + experience_part_time + experience_full_time
 
     experience_cap: 15 # maximum of exp accumulated, see Adda et al (2017)
     Returns to experience are flat after 15 years of experience.
@@ -108,11 +108,16 @@ def update_endog_state(
     next_state["period"] = period + 1
     next_state["lagged_choice"] = choice
 
-    below_exp_cap_full = experience + 1 < options["experience_cap"]
-    experience_full_time = 1 * below_exp_cap_full * is_full_time(choice)
-    next_state["experience"] = experience + experience_full_time
+    below_exp_cap_part = experience + 1 < options["experience_cap"]
+    below_exp_cap_full = experience + 2 < options["experience_cap"]
+    experience_part_time = 1 * below_exp_cap_part * is_part_time(choice)
+    experience_full_time = 2 * below_exp_cap_full * is_full_time(choice)
+    next_state["experience"] = experience + experience_part_time + experience_full_time
+    # below_exp_cap_full = experience + 1 < options["experience_cap"]
+    # experience_full_time = 1 * below_exp_cap_full * is_full_time(choice)
+    # next_state["experience"] = experience + experience_full_time
 
-    next_state["has_sibling"] = has_sibling
+    # next_state["has_sibling"] = has_sibling
     next_state["high_educ"] = high_educ
 
     return next_state
@@ -130,14 +135,21 @@ def sparsity_condition(
 
     cond = True
 
+    # You cannot retire before the earliest retirement age
     if (
-        (is_full_time(lagged_choice) is False) & (is_part_time(lagged_choice) is False)
-    ) & (period + max_init_experience == experience) & (period > 0) | (
-        experience > options["experience_cap"]
+        (age <= options["min_ret_age"]) & is_retired(lagged_choice)
+        or (age > options["max_ret_age"]) & (is_retired(lagged_choice) is False)
+        or (
+            (is_full_time(lagged_choice) is False)
+            & (is_part_time(lagged_choice) is False)
+        )
+        & (period + max_init_experience == experience)
+        & (period > 0)
+        | (experience > options["experience_cap"])
     ):
         cond = False
 
-    if (age >= options["age_seventy"] + 1) & (lagged_choice != CHOICE_AFTER_AGE_70):
+    if (age >= options["max_ret_age"] + 1) & (lagged_choice != RETIREMENT):
         cond = False
 
     return cond

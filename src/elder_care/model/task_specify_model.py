@@ -34,7 +34,7 @@ from elder_care.utils import load_dict_from_pickle
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
-    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_short_exp.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_leisure.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
 
@@ -57,7 +57,13 @@ def get_options_dict(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
 ):
+    """Create options dictionary for model setup.
 
+    Estimate taste shock scale within the model.
+
+    "taste_shock_scale": specs["lambda"]
+
+    """
     specs, wage_params = load_specs(path_to_specs)
 
     exog_params = load_dict_from_pickle(path_to_exog)
@@ -75,7 +81,7 @@ def get_options_dict(
             "transition": prob_full_time_offer,
         },
         "mother_health": {
-            "states": np.arange(4, dtype=np.int8),
+            "states": np.arange(3, dtype=np.int8),
             "transition": exog_health_transition_mother_with_survival,
         },
     }
@@ -85,7 +91,6 @@ def get_options_dict(
             "n_periods": n_periods,
             "choices": choices,
             "income_shock_scale": specs["income_shock_scale"],
-            "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
                 "has_sibling": np.arange(2, dtype=np.uint8),
