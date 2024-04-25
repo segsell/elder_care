@@ -10,6 +10,8 @@ from elder_care.model.shared import (
     is_part_time,
 )
 
+MEDIUM_HEALTH = -99
+
 # ==============================================================================
 # Exogenous processes
 # ==============================================================================
@@ -95,8 +97,6 @@ def prob_survival_mother(period, mother_health, mother_alive, options):
         options["survival_prob_mother_constant"]
         + options["survival_prob_mother_lagged_age"] * mother_age
         + options["survival_prob_mother_lagged_age_squared"] * (mother_age**2)
-        # + options["survival_prob_mother_lagged_health_medium"]
-        # * is_medium_health(mother_health)
         + options["survival_prob_mother_lagged_health_bad"]
         * is_bad_health(mother_health)
     )
@@ -138,8 +138,6 @@ def prob_survival_father(period, father_health, father_alive, options):
         options["survival_prob_father_constant"]
         + options["survival_prob_father_lagged_age"] * father_age
         + options["survival_prob_father_lagged_age_squared"] * (father_age**2)
-        # + options["survival_prob_father_lagged_health_medium"]
-        # * is_medium_health(father_health)
         + options["survival_prob_father_lagged_health_bad"]
         * is_bad_health(father_health)
     )
@@ -183,36 +181,6 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
     prob_dead = mother_survival_prob[0]
     prob_alive = mother_survival_prob[1]
 
-    # # Linear combination for medium health
-    # lc_medium_health = (
-    #     options["mother_medium_health"]["medium_health_age"] * mother_age
-    #     + options["mother_medium_health"]["medium_health_age_squared"]
-    #     * mother_age_squared
-    #     + options["mother_medium_health"]["medium_health_lagged_good_health"]
-    #     * good_health
-    #     + options["mother_medium_health"]["medium_health_lagged_medium_health"]
-    #     * medium_health
-    #     + options["mother_medium_health"]["medium_health_lagged_bad_health"]
-    #     * bad_health
-    #     + options["mother_medium_health"]["medium_health_constant"]
-    # )
-
-    # Linear combination for bad health
-
-    # options_bad_health = {
-    #     "bad_health_age": 0.0812661362,
-    #     "bad_health_age_squared": -0.0003235191,
-    #     "bad_health_lagged_good_health": -2.8066457229,
-    #     "bad_health_lagged_bad_health": -0.2541395214,
-    #     "bad_health_constant": -3.0607852445,
-    # }
-    # outcome_bad_health = (
-    #     options_bad_health["bad_health_age"] * mother_age
-    #     + options_bad_health["bad_health_age_squared"] * mother_age_squared
-    #     + options_bad_health["bad_health_lagged_good_health"] * good_health
-    #     + options_bad_health["bad_health_lagged_bad_health"] * bad_health
-    #     + options_bad_health["bad_health_constant"]
-    # )
     outcome_bad_health = (
         options["mother_bad_health"]["bad_health_age"] * mother_age
         + options["mother_bad_health"]["bad_health_age_squared"] * mother_age_squared

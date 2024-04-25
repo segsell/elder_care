@@ -8,12 +8,12 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pytask
+from pytask import Product
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-from pytask import Product
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
@@ -288,8 +288,6 @@ def task_debugging(
     #     age_bins=AGE_BINS_SIM,
     # )
 
-    breakpoint()
-
     return (
         share_not_working_by_age,
         share_part_time_by_age,
@@ -320,7 +318,5 @@ def task_debug_simulate():
 
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
-
-    breakpoint()
 
     return out, arr

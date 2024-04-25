@@ -80,6 +80,8 @@ lint.extend-ignore = [
 "src/elder_care/simulation/initial_conditions.py" = ["PD008"]
 "src/elder_care/moments/task_create_empirical_moments.py" = ["ERA001"]
 "src/elder_care/moments/task_create_empirical_cov.py" = ["ERA001"]
+"src/elder_care/model/shared.py" = ["ERA001"]
+"src/elder_care/model/task_debugging.py" = ["ERA001"]
 
 
 [tool.ruff.lint.pydocstyle]

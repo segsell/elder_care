@@ -6,10 +6,10 @@ from functools import partial
 import estimagic as em
 import jax.numpy as jnp
 import pandas as pd
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.state_space import create_state_space_functions
@@ -233,7 +233,6 @@ def criterion_solve_and_simulate_short(
     """
     # ! random seed !
     seed = int(time.time())
-    # seed = 2024
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 
@@ -290,7 +289,6 @@ def criterion_solve_and_simulate(
     """
     # ! random seed !
     seed = int(time.time())
-    # seed = 2024
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 
