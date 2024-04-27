@@ -232,7 +232,7 @@ def criterion_solve_and_simulate_short(
 
     """
     # ! random seed !
-    seed = int(time.time())
+    seed = int(time.time()) + 10
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 
@@ -288,7 +288,7 @@ def criterion_solve_and_simulate(
 
     """
     # ! random seed !
-    seed = int(time.time())
+    seed = int(time.time()) + 10
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 

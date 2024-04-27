@@ -22,6 +22,10 @@ from elder_care.model.shared import (
     OUT_OF_LABOR,
     PART_TIME,
     RETIREMENT,
+    AGE_BINS_SIM,
+    INFORMAL_CARE,
+    FORMAL_CARE,
+    ALL,
 )
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
@@ -34,6 +38,7 @@ from elder_care.simulation.simulate import (
     create_simulation_array_from_df,
     create_simulation_df_from_dict,
     get_share_by_age,
+    get_share_by_type_by_age_bin,
     simulate_moments,
 )
 from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
@@ -48,27 +53,22 @@ PARAMS = {
     "sigma": 0.5364562201,
     "interest_rate": 0.04,
     #
-    "utility_leisure_constant": 1,
-    "utility_leisure_age": 0.05,
-    "utility_leisure_age_squared": -0.005,
+    # "utility_leisure_constant": 1,
+    # "utility_leisure_age": 0.05,
+    # "utility_leisure_age_squared": -0.005,
     #
     "disutility_part_time": -3,
     "disutility_full_time": -8,
     # caregiving
-    # "utility_informal_care_parent_medium_health": 2,
-    # "utility_informal_care_parent_bad_health": 1,
-    # "utility_formal_care_parent_medium_health": 0.7,
-    # "utility_formal_care_parent_bad_health": 1,
-    # "utility_combination_care_parent_medium_health": -0.8,
-    # "utility_combination_care_parent_bad_health": -1.5,
-    # # caregiving if sibling present
-    # "utility_informal_care_medium_health_sibling": 2.5,
-    # "utility_informal_care_bad_health_sibling": 2,
-    # "utility_formal_care_medium_health_sibling": 1,
-    # "utility_formal_care_bad_health_sibling": 1,
-    # "utility_combination_care_medium_health_sibling": -0.2,
-    # "utility_combination_care_bad_health_sibling": -0.4,
-    # part-time job offer
+    "utility_no_care_parent_bad_health": -1,
+    "utility_informal_care_parent_bad_health": 1,
+    "utility_formal_care_parent_bad_health": 1,
+    "utility_combination_care_parent_bad_health": -1.5,
+    # caregiving if sibling present
+    "utility_no_care_parent_bad_health_sibling": -1,
+    "utility_informal_care_bad_health_sibling": 2,
+    "utility_formal_care_bad_health_sibling": 1,
+    "utility_combination_care_bad_health_sibling": -0.4,
     "part_time_constant": -2.568584,
     "part_time_not_working_last_period": 0.3201395,
     "part_time_high_education": 0.1691369,
@@ -141,7 +141,7 @@ def task_debugging(
     results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     """
-    path_to_model = BLD / "model" / "model_work.pkl"
+    path_to_model = BLD / "model" / "model.pkl"
     options = get_options_dict()
 
     params = PARAMS
@@ -250,43 +250,45 @@ def task_debugging(
         choice=OUT_OF_LABOR,
     )  # 15
 
-    # share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=INFORMAL_CARE,
-    #     care_type=ALL,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=INFORMAL_CARE,
+        care_type=ALL,
+        age_bins=AGE_BINS_SIM,
+    )
 
-    # share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=FORMAL_CARE,
-    #     care_type=ALL,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FORMAL_CARE,
+        care_type=ALL,
+        age_bins=AGE_BINS_SIM,
+    )
 
-    # share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=NO_WORK,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
-    # share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=PART_TIME,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
-    # share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=FULL_TIME,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=NO_WORK,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+
+    breakpoint()
 
     return (
         share_not_working_by_age,
@@ -318,5 +320,7 @@ def task_debug_simulate():
 
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
+
+    breakpoint()
 
     return out, arr

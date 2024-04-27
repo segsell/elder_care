@@ -127,16 +127,16 @@ def task_create_empirical_var(
     all_vars = pd.concat(
         [
             employment_by_age_soep,
-            #     ols_coeffs_savings_rate,
-            #     employment_by_age_bin_non_caregivers_soep,
-            #     employment_by_age_bin_caregivers_soep,
-            #     #
-            #     share_informal_care_by_age_bin,
-            #     caregiving_by_mother_health_and_presence_of_sibling,
-            #     #
+            ols_coeffs_savings_rate,
+            employment_by_age_bin_non_caregivers_soep,
+            employment_by_age_bin_caregivers_soep,
+            #
+            share_informal_care_by_age_bin,
+            caregiving_by_mother_health_and_presence_of_sibling,
+            #
             employment_transitions_soep,
-            #     care_transitions_estimation_data,
-            #     care_transitions_parent_child_data,
+            care_transitions_estimation_data,
+            care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,
@@ -327,23 +327,27 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
     sibling_var,
     weight,
 ):
-
+    no_care_mother_bad_health = get_weighted_variance_one_condition(
+        dat=mother,
+        moment_unweighted="no_care",
+        condition_var="health",
+        condition_val=BAD_HEALTH,
+        weight=weight,
+    )
     informal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="informal_care_child",
+        moment_unweighted="informal_care_child_no_comb",
         condition_var="health",
         condition_val=BAD_HEALTH,
         weight=weight,
     )
-
     formal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="formal_care",
+        moment_unweighted="formal_care_no_comb",
         condition_var="health",
         condition_val=BAD_HEALTH,
         weight=weight,
     )
-
     comb_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
         moment_unweighted="combination_care",
@@ -352,26 +356,33 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
+    no_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="no_care",
+        condition_var_one="health",
+        condition_val_one=BAD_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
     informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
-        moment_unweighted="informal_care_child",
+        moment_unweighted="informal_care_child_no_comb",
         condition_var_one="health",
         condition_val_one=BAD_HEALTH,
         condition_var_two=sibling_var,
         condition_val_two=True,
         weight=weight,
     )
-
     formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
-        moment_unweighted="formal_care",
+        moment_unweighted="formal_care_no_comb",
         condition_var_one="health",
         condition_val_one=BAD_HEALTH,
         condition_var_two=sibling_var,
         condition_val_two=True,
         weight=weight,
     )
-
     comb_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
         moment_unweighted="combination_care",
@@ -384,9 +395,11 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
 
     return pd.Series(
         {
+            "no_care_mother_health_2": no_care_mother_bad_health,
             "informal_care_mother_health_2": informal_care_mother_bad_health,
             "formal_care_mother_health_2": formal_care_mother_bad_health,
             "combination_care_mother_health_2": comb_care_mother_bad_health,
+            "no_care_sibling_mother_health_2": no_care_mother_bad_health_sibling,
             "informal_care_sibling_mother_health_2": informal_mother_bad_health_sibling,
             "formal_care_sibling_mother_health_2": formal_mother_bad_health_sibling,
             "combination_care_sibling_mother_health_2": comb_mother_bad_health_sibling,

@@ -5,17 +5,18 @@
 quadrature_points_stochastic: 5
 
 start_age: 40
-end_age: 80 # 80
+end_age: 80
 retirement_age: 65
 min_ret_age: 62
 max_ret_age: 70
 
 mother_start_age: 65
 father_start_age: 67
-n_choices: 4
+n_choices: 16
 
-max_init_experience: 40
-experience_cap: 80 # 30 * 2
+min_init_experience: 5
+max_init_experience: 15
+experience_cap: 30 # times two
 
 # Parameters of the policy environment
 min_wage: 7.5 # 8.5 in 2015
