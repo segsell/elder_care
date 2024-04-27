@@ -12,11 +12,11 @@ from elder_care.model.shared import (
     WEEKLY_HOURS_PART_TIME,
     WEEKLY_INTENSIVE_INFORMAL_HOURS,
     is_bad_health,
-    is_no_care,
-    is_formal_care,
-    is_informal_care,
     is_combination_care,
+    is_formal_care,
     is_full_time,
+    is_informal_care,
+    is_no_care,
     is_part_time,
 )
 

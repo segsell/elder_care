@@ -17,15 +17,15 @@ from pytask import Product
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
+    AGE_BINS_SIM,
+    ALL,
+    FORMAL_CARE,
     FULL_TIME,
+    INFORMAL_CARE,
     NO_WORK,
     OUT_OF_LABOR,
     PART_TIME,
     RETIREMENT,
-    AGE_BINS_SIM,
-    INFORMAL_CARE,
-    FORMAL_CARE,
-    ALL,
 )
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
