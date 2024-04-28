@@ -5,7 +5,7 @@ import numpy as np
 MIN_INIT_EXPER = 5
 MAX_INIT_EXPER = 10
 
-from elder_care.model.shared import is_full_time, is_part_time, PART_TIME, FULL_TIME
+from elder_care.model.shared import FULL_TIME, PART_TIME
 
 
 def draw_initial_states(
@@ -50,7 +50,7 @@ def draw_initial_states(
         [
             _mother_health_probs.ravel() * mother_alive[1],
             jnp.atleast_1d(mother_alive[0]),
-        ]
+        ],
     )
 
     _experience = draw_from_discrete_normal(
@@ -62,7 +62,7 @@ def draw_initial_states(
         * float(initial_conditions.loc["experience_std"].iloc[0]),
     )
     experience = jnp.clip(
-        _experience * 2, a_min=MIN_INIT_EXPER * 2, a_max=MAX_INIT_EXPER * 2
+        _experience * 2, a_min=MIN_INIT_EXPER * 2, a_max=MAX_INIT_EXPER * 2,
     )
 
     initial_states = {
