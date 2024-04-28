@@ -62,7 +62,9 @@ def draw_initial_states(
         * float(initial_conditions.loc["experience_std"].iloc[0]),
     )
     experience = jnp.clip(
-        _experience * 2, a_min=MIN_INIT_EXPER * 2, a_max=MAX_INIT_EXPER * 2,
+        _experience * 2,
+        a_min=MIN_INIT_EXPER * 2,
+        a_max=MAX_INIT_EXPER * 2,
     )
 
     initial_states = {
