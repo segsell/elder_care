@@ -143,12 +143,10 @@ def is_no_care(lagged_choice):
 
 
 def is_informal_care(lagged_choice):
-    # intensive only here
     return jnp.any(lagged_choice == INFORMAL_CARE)
 
 
 def is_no_informal_care(lagged_choice):
-    # intensive only here
     return jnp.all(lagged_choice != INFORMAL_CARE)
 
 

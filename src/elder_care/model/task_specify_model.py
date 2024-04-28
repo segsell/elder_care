@@ -34,7 +34,7 @@ from elder_care.utils import load_dict_from_pickle
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
-    path_to_save: Annotated[Path, Product] = BLD / "model" / "model.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_32.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
 
