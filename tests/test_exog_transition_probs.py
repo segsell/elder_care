@@ -106,7 +106,7 @@ def test_exog_health_transition_with_alive(health_state):
     aaae(prob_good + prob_medium + prob_bad + prob_dead, 1)
 
 
-@pytest.mark.parametrize("health_state", [GOOD_HEALTH, BAD_HEALTH])
+@pytest.mark.parametrize("health_state", [BAD_HEALTH])
 def test_exog_health_transition_with_alive_binary(health_state):
 
     path_to_specs = SRC / "model" / "specs.yaml"
@@ -139,9 +139,10 @@ def test_exog_health_transition_with_alive_binary(health_state):
     options = {"mother_start_age": 65} | model_params | survival_prob_params
 
     prob_good, prob_bad, prob_dead = exog_health_transition_mother_with_survival(
-        period=2,
+        period=15,
         mother_health=health_state,
         options=options,
     )
+    breakpoint()
 
     aaae(prob_good + prob_bad + prob_dead, 1)

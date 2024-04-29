@@ -12,7 +12,7 @@ max_ret_age: 70
 
 mother_start_age: 65
 father_start_age: 67
-n_choices: 16
+n_choices: 4
 
 min_init_experience: 5
 max_init_experience: 15

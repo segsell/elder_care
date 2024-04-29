@@ -1,10 +1,7 @@
 import numpy as np
 
 from elder_care.model.shared import (
-    BAD_HEALTH,
-    CARE,
     FULL_TIME_AND_NO_WORK,
-    NO_CARE,
     NO_RETIREMENT,
     OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
@@ -31,9 +28,9 @@ def create_state_space_functions():
 def get_state_specific_feasible_choice_set(
     period,
     lagged_choice,
-    # part_time_offer,
-    # full_time_offer,
-    mother_health,
+    part_time_offer,
+    full_time_offer,
+    # mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.
@@ -52,15 +49,13 @@ def get_state_specific_feasible_choice_set(
 
     """
     age = options["start_age"] + period
-    part_time_offer = 1
-    full_time_offer = 1
 
-    _feasible_choice_set_all = np.arange(options["n_choices"])
+    feasible_choice_set = np.arange(options["n_choices"])
 
-    if mother_health == BAD_HEALTH:
-        feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
-    else:
-        feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
+    # if mother_health == BAD_HEALTH:
+    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
+    # else:
+    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
     if age < options["min_ret_age"]:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]

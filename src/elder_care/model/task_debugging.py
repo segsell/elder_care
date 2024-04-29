@@ -8,12 +8,12 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pytask
+from pytask import Product
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-from pytask import Product
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
@@ -52,18 +52,24 @@ PARAMS = {
     # "utility_leisure_age": 0.05,
     # "utility_leisure_age_squared": -0.005,
     #
-    "disutility_part_time": -3,
-    "disutility_full_time": -8,
+    "disutility_part_time": -2,
+    "disutility_full_time": -4,
+    # "disutility_part_time_constant": 0,
+    # "disutility_part_time_age": -1,
+    # "disutility_part_time_age_squared": 0,
+    # "disutility_full_time_constant": 0,
+    # "disutility_full_time_age": -2,
+    # "disutility_full_time_age_squared": 0,
     # caregiving
-    "utility_no_care_parent_bad_health": -1,
-    "utility_informal_care_parent_bad_health": 1,
-    "utility_formal_care_parent_bad_health": 1,
-    "utility_combination_care_parent_bad_health": -1.5,
-    # caregiving if sibling present
-    "utility_no_care_parent_bad_health_sibling": -1,
-    "utility_informal_care_bad_health_sibling": 2,
-    "utility_formal_care_bad_health_sibling": 1,
-    "utility_combination_care_bad_health_sibling": -0.4,
+    # "utility_no_care_parent_bad_health": -1,
+    # "utility_informal_care_parent_bad_health": 1,
+    # "utility_formal_care_parent_bad_health": 1,
+    # "utility_combination_care_parent_bad_health": -1.5,
+    # # caregiving if sibling present
+    # "utility_no_care_parent_bad_health_sibling": -1,
+    # "utility_informal_care_bad_health_sibling": 2,
+    # "utility_formal_care_bad_health_sibling": 1,
+    # "utility_combination_care_bad_health_sibling": -0.4,
     "part_time_constant": -2.568584,
     "part_time_not_working_last_period": 0.3201395,
     "part_time_high_education": 0.1691369,
@@ -283,7 +289,7 @@ def task_debugging(
     #     age_bins=AGE_BINS_SIM,
     # )
 
-    # breakpoint()
+    breakpoint()
 
     return (
         share_not_working_by_age,

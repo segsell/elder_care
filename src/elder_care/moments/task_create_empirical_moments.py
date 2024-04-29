@@ -267,23 +267,23 @@ def task_create_moments(
         parent["no_informal_care_child"] * parent[weight]
     )
 
-    caregiving_by_mother_health_and_presence_of_sibling = (
-        get_caregiving_status_by_mother_health_and_presence_of_sibling(
-            mother,
-            sibling_var="has_two_daughters",
-            weight=weight,
-        )
-    )
+    # caregiving_by_mother_health_and_presence_of_sibling = (
+    #     get_caregiving_status_by_mother_health_and_presence_of_sibling(
+    #         mother,
+    #         sibling_var="has_two_daughters",
+    #         weight=weight,
+    #     )
+    # )
 
-    first_half = caregiving_by_mother_health_and_presence_of_sibling[:4]
-    second_half = caregiving_by_mother_health_and_presence_of_sibling[4:]
+    # first_half = caregiving_by_mother_health_and_presence_of_sibling[:4]
+    # second_half = caregiving_by_mother_health_and_presence_of_sibling[4:]
 
-    normalized_first_half = first_half / first_half.sum()
-    normalized_second_half = second_half / second_half.sum()
+    # normalized_first_half = first_half / first_half.sum()
+    # normalized_second_half = second_half / second_half.sum()
 
-    caregiving_by_mother_health_and_presence_of_sibling_normalized = pd.concat(
-        [normalized_first_half, normalized_second_half],
-    )
+    # caregiving_by_mother_health_and_presence_of_sibling_normalized = pd.concat(
+    #     [normalized_first_half, normalized_second_half],
+    # )
 
     # ================================================================================
     # Labor and caregiving transitions
@@ -291,29 +291,29 @@ def task_create_moments(
 
     employment_transitions_soep = get_employment_transitions_soep()
 
-    care_transitions_estimation_data = (
-        get_care_transitions_from_estimation_data_weighted(
-            dat,
-            intensive_care_var=intensive_care_var,
-            intensive_care_var_weighted=intensive_care_var_weighted,
-            weight=weight,
-        )
-    )
+    # care_transitions_estimation_data = (
+    #     get_care_transitions_from_estimation_data_weighted(
+    #         dat,
+    #         intensive_care_var=intensive_care_var,
+    #         intensive_care_var_weighted=intensive_care_var_weighted,
+    #         weight=weight,
+    #     )
+    # )
 
-    care_transitions_parent_child_data = (
-        get_care_transitions_from_parent_child_data_weighted(
-            parent,
-            weight=weight,
-        )
-    )
+    # care_transitions_parent_child_data = (
+    #     get_care_transitions_from_parent_child_data_weighted(
+    #         parent,
+    #         weight=weight,
+    #     )
+    # )
 
     employment_by_age_soep = get_employment_by_age_soep()
-    employment_by_age_bin_caregivers_soep = (
-        get_employment_by_age_bin_informal_parental_caregivers_soep()
-    )
-    employment_by_age_bin_non_caregivers_soep = (
-        get_employment_by_age_bin_non_informal_caregivers_soep()
-    )
+    # employment_by_age_bin_caregivers_soep = (
+    #     get_employment_by_age_bin_informal_parental_caregivers_soep()
+    # )
+    # employment_by_age_bin_non_caregivers_soep = (
+    #     get_employment_by_age_bin_non_informal_caregivers_soep()
+    # )
 
     ols_coeffs_savings_rate = get_coefficients_savings_rate_regression()
 
@@ -321,15 +321,15 @@ def task_create_moments(
         [
             employment_by_age_soep,
             ols_coeffs_savings_rate,
-            employment_by_age_bin_non_caregivers_soep,
-            employment_by_age_bin_caregivers_soep,
+            # employment_by_age_bin_non_caregivers_soep,
+            # employment_by_age_bin_caregivers_soep,
             # #
-            share_informal_care_by_age_bin,
-            caregiving_by_mother_health_and_presence_of_sibling_normalized,
+            # share_informal_care_by_age_bin,
+            # caregiving_by_mother_health_and_presence_of_sibling_normalized,
             # #
             employment_transitions_soep,
-            care_transitions_estimation_data,
-            care_transitions_parent_child_data,
+            # care_transitions_estimation_data,
+            # care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,
@@ -1917,7 +1917,7 @@ def get_coefficients_savings_rate_regression():
             "savings_rate_high_education": 0.0050211845,
             "savings_rate_part_time": 0.0809547016,
             "savings_rate_full_time": 0.1041300926,
-            "savings_rate_informal_care": -0.0339010984,
+            # "savings_rate_informal_care": -0.0339010984,
         },
     )
 

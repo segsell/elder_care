@@ -7,22 +7,13 @@ import pandas as pd
 
 from elder_care.model.shared import (
     AGE_BINS_SIM,
-    ALL,
     BAD_HEALTH,
-    COMBINATION_CARE,
-    FORMAL_CARE,
     FULL_TIME,
     INFORMAL_CARE,
     MAX_AGE_SIM,
     MIN_AGE_SIM,
-    NO_CARE,
-    NO_FORMAL_CARE,
-    NO_INFORMAL_CARE,
-    NO_WORK,
     OUT_OF_LABOR,
     PART_TIME,
-    PURE_FORMAL_CARE,
-    PURE_INFORMAL_CARE,
     RETIREMENT,
 )
 
@@ -141,7 +132,7 @@ def simulate_moments(arr, idx):
                 idx["high_educ"],
                 idx["choice_part_time"],
                 idx["choice_full_time"],
-                idx["choice_informal_care"],
+                # idx["choice_informal_care"],
             ],
         ],
         y=arr[:, idx["savings_rate"]],
@@ -151,127 +142,127 @@ def simulate_moments(arr, idx):
     # Labor shares by informal caregiving status
     # ================================================================================
 
-    share_not_working_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=NO_WORK,
-        care_type=NO_INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
-    share_part_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=PART_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
-    share_full_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=FULL_TIME,
-        care_type=NO_INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
+    # share_not_working_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=NO_WORK,
+    #     care_type=NO_INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+    # share_part_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=PART_TIME,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+    # share_full_time_no_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=FULL_TIME,
+    #     care_type=NO_INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
 
-    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=NO_WORK,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
-    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=PART_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
-    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=FULL_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
-    )
+    # share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=NO_WORK,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+    # share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=PART_TIME,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
+    # share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=FULL_TIME,
+    #     care_type=INFORMAL_CARE,
+    #     age_bins=AGE_BINS_SIM,
+    # )
 
     # ================================================================================
     # Share caregiving by age bin
     # ================================================================================
 
-    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=INFORMAL_CARE,
-        care_type=ALL,
-        age_bins=AGE_BINS_SIM,
-    )
+    # share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    #     arr,
+    #     ind=idx,
+    #     choice=INFORMAL_CARE,
+    #     care_type=ALL,
+    #     age_bins=AGE_BINS_SIM,
+    # )
 
     # ================================================================================
     # Share care by mother's health
     # ================================================================================
 
-    no_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=NO_CARE,
-        parent="mother",
-    )
-    informal_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=PURE_INFORMAL_CARE,
-        parent="mother",
-    )
-    formal_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=PURE_FORMAL_CARE,
-        parent="mother",
-    )
-    combination_care_mother_health = get_share_care_by_parental_health(
-        arr,
-        ind=idx,
-        care_choice=COMBINATION_CARE,
-        parent="mother",
-    )
+    # no_care_mother_health = get_share_care_by_parental_health(
+    #     arr,
+    #     ind=idx,
+    #     care_choice=NO_CARE,
+    #     parent="mother",
+    # )
+    # informal_care_mother_health = get_share_care_by_parental_health(
+    #     arr,
+    #     ind=idx,
+    #     care_choice=PURE_INFORMAL_CARE,
+    #     parent="mother",
+    # )
+    # formal_care_mother_health = get_share_care_by_parental_health(
+    #     arr,
+    #     ind=idx,
+    #     care_choice=PURE_FORMAL_CARE,
+    #     parent="mother",
+    # )
+    # combination_care_mother_health = get_share_care_by_parental_health(
+    #     arr,
+    #     ind=idx,
+    #     care_choice=COMBINATION_CARE,
+    #     parent="mother",
+    # )
 
-    no_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=NO_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
-    informal_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=PURE_INFORMAL_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
-    formal_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=PURE_FORMAL_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
-    combination_care_mother_health_has_sibling = (
-        get_share_care_by_parental_health_and_presence_of_sibling(
-            arr,
-            ind=idx,
-            care_choice=COMBINATION_CARE,
-            has_sibling=True,
-            parent="mother",
-        )
-    )
+    # no_care_mother_health_has_sibling = (
+    #     get_share_care_by_parental_health_and_presence_of_sibling(
+    #         arr,
+    #         ind=idx,
+    #         care_choice=NO_CARE,
+    #         has_sibling=True,
+    #         parent="mother",
+    #     )
+    # )
+    # informal_care_mother_health_has_sibling = (
+    #     get_share_care_by_parental_health_and_presence_of_sibling(
+    #         arr,
+    #         ind=idx,
+    #         care_choice=PURE_INFORMAL_CARE,
+    #         has_sibling=True,
+    #         parent="mother",
+    #     )
+    # )
+    # formal_care_mother_health_has_sibling = (
+    #     get_share_care_by_parental_health_and_presence_of_sibling(
+    #         arr,
+    #         ind=idx,
+    #         care_choice=PURE_FORMAL_CARE,
+    #         has_sibling=True,
+    #         parent="mother",
+    #     )
+    # )
+    # combination_care_mother_health_has_sibling = (
+    #     get_share_care_by_parental_health_and_presence_of_sibling(
+    #         arr,
+    #         ind=idx,
+    #         care_choice=COMBINATION_CARE,
+    #         has_sibling=True,
+    #         parent="mother",
+    #     )
+    # )
 
     # ================================================================================
     # Employment transitions
@@ -338,109 +329,109 @@ def simulate_moments(arr, idx):
     # Caregiving transitions
     # ================================================================================
 
-    no_informal_care_to_no_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_INFORMAL_CARE,
-        current_choice=NO_INFORMAL_CARE,
-    )
-    no_informal_care_to_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_INFORMAL_CARE,
-        current_choice=INFORMAL_CARE,
-    )
+    # no_informal_care_to_no_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_INFORMAL_CARE,
+    #     current_choice=NO_INFORMAL_CARE,
+    # )
+    # no_informal_care_to_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_INFORMAL_CARE,
+    #     current_choice=INFORMAL_CARE,
+    # )
 
-    informal_care_to_no_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=INFORMAL_CARE,
-        current_choice=NO_INFORMAL_CARE,
-    )
-    informal_care_to_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=INFORMAL_CARE,
-        current_choice=INFORMAL_CARE,
-    )
+    # informal_care_to_no_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=INFORMAL_CARE,
+    #     current_choice=NO_INFORMAL_CARE,
+    # )
+    # informal_care_to_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=INFORMAL_CARE,
+    #     current_choice=INFORMAL_CARE,
+    # )
 
-    no_informal_care_to_no_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_INFORMAL_CARE,
-        current_choice=NO_FORMAL_CARE,
-    )
-    no_informal_care_to_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_INFORMAL_CARE,
-        current_choice=FORMAL_CARE,
-    )
+    # no_informal_care_to_no_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_INFORMAL_CARE,
+    #     current_choice=NO_FORMAL_CARE,
+    # )
+    # no_informal_care_to_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_INFORMAL_CARE,
+    #     current_choice=FORMAL_CARE,
+    # )
 
-    informal_care_to_no_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=INFORMAL_CARE,
-        current_choice=NO_FORMAL_CARE,
-    )
-    informal_care_to_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=INFORMAL_CARE,
-        current_choice=FORMAL_CARE,
-    )
+    # informal_care_to_no_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=INFORMAL_CARE,
+    #     current_choice=NO_FORMAL_CARE,
+    # )
+    # informal_care_to_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=INFORMAL_CARE,
+    #     current_choice=FORMAL_CARE,
+    # )
 
-    no_formal_care_to_no_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_FORMAL_CARE,
-        current_choice=NO_INFORMAL_CARE,
-    )
-    no_formal_care_to_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_FORMAL_CARE,
-        current_choice=INFORMAL_CARE,
-    )
+    # no_formal_care_to_no_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_FORMAL_CARE,
+    #     current_choice=NO_INFORMAL_CARE,
+    # )
+    # no_formal_care_to_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_FORMAL_CARE,
+    #     current_choice=INFORMAL_CARE,
+    # )
 
-    formal_care_to_no_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=FORMAL_CARE,
-        current_choice=NO_INFORMAL_CARE,
-    )
-    formal_care_to_informal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=FORMAL_CARE,
-        current_choice=INFORMAL_CARE,
-    )
+    # formal_care_to_no_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=FORMAL_CARE,
+    #     current_choice=NO_INFORMAL_CARE,
+    # )
+    # formal_care_to_informal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=FORMAL_CARE,
+    #     current_choice=INFORMAL_CARE,
+    # )
 
-    no_formal_care_to_no_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_FORMAL_CARE,
-        current_choice=NO_FORMAL_CARE,
-    )
-    no_formal_care_to_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=NO_FORMAL_CARE,
-        current_choice=FORMAL_CARE,
-    )
+    # no_formal_care_to_no_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_FORMAL_CARE,
+    #     current_choice=NO_FORMAL_CARE,
+    # )
+    # no_formal_care_to_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=NO_FORMAL_CARE,
+    #     current_choice=FORMAL_CARE,
+    # )
 
-    formal_care_to_no_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=FORMAL_CARE,
-        current_choice=NO_FORMAL_CARE,
-    )
-    formal_care_to_formal_care = get_transition(
-        arr,
-        ind=idx,
-        lagged_choice=FORMAL_CARE,
-        current_choice=FORMAL_CARE,
-    )
+    # formal_care_to_no_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=FORMAL_CARE,
+    #     current_choice=NO_FORMAL_CARE,
+    # )
+    # formal_care_to_formal_care = get_transition(
+    #     arr,
+    #     ind=idx,
+    #     lagged_choice=FORMAL_CARE,
+    #     current_choice=FORMAL_CARE,
+    # )
 
     # ================================================================================
     # Moments matrix
@@ -455,25 +446,25 @@ def simulate_moments(arr, idx):
         + savings_rate_coeffs.tolist()
         # employment shares by caregiving status
         # no informal care
-        + share_not_working_no_informal_care_by_age_bin
-        + share_part_time_no_informal_care_by_age_bin
-        + share_full_time_no_informal_care_by_age_bin
-        # informal care
-        + share_not_working_informal_care_by_age_bin
-        + share_part_time_informal_care_by_age_bin
-        + share_full_time_informal_care_by_age_bin
+        # + share_not_working_no_informal_care_by_age_bin
+        # + share_part_time_no_informal_care_by_age_bin
+        # + share_full_time_no_informal_care_by_age_bin
+        # # informal care
+        # + share_not_working_informal_care_by_age_bin
+        # + share_part_time_informal_care_by_age_bin
+        # + share_full_time_informal_care_by_age_bin
         #
         # share of informal care in total population by age bin
-        + share_informal_care_by_age_bin
-        # Care by mother's health by presence of sister
-        + no_care_mother_health
-        + informal_care_mother_health
-        + formal_care_mother_health
-        + combination_care_mother_health
-        + no_care_mother_health_has_sibling
-        + informal_care_mother_health_has_sibling
-        + formal_care_mother_health_has_sibling
-        + combination_care_mother_health_has_sibling
+        # + share_informal_care_by_age_bin
+        # # Care by mother's health by presence of sister
+        # + no_care_mother_health
+        # + informal_care_mother_health
+        # + formal_care_mother_health
+        # + combination_care_mother_health
+        # + no_care_mother_health_has_sibling
+        # + informal_care_mother_health_has_sibling
+        # + formal_care_mother_health_has_sibling
+        # + combination_care_mother_health_has_sibling
         #
         # Employment transitions
         + no_work_to_no_work
@@ -484,27 +475,27 @@ def simulate_moments(arr, idx):
         + part_time_to_full_time
         + full_time_to_no_work
         + full_time_to_part_time
-        + full_time_to_full_time
-        +
+        + full_time_to_full_time,
+        # +
         # Caregiving transitions
-        no_informal_care_to_no_informal_care
-        + no_informal_care_to_informal_care
-        + informal_care_to_no_informal_care
-        + informal_care_to_informal_care
-        + no_informal_care_to_no_formal_care
-        + no_informal_care_to_formal_care
-        + informal_care_to_no_formal_care
-        + informal_care_to_formal_care
-        +
-        #
-        no_formal_care_to_no_informal_care
-        + no_formal_care_to_informal_care
-        + formal_care_to_no_informal_care
-        + formal_care_to_informal_care
-        + no_formal_care_to_no_formal_care
-        + no_formal_care_to_formal_care
-        + formal_care_to_no_formal_care
-        + formal_care_to_formal_care,
+        # no_informal_care_to_no_informal_care
+        # + no_informal_care_to_informal_care
+        # + informal_care_to_no_informal_care
+        # + informal_care_to_informal_care
+        # + no_informal_care_to_no_formal_care
+        # + no_informal_care_to_formal_care
+        # + informal_care_to_no_formal_care
+        # + informal_care_to_formal_care
+        # +
+        # #
+        # no_formal_care_to_no_informal_care
+        # + no_formal_care_to_informal_care
+        # + formal_care_to_no_informal_care
+        # + formal_care_to_informal_care
+        # + no_formal_care_to_no_formal_care
+        # + no_formal_care_to_formal_care
+        # + formal_care_to_no_formal_care
+        # + formal_care_to_formal_care,
     )
 
 
@@ -721,7 +712,7 @@ def create_simulation_array_from_df(data, options):
 
     data.loc[:, "age"] = options["start_age"] + period_indices
     data.loc[:, "age_squared"] = data["age"] ** 2
-    data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
+    # data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
 
     # Financial calculations
     data.loc[:, "wealth"] = data["savings"] + data["consumption"]
@@ -753,10 +744,10 @@ def create_simulation_array_from_df(data, options):
         jnp.array(data["choice"]),
         FULL_TIME,
     ).astype(np.int8)
-    data.loc[:, "choice_informal_care"] = jnp.isin(
-        jnp.array(data["choice"]),
-        INFORMAL_CARE,
-    ).astype(np.int8)
+    # data.loc[:, "choice_informal_care"] = jnp.isin(
+    #     jnp.array(data["choice"]),
+    #     INFORMAL_CARE,
+    # ).astype(np.int8)
 
     # Wage calculations
     data.loc[:, "log_wage"] = (

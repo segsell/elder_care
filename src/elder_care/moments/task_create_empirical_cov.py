@@ -87,16 +87,16 @@ def task_create_empirical_var(
 
     ols_coeffs_savings_rate = get_var_coefficients_savings_rate_regression_soep()
 
-    employment_by_age_bin_non_caregivers_soep = (
-        get_var_employment_by_age_bin_non_informal_caregivers_soep()
-    )
-    employment_by_age_bin_caregivers_soep = (
-        get_var_employment_by_age_bin_informal_parental_caregivers_soep()
-    )
+    # employment_by_age_bin_non_caregivers_soep = (
+    #     get_var_employment_by_age_bin_non_informal_caregivers_soep()
+    # )
+    # employment_by_age_bin_caregivers_soep = (
+    #     get_var_employment_by_age_bin_informal_parental_caregivers_soep()
+    # )
 
-    share_informal_care_by_age_bin = (
-        get_var_share_informal_maternal_care_by_age_bin_soep()
-    )
+    # share_informal_care_by_age_bin = (
+    #     get_var_share_informal_maternal_care_by_age_bin_soep()
+    # )
 
     employment_transitions_soep = get_var_employment_transitions_soep()
 
@@ -104,21 +104,21 @@ def task_create_empirical_var(
     # SHARE
     # ================================================================================
 
-    caregiving_by_mother_health_and_presence_of_sibling = (
-        get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
-            mother,
-            sibling_var="has_two_daughters",
-            weight=weight,
-        )
-    )
+    # caregiving_by_mother_health_and_presence_of_sibling = (
+    #     get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
+    #         mother,
+    #         sibling_var="has_two_daughters",
+    #         weight=weight,
+    #     )
+    # )
 
-    care_transitions_estimation_data = get_var_care_transitions_from_estimation_data(
-        dat,
-        intensive_care_var=intensive_care_var,
-    )
-    care_transitions_parent_child_data = get_care_transitions_from_parent_child_data(
-        parent,
-    )
+    # care_transitions_estimation_data = get_var_care_transitions_from_estimation_data(
+    #     dat,
+    #     intensive_care_var=intensive_care_var,
+    # )
+    # care_transitions_parent_child_data = get_care_transitions_from_parent_child_data(
+    #     parent,
+    # )
 
     # ================================================================================
     # Combine variances
@@ -128,15 +128,15 @@ def task_create_empirical_var(
         [
             employment_by_age_soep,
             ols_coeffs_savings_rate,
-            employment_by_age_bin_non_caregivers_soep,
-            employment_by_age_bin_caregivers_soep,
+            # employment_by_age_bin_non_caregivers_soep,
+            # employment_by_age_bin_caregivers_soep,
             #
-            share_informal_care_by_age_bin,
-            caregiving_by_mother_health_and_presence_of_sibling,
+            # share_informal_care_by_age_bin,
+            # caregiving_by_mother_health_and_presence_of_sibling,
             #
             employment_transitions_soep,
-            care_transitions_estimation_data,
-            care_transitions_parent_child_data,
+            # care_transitions_estimation_data,
+            # care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,
@@ -660,7 +660,7 @@ def get_var_coefficients_savings_rate_regression_soep():
             "savings_rate_high_education": 0.000000488544,
             "savings_rate_part_time": 0.001620693283,
             "savings_rate_full_time": 0.002157233215,
-            "savings_rate_informal_care": 0.000301182374,
+            # "savings_rate_informal_care": 0.000301182374,
         },
     )
 
