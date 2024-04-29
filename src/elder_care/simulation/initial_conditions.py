@@ -1,11 +1,13 @@
+"""Initial conditions for the simulation."""
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 
+from elder_care.model.shared import FULL_TIME, PART_TIME
+
 MIN_INIT_EXPER = 5
 MAX_INIT_EXPER = 10
-
-from elder_care.model.shared import FULL_TIME, PART_TIME
 
 
 def draw_initial_states(

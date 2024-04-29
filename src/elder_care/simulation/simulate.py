@@ -670,7 +670,7 @@ def get_share_care_by_parental_health(
 
     shares = []
     for health in [BAD_HEALTH]:
-        health_mask = df_arr[:, ind[f"{parent}_health"]] == BAD_HEALTH
+        health_mask = df_arr[:, ind[f"{parent}_health"]] == health
 
         share = jnp.sum(care_choice_mask & health_mask) / jnp.sum(health_mask)
         shares.append(share)
@@ -721,7 +721,7 @@ def create_simulation_array_from_df(data, options):
 
     data.loc[:, "age"] = options["start_age"] + period_indices
     data.loc[:, "age_squared"] = data["age"] ** 2
-    # data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
+    data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
 
     # Financial calculations
     data.loc[:, "wealth"] = data["savings"] + data["consumption"]

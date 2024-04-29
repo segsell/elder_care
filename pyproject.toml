@@ -86,8 +86,14 @@ lint.extend-ignore = [
 "src/elder_care/model/utility_functions.py" = ["ERA001"]
 
 
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+
+[[tool.refurb.amend]]
+path = "src/elder_care/simulation/simulate.py"
+ignore = ["FURB109"]
 
 
 [tool.yamlfix]
