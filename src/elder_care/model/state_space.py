@@ -31,8 +31,8 @@ def create_state_space_functions():
 def get_state_specific_feasible_choice_set(
     period,
     lagged_choice,
-    part_time_offer,
-    full_time_offer,
+    # part_time_offer,
+    # full_time_offer,
     mother_health,
     options,
 ):
@@ -52,10 +52,12 @@ def get_state_specific_feasible_choice_set(
 
     """
     age = options["start_age"] + period
+    part_time_offer = 1
+    full_time_offer = 1
 
     _feasible_choice_set_all = np.arange(options["n_choices"])
 
-    if mother_health in [BAD_HEALTH]:
+    if mother_health == BAD_HEALTH:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]

@@ -16,7 +16,7 @@ n_choices: 16
 
 min_init_experience: 5
 max_init_experience: 15
-experience_cap: 32 # times two
+experience_cap: 30 # times two
 
 # Parameters of the policy environment
 min_wage: 7.5 # 8.5 in 2015
