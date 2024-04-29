@@ -17,6 +17,7 @@ from elder_care.model.shared import (
     is_full_time,
     is_informal_care,
     is_no_care,
+    is_no_informal_care,
     is_part_time,
 )
 
