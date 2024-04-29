@@ -21,7 +21,6 @@ from elder_care.model.shared import (
     FEMALE,
     GOOD_HEALTH,
     MAX_AGE,
-    MEDIUM_HEALTH,
     MIN_AGE,
 )
 
@@ -37,9 +36,7 @@ def task_create_moments(
     / "data"
     / "parent_child_data_hh_weight.csv",
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
-    path_to_save: Annotated[Path, Product] = BLD
-    / "moments"
-    / "empirical_moments_long.csv",
+    path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
     """Create empirical moments for SHARE data.
 
@@ -224,6 +221,7 @@ def task_create_moments(
 
     parent = parent_hh_weight.copy()
 
+    parent["no_care_weighted"] = parent["no_care"] * parent[weight]
     parent["informal_care_child_weighted"] = (
         parent["informal_care_child"] * parent[weight]
     )
@@ -234,8 +232,12 @@ def task_create_moments(
         parent["no_combination_care"] * parent[weight]
     )
 
-    parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
-    parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
+    parent["informal_care_child_no_comb_weighted"] = (
+        parent["informal_care_child_no_comb"] * parent[weight]
+    )
+    parent["formal_care_no_comb_weighted"] = (
+        parent["formal_care_no_comb"] * parent[weight]
+    )
 
     dat["no_intensive_informal_weighted"] = dat["no_intensive_informal"] * dat[weight]
     dat["intensive_care_no_other_weighted"] = (
@@ -271,6 +273,16 @@ def task_create_moments(
             sibling_var="has_two_daughters",
             weight=weight,
         )
+    )
+
+    first_half = caregiving_by_mother_health_and_presence_of_sibling[:4]
+    second_half = caregiving_by_mother_health_and_presence_of_sibling[4:]
+
+    normalized_first_half = first_half / first_half.sum()
+    normalized_second_half = second_half / second_half.sum()
+
+    caregiving_by_mother_health_and_presence_of_sibling_normalized = pd.concat(
+        [normalized_first_half, normalized_second_half],
     )
 
     # ================================================================================
@@ -311,10 +323,10 @@ def task_create_moments(
             ols_coeffs_savings_rate,
             employment_by_age_bin_non_caregivers_soep,
             employment_by_age_bin_caregivers_soep,
-            #
+            # #
             share_informal_care_by_age_bin,
-            caregiving_by_mother_health_and_presence_of_sibling,
-            #
+            caregiving_by_mother_health_and_presence_of_sibling_normalized,
+            # #
             employment_transitions_soep,
             care_transitions_estimation_data,
             care_transitions_parent_child_data,
@@ -484,7 +496,7 @@ def get_care_transitions_from_parent_child_data_weighted(parent, weight):
     )
 
 
-def get_care_transitions_from_parent_child_data_weighted_only(parent, weight):
+def _get_care_transitions_from_parent_child_data_weighted_only(parent, weight):
     """Get care transitions from parent child data set using survey weights.
 
     # informal no_informal_to_no_informal_weighted = get_care_transition_weighted(
@@ -999,18 +1011,24 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
     combination_care_mother_sibling_health_2,0.06878949679959141
 
     """
+    no_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
+        mother,
+        parent="mother",
+        moment="no_care_weighted",
+        weight=weight,
+    )
     informal_care_by_mother_health = (
         get_caregiving_status_by_parental_health_any_sibling(
             mother,
             parent="mother",
-            moment="informal_care_child_weighted",
+            moment="informal_care_child_no_comb_weighted",
             weight=weight,
         )
     )
     formal_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
         mother,
         parent="mother",
-        moment="formal_care_weighted",
+        moment="formal_care_no_comb_weighted",
         weight=weight,
     )
 
@@ -1023,11 +1041,21 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
         )
     )
 
+    no_care_by_mother_health_sibling = (
+        get_caregiving_status_by_parental_health_and_presence_of_sibling(
+            mother,
+            parent="mother",
+            moment="no_care_weighted",
+            has_other_sibling=True,
+            sibling_var=sibling_var,
+            weight=weight,
+        )
+    )
     informal_care_by_mother_health_sibling = (
         get_caregiving_status_by_parental_health_and_presence_of_sibling(
             mother,
             parent="mother",
-            moment="informal_care_child_weighted",
+            moment="informal_care_child_no_comb_weighted",
             has_other_sibling=True,
             sibling_var=sibling_var,
             weight=weight,
@@ -1037,7 +1065,7 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
         get_caregiving_status_by_parental_health_and_presence_of_sibling(
             mother,
             parent="mother",
-            moment="formal_care_weighted",
+            moment="formal_care_no_comb_weighted",
             has_other_sibling=True,
             sibling_var=sibling_var,
             weight=weight,
@@ -1056,9 +1084,11 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
 
     return pd.concat(
         [
+            no_care_by_mother_health,
             informal_care_by_mother_health,
             formal_care_by_mother_health,
             combination_care_by_mother_health,
+            no_care_by_mother_health_sibling,
             informal_care_by_mother_health_sibling,
             formal_care_by_mother_health_sibling,
             combination_care_by_mother_health_sibling,
@@ -1798,7 +1828,7 @@ def get_caregiving_status_by_parental_health_any_sibling(
                 dat["health"] == health,
                 weight,
             ].sum()
-            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [BAD_HEALTH]
         },
     )
 
@@ -1833,7 +1863,7 @@ def get_caregiving_status_by_parental_health_and_presence_of_sibling(
                 (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
                 weight,
             ].sum()
-            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [BAD_HEALTH]
         },
     )
 
@@ -1861,7 +1891,7 @@ def get_caregiving_status_by_parental_health(
                 (dat["health"] == health) & (dat["married"] == is_other_parent_alive),
                 weight,
             ].sum()
-            for health in [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [GOOD_HEALTH, BAD_HEALTH]
         },
     )
 

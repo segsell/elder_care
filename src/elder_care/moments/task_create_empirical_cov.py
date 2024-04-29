@@ -7,7 +7,7 @@ import pandas as pd
 from pytask import Product
 
 from elder_care.config import BLD
-from elder_care.model.shared import BAD_HEALTH, FEMALE, MEDIUM_HEALTH
+from elder_care.model.shared import BAD_HEALTH, FEMALE
 from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
 
 
@@ -20,7 +20,7 @@ def task_create_empirical_var(
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD
     / "moments"
-    / "empirical_moments_var_long.csv",
+    / "empirical_moments_var.csv",
 ) -> None:
     """Create empirical covariance matrix for the model."""
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
@@ -327,42 +327,25 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
     sibling_var,
     weight,
 ):
-
-    informal_care_mother_medium_health = get_weighted_variance_one_condition(
+    no_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="informal_care_child",
+        moment_unweighted="no_care",
         condition_var="health",
-        condition_val=MEDIUM_HEALTH,
+        condition_val=BAD_HEALTH,
         weight=weight,
     )
     informal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="informal_care_child",
+        moment_unweighted="informal_care_child_no_comb",
         condition_var="health",
         condition_val=BAD_HEALTH,
-        weight=weight,
-    )
-
-    formal_care_mother_medium_health = get_weighted_variance_one_condition(
-        dat=mother,
-        moment_unweighted="formal_care",
-        condition_var="health",
-        condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
     formal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="formal_care",
+        moment_unweighted="formal_care_no_comb",
         condition_var="health",
         condition_val=BAD_HEALTH,
-        weight=weight,
-    )
-
-    comb_care_mother_medium_health = get_weighted_variance_one_condition(
-        dat=mother,
-        moment_unweighted="combination_care",
-        condition_var="health",
-        condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
     comb_care_mother_bad_health = get_weighted_variance_one_condition(
@@ -373,49 +356,29 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    informal_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+    no_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
-        moment_unweighted="informal_care_child",
+        moment_unweighted="no_care",
         condition_var_one="health",
-        condition_val_one=MEDIUM_HEALTH,
+        condition_val_one=BAD_HEALTH,
         condition_var_two=sibling_var,
         condition_val_two=True,
         weight=weight,
     )
     informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
-        moment_unweighted="informal_care_child",
+        moment_unweighted="informal_care_child_no_comb",
         condition_var_one="health",
         condition_val_one=BAD_HEALTH,
-        condition_var_two=sibling_var,
-        condition_val_two=True,
-        weight=weight,
-    )
-
-    formal_mother_medium_health_sibling = get_weighted_variance_two_conditions(
-        dat=mother,
-        moment_unweighted="formal_care",
-        condition_var_one="health",
-        condition_val_one=MEDIUM_HEALTH,
         condition_var_two=sibling_var,
         condition_val_two=True,
         weight=weight,
     )
     formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
         dat=mother,
-        moment_unweighted="formal_care",
+        moment_unweighted="formal_care_no_comb",
         condition_var_one="health",
         condition_val_one=BAD_HEALTH,
-        condition_var_two=sibling_var,
-        condition_val_two=True,
-        weight=weight,
-    )
-
-    comb_mother_medium_health_sibling = get_weighted_variance_two_conditions(
-        dat=mother,
-        moment_unweighted="combination_care",
-        condition_var_one="health",
-        condition_val_one=MEDIUM_HEALTH,
         condition_var_two=sibling_var,
         condition_val_two=True,
         weight=weight,
@@ -432,17 +395,13 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
 
     return pd.Series(
         {
-            "informal_care_mother_health_1": informal_care_mother_medium_health,
+            "no_care_mother_health_2": no_care_mother_bad_health,
             "informal_care_mother_health_2": informal_care_mother_bad_health,
-            "formal_care_mother_health_1": formal_care_mother_medium_health,
             "formal_care_mother_health_2": formal_care_mother_bad_health,
-            "combination_care_mother_health_1": comb_care_mother_medium_health,
             "combination_care_mother_health_2": comb_care_mother_bad_health,
-            "informal_care_sibling_mother_health_1": informal_mother_medium_health_sibling,  # noqa: E501
+            "no_care_sibling_mother_health_2": no_care_mother_bad_health_sibling,
             "informal_care_sibling_mother_health_2": informal_mother_bad_health_sibling,
-            "formal_care_sibling_mother_health_1": formal_mother_medium_health_sibling,
             "formal_care_sibling_mother_health_2": formal_mother_bad_health_sibling,
-            "combination_care_sibling_mother_health_1": comb_mother_medium_health_sibling,  # noqa: E501
             "combination_care_sibling_mother_health_2": comb_mother_bad_health_sibling,
         },
     )

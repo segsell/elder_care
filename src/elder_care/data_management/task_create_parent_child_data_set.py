@@ -37,8 +37,9 @@ CHILD_ONE_GAVE_HELP = 10
 STEP_CHILD_GAVE_HELP = 11
 OTHER_CHILD_GAVE_HELP = 19
 
-NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD = 5
+ANSWER_YES = 1
 ANSWER_NO = 5
+NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD = 5
 YES_TEMPORARILY = 1
 YES_PERMANENTLY = 3
 
@@ -200,6 +201,9 @@ def multiply_rows_with_weight(dat, weight):
         "no_combination_care",
         "no_only_formal",
         "no_only_informal",
+        "no_care",
+        "informal_care_child_no_comb",
+        "formal_care_no_comb",
         "lagged_home_care",
         "lagged_formal_care",
         "lagged_informal_care_general",
@@ -288,6 +292,13 @@ def multiply_rows_with_weight(dat, weight):
     dat_weighted.insert(37, "lagged_no_only_formal", dat["lagged_no_only_formal"])
     dat_weighted.insert(38, "lagged_no_only_informal", dat["lagged_no_only_informal"])
     dat_weighted.insert(38, "no_combination_care", dat["no_combination_care"])
+    dat_weighted.insert(39, "no_care", dat["no_care"])
+    dat_weighted.insert(39, "formal_care_no_comb", dat["formal_care_no_comb"])
+    dat_weighted.insert(
+        40,
+        "informal_care_child_no_comb",
+        dat["informal_care_child_no_comb"],
+    )
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -305,11 +316,12 @@ def create_health_variables(dat):
     dat = replace_negative_values_with_nan(dat, "ph003_")
 
     _cond = [
-        (dat["ph003_"] == HEALTH_EXCELLENT) | (dat["ph003_"] == HEALTH_VERY_GOOD),
-        (dat["ph003_"] == HEALTH_GOOD) | (dat["ph003_"] == HEALTH_FAIR),
-        (dat["ph003_"] == HEALTH_POOR),
+        (dat["ph003_"] == HEALTH_EXCELLENT)
+        | (dat["ph003_"] == HEALTH_VERY_GOOD)
+        | (dat["ph003_"] == HEALTH_GOOD),
+        (dat["ph003_"] == HEALTH_FAIR) | (dat["ph003_"] == HEALTH_POOR),
     ]
-    _val = [0, 1, 2]
+    _val = [0, 1]
 
     dat["health"] = np.select(_cond, _val, default=np.nan)
 
@@ -332,10 +344,8 @@ def create_care_variables(dat):
 
     # formal home care by professional nursing service
     _cond = [
-        (dat["hc032d1"] == 1)
-        | (dat["hc032d2"] == 1)
-        | (dat["hc032d3"] == 1)
-        | (dat["hc032dno"] == 0)
+        (dat["hc032d1"] == 1) | (dat["hc032d2"] == 1) | (dat["hc032d3"] == 1)
+        # | (dat["hc032dno"] == 1)
         | (dat["hc127d1"] == 1)
         | (dat["hc127d2"] == 1)
         | (dat["hc127d3"] == 1)
@@ -365,7 +375,7 @@ def create_care_variables(dat):
 
     # informal care by own children
     _cond = [
-        dat["sp021d10"] == 1,  # help within household from own children
+        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
         # help outside the household from own children
         (
             dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
@@ -386,7 +396,6 @@ def create_care_variables(dat):
         )
         | (
             (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
-            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
             & (
                 (
                     dat["sp003_1"]
@@ -405,17 +414,14 @@ def create_care_variables(dat):
                 )
             )
         ),
-        ((dat["sp021d10"] == 0) | (dat["sp021d10"].isna()))
-        & (
-            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
-            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            | (
-                (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
-                & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            )
-        ),
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
     ]
-    _val = [1, 1, 0]
+    _val = [1, 1, 0, np.nan, np.nan]
     dat["informal_care_child"] = np.select(_cond, _val, default=np.nan)
 
     # informal care general
@@ -427,8 +433,8 @@ def create_care_variables(dat):
     dat["informal_care_general"] = np.select(_cond, _val, default=0)
 
     _cond = [
-        (dat["home_care"] == 1) & (dat["informal_care_child"] == 1),
-        (dat["home_care"].isna()) & (dat["informal_care_child"].isna()),
+        (dat["formal_care"] == 1) & (dat["informal_care_child"] == 1),
+        (dat["formal_care"].isna()) & (dat["informal_care_child"].isna()),
     ]
     _val = [1, np.nan]
     dat["combination_care"] = np.select(_cond, _val, default=0)
@@ -459,6 +465,18 @@ def create_care_variables(dat):
     _val = [0, 1]
     dat["no_combination_care"] = np.select(_cond, _val, default=np.nan)
 
+    _cond = [
+        (dat["informal_care_child"] == 1)
+        | (dat["home_care"] == 1)
+        | (dat["nursing_home"] == 1),
+        (dat["informal_care_child"] == 0)
+        & (dat["home_care"] == 0)
+        & (dat["nursing_home"] == 0),
+    ]
+    _val = [0, 1]
+    dat["no_care"] = np.select(_cond, _val, default=np.nan)
+
+    dat = _create_lagged_var(dat, "no_care")
     dat = _create_lagged_var(dat, "home_care")
     dat = _create_lagged_var(dat, "formal_care")
     dat = _create_lagged_var(dat, "informal_care_general")
@@ -472,12 +490,25 @@ def create_care_variables(dat):
 
 
 def create_care_combinations(dat, informal_care_var):
+
+    # 25.03.2024
     _cond = [
-        (dat["home_care"] == 0) & (dat[informal_care_var] == 1),
-        (dat["home_care"].isna()) & (dat[informal_care_var].isna()),
+        (dat["formal_care"] == 0) & (dat[informal_care_var] == 1),
+        (dat["formal_care"].isna()) & (dat[informal_care_var].isna()),
     ]
     _val = [1, np.nan]
-    dat["only_informal"] = np.select(_cond, _val, default=0)
+    dat["informal_care_child_no_comb"] = np.select(_cond, _val, default=0)
+    dat["only_informal"] = dat["informal_care_child_no_comb"].copy()
+
+    _cond = [
+        (dat["formal_care"] == 1) & (dat[informal_care_var] == 0),
+        (dat["formal_care"].isna()) & (dat[informal_care_var].isna()),
+    ]
+    _val = [1, np.nan]
+    dat["formal_care_no_comb"] = np.select(_cond, _val, default=0)
+    dat["only_formal"] = dat["formal_care_no_comb"].copy()
+
+    #
 
     _cond = [
         (dat["home_care"] == 1) & (dat[informal_care_var] == 0),
@@ -496,16 +527,6 @@ def create_care_combinations(dat, informal_care_var):
     ]
     _val = [1, np.nan]
     dat["only_nursing_home"] = np.select(_cond, _val, default=0)
-
-    _cond = [
-        ((dat["nursing_home"] == 1) | (dat["home_care"] == 1))
-        & (dat[informal_care_var] == 0),
-        (dat["nursing_home"].isna())
-        & (dat["home_care"].isna())
-        & (dat[informal_care_var].isna()),
-    ]
-    _val = [1, np.nan]
-    dat["only_formal"] = np.select(_cond, _val, default=0)
 
     _cond = [dat["only_formal"] == 1, dat["only_formal"] == 0]
     _val = [0, 1]
