@@ -48,27 +48,22 @@ PARAMS = {
     "sigma": 0.5364562201,
     "interest_rate": 0.04,
     #
-    "utility_leisure_constant": 1,
-    "utility_leisure_age": 0.05,
-    "utility_leisure_age_squared": -0.005,
+    # "utility_leisure_constant": 1,
+    # "utility_leisure_age": 0.05,
+    # "utility_leisure_age_squared": -0.005,
     #
     "disutility_part_time": -3,
     "disutility_full_time": -8,
     # caregiving
-    # "utility_informal_care_parent_medium_health": 2,
-    # "utility_informal_care_parent_bad_health": 1,
-    # "utility_formal_care_parent_medium_health": 0.7,
-    # "utility_formal_care_parent_bad_health": 1,
-    # "utility_combination_care_parent_medium_health": -0.8,
-    # "utility_combination_care_parent_bad_health": -1.5,
-    # # caregiving if sibling present
-    # "utility_informal_care_medium_health_sibling": 2.5,
-    # "utility_informal_care_bad_health_sibling": 2,
-    # "utility_formal_care_medium_health_sibling": 1,
-    # "utility_formal_care_bad_health_sibling": 1,
-    # "utility_combination_care_medium_health_sibling": -0.2,
-    # "utility_combination_care_bad_health_sibling": -0.4,
-    # part-time job offer
+    "utility_no_care_parent_bad_health": -1,
+    "utility_informal_care_parent_bad_health": 1,
+    "utility_formal_care_parent_bad_health": 1,
+    "utility_combination_care_parent_bad_health": -1.5,
+    # caregiving if sibling present
+    "utility_no_care_parent_bad_health_sibling": -1,
+    "utility_informal_care_bad_health_sibling": 2,
+    "utility_formal_care_bad_health_sibling": 1,
+    "utility_combination_care_bad_health_sibling": -0.4,
     "part_time_constant": -2.568584,
     "part_time_not_working_last_period": 0.3201395,
     "part_time_high_education": 0.1691369,
@@ -141,7 +136,7 @@ def task_debugging(
     results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     """
-    path_to_model = BLD / "model" / "model_work.pkl"
+    path_to_model = BLD / "model" / "model.pkl"
     options = get_options_dict()
 
     params = PARAMS
@@ -288,6 +283,8 @@ def task_debugging(
     #     age_bins=AGE_BINS_SIM,
     # )
 
+    # breakpoint()
+
     return (
         share_not_working_by_age,
         share_part_time_by_age,
@@ -318,5 +315,7 @@ def task_debug_simulate():
 
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
+
+    # breakpoint()
 
     return out, arr

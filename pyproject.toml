@@ -82,10 +82,18 @@ lint.extend-ignore = [
 "src/elder_care/moments/task_create_empirical_cov.py" = ["ERA001"]
 "src/elder_care/model/shared.py" = ["ERA001"]
 "src/elder_care/model/task_debugging.py" = ["ERA001"]
+"src/elder_care/model/task_specify_model.py" = ["ERA001"]
+"src/elder_care/model/utility_functions.py" = ["ERA001"]
+
 
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+
+[[tool.refurb.amend]]
+path = "src/elder_care/simulation/simulate.py"
+ignore = ["FURB109"]
 
 
 [tool.yamlfix]

@@ -1,12 +1,13 @@
+"""Initial conditions for the simulation."""
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 
-FOUR = 4
-EIGHT = 8
-TWELVE = 12
+from elder_care.model.shared import FULL_TIME, PART_TIME
 
-MAX_INIT_EXPER = 20
+MIN_INIT_EXPER = 5
+MAX_INIT_EXPER = 10
 
 
 def draw_initial_states(
@@ -26,19 +27,18 @@ def draw_initial_states(
     informal_care = get_initial_share_two(initial_conditions, "share_informal_care")
 
     """
-    n_choices = 3
+    n_choices = 16
 
     employment = get_initial_share_three(
         initial_conditions,
         ["share_not_working", "share_part_time", "share_full_time"],
     )
+    employment = jnp.concatenate([employment, jnp.array([0])])
 
     informal_care = jnp.array([1, 0])  # agents start with no informal care provided
     formal_care = jnp.array([1, 0])  # agents start with no formal care provided
     informal_formal = jnp.outer(informal_care, formal_care)
-    # lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
-
-    lagged_choice_probs = employment
+    lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
 
     high_educ = get_initial_share_two(initial_conditions, "share_high_educ")
     has_sibling = get_initial_share_two(initial_conditions, "share_has_sister")
@@ -48,7 +48,12 @@ def draw_initial_states(
     _mother_health_probs = initial_conditions.loc[
         ["mother_good_health", "mother_bad_health"]
     ].to_numpy()
-    mother_health_probs = jnp.array(_mother_health_probs).ravel()
+    mother_health_probs = jnp.concatenate(
+        [
+            _mother_health_probs.ravel() * mother_alive[1],
+            jnp.atleast_1d(mother_alive[0]),
+        ],
+    )
 
     _experience = draw_from_discrete_normal(
         seed=seed - 4,
@@ -58,7 +63,11 @@ def draw_initial_states(
         std_dev=jnp.ones(n_agents, dtype=np.uint16)
         * float(initial_conditions.loc["experience_std"].iloc[0]),
     )
-    experience = jnp.clip(_experience * 2, a_min=0, a_max=MAX_INIT_EXPER)
+    experience = jnp.clip(
+        _experience * 2,
+        a_min=MIN_INIT_EXPER * 2,
+        a_max=MAX_INIT_EXPER * 2,
+    )
 
     initial_states = {
         "period": jnp.zeros(n_agents, dtype=np.int16),
@@ -74,26 +83,19 @@ def draw_initial_states(
             values=jnp.array([0, 1]),
             probabilities=high_educ,
         ).astype(np.int16),
-        # "has_sibling": draw_random_array(
-        #     seed=seed - 3,
-        #     n_agents=n_agents,
-        #     values=jnp.array([0, 1]),
-        #     probabilities=has_sibling,
-        # ).astype(np.int16),
-        # "experience": jnp.zeros(n_agents, dtype=np.int16),
+        "has_sibling": draw_random_array(
+            seed=seed - 3,
+            n_agents=n_agents,
+            values=jnp.array([0, 1]),
+            probabilities=has_sibling,
+        ).astype(np.int16),
         "experience": experience,
-        # "mother_health": draw_random_array(
-        #     seed=seed - 5,
-        #     n_agents=n_agents,
-        #     values=jnp.array([0, 1]),
-        #     probabilities=mother_health_probs,
-        # ).astype(np.int16),
-        # "mother_alive": draw_random_array(
-        #     seed=seed - 6,
-        #     n_agents=n_agents,
-        #     values=jnp.array([0, 1]),
-        #     probabilities=mother_alive,
-        # ).astype(np.int16),
+        "mother_health": draw_random_array(
+            seed=seed - 5,
+            n_agents=n_agents,
+            values=jnp.array([0, 1, 2]),
+            probabilities=mother_health_probs,
+        ).astype(np.int16),
     }
 
     initial_resources = draw_random_sequence_from_array(
@@ -111,20 +113,11 @@ def draw_initial_states(
         initial_resources_high_educ[initial_states["high_educ"] == 1],
     )
 
-    part_time_offer = jnp.where(
-        # (initial_states["lagged_choice"] >= FOUR)
-        # & (initial_states["lagged_choice"] < EIGHT),
-        initial_states["lagged_choice"] == 1,
-        1,
-        0,
-    )
-    full_time_offer = jnp.where(
-        # (initial_states["lagged_choice"] >= EIGHT)
-        # & (initial_states["lagged_choice"] < TWELVE),
-        initial_states["lagged_choice"] == 2,
-        1,
-        0,
-    )
+    is_part_time = jnp.isin(initial_states["lagged_choice"], PART_TIME)
+    part_time_offer = jnp.where(is_part_time, 1, 0)
+    is_full_time = jnp.isin(initial_states["lagged_choice"], FULL_TIME)
+    full_time_offer = jnp.where(is_full_time, 1, 0)
+
     initial_states["part_time_offer"] = part_time_offer
     initial_states["full_time_offer"] = full_time_offer
 

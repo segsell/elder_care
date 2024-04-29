@@ -414,18 +414,14 @@ def create_care_variables(dat):
                 )
             )
         ),
-        (dat["sp020_"] == ANSWER_NO)
-        & (
-            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
-            & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            | (
-                (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
-                & (dat["sp002_"] == NO_HELP_FROM_OTHERS_OUTSIDE_HOUSEHOLD)
-            )
-        ),
-        (dat["sp020_"]).isna() | (dat["sp002_"]).isna(),
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
     ]
-    _val = [1, 1, 0, np.nan]
+    _val = [1, 1, 0, np.nan, np.nan]
     dat["informal_care_child"] = np.select(_cond, _val, default=np.nan)
 
     # informal care general
