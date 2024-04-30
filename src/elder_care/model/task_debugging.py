@@ -47,76 +47,25 @@ jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
 
 PARAMS = {
-    "beta": 0.959,
     "rho": 0.8,
-    "lambda": 1,
-    "sigma": 0.5364562201,
-    "interest_rate": 0.04,
-    #
-    # "utility_leisure_constant": 1,
-    # "utility_leisure_age": 0.05,
-    # "utility_leisure_age_squared": -0.005,
-    #
-    "disutility_part_time": -3,
-    "disutility_full_time": -8,
-    # caregiving
-    # "utility_informal_care_parent_medium_health": 2,
-    # "utility_informal_care_parent_bad_health": 1,
-    # "utility_formal_care_parent_medium_health": 0.7,
-    # "utility_formal_care_parent_bad_health": 1,
-    # "utility_combination_care_parent_medium_health": -0.8,
-    # "utility_combination_care_parent_bad_health": -1.5,
-    # # caregiving if sibling present
-    # "utility_informal_care_medium_health_sibling": 2.5,
-    # "utility_informal_care_bad_health_sibling": 2,
-    # "utility_formal_care_medium_health_sibling": 1,
-    # "utility_formal_care_bad_health_sibling": 1,
-    # "utility_combination_care_medium_health_sibling": -0.2,
-    # "utility_combination_care_bad_health_sibling": -0.4,
-    # part-time job offer
-    "part_time_constant": -2.568584,
-    "part_time_not_working_last_period": 0.3201395,
-    "part_time_high_education": 0.1691369,
-    "part_time_above_retirement_age": -1.9976496,
-    # full-time job offer
-    "full_time_constant": -2.445238,
-    "full_time_not_working_last_period": -0.9964007,
-    "full_time_high_education": 0.3019138,
-    "full_time_above_retirement_age": -2.6571659,
-}
-
-
-PROGRESS = {
-    "rho": 1.98,
     "beta": 0.959,
     "sigma": 0.5364562201,
-    "lambda": 1.0,
+    "lambda": 0.9864699097918321,
     "interest_rate": 0.04,
-    "utility_leisure_constant": 3.2194001905695693,
-    "utility_leisure_age": 0.04691636386597703,
-    "utility_leisure_age_squared": -0.006495755962584587,
-    "disutility_part_time": -1.9337796413959372,
-    "disutility_full_time": -5.282394222692581,
-    "utility_informal_care_parent_medium_health": -0.4089331199248291,
-    "utility_informal_care_parent_bad_health": -0.3851096018741167,
-    "utility_formal_care_parent_medium_health": 0.4045081430627899,
-    "utility_formal_care_parent_bad_health": -0.4575685368898893,
-    "utility_combination_care_parent_medium_health": -4.112870982901066,
-    "utility_combination_care_parent_bad_health": -2.6130289452563393,
-    "utility_informal_care_medium_health_sibling": 1.815903823857372,
-    "utility_informal_care_bad_health_sibling": 2.439680402899742,
-    "utility_formal_care_medium_health_sibling": 0.6975043998652197,
-    "utility_formal_care_bad_health_sibling": 0.9263483706654374,
-    "utility_combination_care_medium_health_sibling": -1.6125665883276101,
-    "utility_combination_care_bad_health_sibling": -1.6952982282449929,
-    "part_time_constant": -2.568584,
-    "part_time_not_working_last_period": 0.3201395,
-    "part_time_high_education": 0.1691369,
-    "part_time_above_retirement_age": -1.9976496,
-    "full_time_constant": -2.445238,
-    "full_time_not_working_last_period": -0.9964007,
-    "full_time_high_education": 0.3019138,
-    "full_time_above_retirement_age": -2.6571659,
+    "disutility_part_time_constant": 0.33354121247199703,
+    "disutility_part_time_age": -0.12100801003524632,
+    "disutility_part_time_age_squared": 0.0007139083714654349,
+    "disutility_full_time_constant": 0.08529730099536248,
+    "disutility_full_time_age": -0.054504780075805004,
+    "disutility_full_time_age_squared": -0.0022061388612220744,
+    "part_time_constant": -2.102635900186225,
+    "part_time_not_working_last_period": -1.0115255914421664,
+    "part_time_high_education": 0.48013160890989515,
+    "part_time_above_retirement_age": -2.110713962590601,
+    "full_time_constant": -1.9425261133765783,
+    "full_time_not_working_last_period": -2.097935912953995,
+    "full_time_high_education": 0.8921957457184644,
+    "full_time_above_retirement_age": -3.1212459549307496,
 }
 
 
@@ -143,10 +92,9 @@ def task_debugging(
     ].to_numpy()
     mother_health_probs = jnp.array(_mother_health_probs).ravel()
 
-    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
 
     """
-    path_to_model = BLD / "model" / "model_work.pkl"
+    path_to_model = BLD / "model" / "model.pkl"
     options = get_options_dict()
 
     params = PARAMS
@@ -162,13 +110,14 @@ def task_debugging(
 
     exog_savings_grid = create_savings_grid()
 
-    func = get_solve_func_for_model(
-        model=model_loaded,
-        exog_savings_grid=exog_savings_grid,
-        options=options,
-    )
-    results = func(params)
-    save_dict_to_pickle(results, path_to_save_result)
+    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
+    # func = get_solve_func_for_model(
+    #     model=model_loaded,
+    #     exog_savings_grid=exog_savings_grid,
+    #     options=options,
+    # )
+    # results = func(params)
+    # save_dict_to_pickle(results, path_to_save_result)
 
     n_agents = 100_000
     seed = 2024

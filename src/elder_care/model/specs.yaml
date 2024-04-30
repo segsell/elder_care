@@ -12,7 +12,6 @@ max_ret_age: 70
 
 mother_start_age: 65
 father_start_age: 67
-n_choices: 4
 
 max_init_experience: 20
 experience_cap: 80 # 30 * 2

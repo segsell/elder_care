@@ -28,9 +28,10 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 from elder_care.utils import load_dict_from_pickle
+from elder_care.model.shared import ALL
 
 
-# @pytask.mark.skip(reason="Respecifying model.")
+@pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
@@ -63,7 +64,7 @@ def get_options_dict(
     # exog_params = load_dict_from_pickle(path_to_exog)
 
     n_periods = specs["n_periods"]
-    choices = np.arange(specs["n_choices"], dtype=np.int8)
+    choices = np.arange(len(ALL), dtype=np.int8)
 
     exog_processes = {
         "part_time_offer": {
@@ -88,7 +89,6 @@ def get_options_dict(
             # "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
-                # "has_sibling": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
                     stop=specs["experience_cap"] + 1,
                     dtype=np.uint8,
@@ -107,13 +107,10 @@ def load_specs(path_to_specs):
     specs = yaml.safe_load(Path.open(path_to_specs))
 
     specs["n_periods"] = specs["end_age"] - specs["start_age"] + 1
+    specs["n_choices"] = len(ALL)
 
     wage_params = task_create_exog_wage()
 
     specs["income_shock_scale"] = wage_params.pop("wage_std_regression_residual")
 
     return specs, wage_params
-
-
-def _dummy_func(period):
-    return jnp.array([1], dtype=np.int8)
