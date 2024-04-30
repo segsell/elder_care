@@ -4,13 +4,13 @@ from elder_care.model.shared import (
     BAD_HEALTH,
     DEAD,
     GOOD_HEALTH,
+    MEDIUM_HEALTH,
     is_bad_health,
     is_full_time,
+    is_medium_health,
     is_not_working,
     is_part_time,
 )
-
-MEDIUM_HEALTH = -99
 
 # ==============================================================================
 # Exogenous processes
@@ -97,6 +97,8 @@ def prob_survival_mother(period, mother_health, mother_alive, options):
         options["survival_prob_mother_constant"]
         + options["survival_prob_mother_lagged_age"] * mother_age
         + options["survival_prob_mother_lagged_age_squared"] * (mother_age**2)
+        + options["survival_prob_mother_lagged_health_medium"]
+        * is_medium_health(mother_health)
         + options["survival_prob_mother_lagged_health_bad"]
         * is_bad_health(mother_health)
     )
@@ -138,6 +140,8 @@ def prob_survival_father(period, father_health, father_alive, options):
         options["survival_prob_father_constant"]
         + options["survival_prob_father_lagged_age"] * father_age
         + options["survival_prob_father_lagged_age_squared"] * (father_age**2)
+        + options["survival_prob_father_lagged_health_medium"]
+        * is_medium_health(father_health)
         + options["survival_prob_father_lagged_health_bad"]
         * is_bad_health(father_health)
     )
@@ -169,6 +173,7 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
     mother_age_squared = mother_age**2
 
     good_health = mother_health == GOOD_HEALTH
+    medium_health = mother_health == MEDIUM_HEALTH
     bad_health = mother_health == BAD_HEALTH
     alive = mother_health != DEAD
 
@@ -181,21 +186,39 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
     prob_dead = mother_survival_prob[0]
     prob_alive = mother_survival_prob[1]
 
-    outcome_bad_health = (
+    # Linear combination for medium health
+    lc_medium_health = (
+        options["mother_medium_health"]["medium_health_age"] * mother_age
+        + options["mother_medium_health"]["medium_health_age_squared"]
+        * mother_age_squared
+        + options["mother_medium_health"]["medium_health_lagged_good_health"]
+        * good_health
+        + options["mother_medium_health"]["medium_health_lagged_medium_health"]
+        * medium_health
+        + options["mother_medium_health"]["medium_health_lagged_bad_health"]
+        * bad_health
+        + options["mother_medium_health"]["medium_health_constant"]
+    )
+
+    # Linear combination for bad health
+    lc_bad_health = (
         options["mother_bad_health"]["bad_health_age"] * mother_age
         + options["mother_bad_health"]["bad_health_age_squared"] * mother_age_squared
         + options["mother_bad_health"]["bad_health_lagged_good_health"] * good_health
+        + options["mother_bad_health"]["bad_health_lagged_medium_health"]
+        * medium_health
         + options["mother_bad_health"]["bad_health_lagged_bad_health"] * bad_health
         + options["mother_bad_health"]["bad_health_constant"]
     )
 
-    linear_comb = jnp.array([0, outcome_bad_health])
+    linear_comb = jnp.array([0, lc_medium_health, lc_bad_health])
     health_trans_probs = _softmax(linear_comb)
 
     return jnp.array(
         [
             health_trans_probs[0] * prob_alive,
             health_trans_probs[1] * prob_alive,
+            health_trans_probs[2] * prob_alive,
             prob_dead,
         ],
     )

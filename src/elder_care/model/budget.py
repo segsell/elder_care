@@ -6,10 +6,11 @@ import jax.numpy as jnp
 import numpy as np
 
 from elder_care.model.shared import (
+    EARLY_RETIREMENT_AGE,
     RETIREMENT_AGE,
     is_full_time,
-    is_part_time,
     is_retired,
+    is_part_time,
     is_working,
 )
 
