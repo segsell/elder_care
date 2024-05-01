@@ -110,14 +110,14 @@ def task_debugging(
 
     exog_savings_grid = create_savings_grid()
 
-    results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
-    # func = get_solve_func_for_model(
-    #     model=model_loaded,
-    #     exog_savings_grid=exog_savings_grid,
-    #     options=options,
-    # )
-    # results = func(params)
-    # save_dict_to_pickle(results, path_to_save_result)
+    # results = load_dict_from_pickle(BLD / "debugging" / "result.pkl")
+    func = get_solve_func_for_model(
+        model=model_loaded,
+        exog_savings_grid=exog_savings_grid,
+        options=options,
+    )
+    results = func(params)
+    save_dict_to_pickle(results, path_to_save_result)
 
     n_agents = 100_000
     seed = 2024

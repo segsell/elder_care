@@ -67,7 +67,7 @@ def get_state_specific_feasible_choice_set(
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]
 
     if age >= options["max_ret_age"]:
-        feasible_choice_set = [RETIREMENT]
+        feasible_choice_set = RETIREMENT
     elif is_retired(lagged_choice):
         feasible_choice_set = [i for i in feasible_choice_set if i in RETIREMENT]
     elif (full_time_offer == 0) & (part_time_offer == 1):
@@ -90,7 +90,6 @@ def update_endog_state(
     period,
     choice,
     experience,
-    # has_sibling,
     high_educ,
     options,
 ):

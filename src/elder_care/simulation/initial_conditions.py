@@ -25,19 +25,19 @@ def draw_initial_states(
 
 
     """
-    n_choices = 12  # exclude retirement
+    n_choices = 3  # exclude retirement
 
     employment = get_initial_share_three(
         initial_conditions,
         ["share_not_working", "share_part_time", "share_full_time"],
     )
 
-    informal_care = jnp.array([1, 0])  # agents start with no informal care provided
-    formal_care = jnp.array([1, 0])  # agents start with no formal care provided
-    informal_formal = jnp.outer(informal_care, formal_care)
-    lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
+    # informal_care = jnp.array([1, 0])  # agents start with no informal care provided
+    # formal_care = jnp.array([1, 0])  # agents start with no formal care provided
+    # informal_formal = jnp.outer(informal_care, formal_care)
+    # lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
 
-    # lagged_choice_probs = employment
+    lagged_choice_probs = employment
 
     high_educ = get_initial_share_two(initial_conditions, "share_high_educ")
 
@@ -63,6 +63,8 @@ def draw_initial_states(
         "lagged_choice": draw_random_array(
             seed=seed - 1,
             n_agents=n_agents,
+            # values=WORK_NO_CARE,
+            # values=jnp.array([0, 4, 8]),
             values=jnp.arange(n_choices),
             probabilities=lagged_choice_probs,
         ).astype(np.int16),

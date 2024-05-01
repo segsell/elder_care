@@ -31,7 +31,7 @@ from elder_care.utils import load_dict_from_pickle
 from elder_care.model.shared import ALL
 
 
-@pytask.mark.skip(reason="Respecifying model.")
+# @pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
@@ -76,7 +76,7 @@ def get_options_dict(
             "transition": prob_full_time_offer,
         },
         # "mother_health": {
-        #     "states": np.arange(4, dtype=np.int8),
+        #     "states": np.arange(3, dtype=np.int8),
         #     "transition": exog_health_transition_mother_with_survival,
         # },
     }
