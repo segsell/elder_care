@@ -23,7 +23,6 @@ def draw_initial_states(
 
     informal_care = get_initial_share_two(initial_conditions, "share_informal_care")
 
-
     """
     n_choices = 3  # exclude retirement
 
