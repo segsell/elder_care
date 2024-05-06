@@ -107,16 +107,18 @@ def utility_func(
     """
     rho = params["rho"]
     age = options["start_age"] + period
+    # age = period
+    # age_squared = period + 40
 
-    informal_care = is_informal_care(choice)
+    # informal_care = is_informal_care(choice)
     # formal_care = is_formal_care(choice)
     # combination_care = is_combination_care(choice)
     part_time = is_part_time(choice)
     full_time = is_full_time(choice)
 
-    working_hours_weekly = (
-        part_time * WEEKLY_HOURS_PART_TIME + full_time * WEEKLY_HOURS_FULL_TIME
-    )
+    # working_hours_weekly = (
+    #     part_time * WEEKLY_HOURS_PART_TIME + full_time * WEEKLY_HOURS_FULL_TIME
+    # )
     # From SOEP data we know that the 25% and 75% percentile in the care hours
     # distribution are 7 and 21 hours per week in a comparative sample.
     # We use these discrete mass-points as discrete choices of non-intensive and
@@ -124,11 +126,11 @@ def utility_func(
     # In SHARE, respondents inform about the frequency with which they provide
     # informal care. We use this information to proxy the care provision in the data.
     # caregiving_hours_weekly = informal_care * WEEKLY_INTENSIVE_INFORMAL_HOURS
-    leisure_hours = (
-        (TOTAL_WEEKLY_HOURS - working_hours_weekly)
-        * N_WEEKS  # month
-        * N_MONTHS  # year
-    )
+    # leisure_hours = (
+    #     (TOTAL_WEEKLY_HOURS - working_hours_weekly)
+    #     * N_WEEKS  # month
+    #     * N_MONTHS  # year
+    # )
 
     # age is a proxy for health impacting the taste for free-time.
     # utility_leisure = (
@@ -141,17 +143,10 @@ def utility_func(
 
     disutility_working = (
         params["disutility_part_time_constant"] * part_time
+        + params["disutility_part_time_age"] * age * part_time
         + params["disutility_full_time_constant"] * full_time
+        + params["disutility_full_time_age"] * age * full_time
     )
-
-    # disutility_working = (
-    #     params["disutility_part_time_constant"] * part_time
-    #     + params["disutility_part_time_age"] * age * part_time
-    #     + params["disutility_part_time_age_squared"] * age**2 * part_time
-    #     + params["disutility_full_time_constant"] * full_time
-    #     + params["disutility_full_time_age"] * age * full_time
-    #     + params["disutility_full_time_age_squared"] * age**2 * full_time
-    # )
     # disutility_working_informal_care = (
     #     params["disutility_part_time_constant"] * part_time * informal_care
     #     + params["disutility_part_time_age"] * age * part_time * informal_care

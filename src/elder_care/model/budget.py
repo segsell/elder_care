@@ -47,6 +47,7 @@ def budget_constraint(
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
+    params: dict[str, Any],
 ) -> float:
     """Budget constraint.
 
