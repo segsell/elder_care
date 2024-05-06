@@ -64,7 +64,7 @@ PARAMS = {
 }
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD

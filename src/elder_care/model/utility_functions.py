@@ -106,9 +106,7 @@ def utility_func(
 
     """
     rho = params["rho"]
-    age = options["start_age"] + period
-    # age = period
-    # age_squared = period + 40
+    # age = options["start_age"] + period
 
     # informal_care = is_informal_care(choice)
     # formal_care = is_formal_care(choice)
@@ -143,9 +141,12 @@ def utility_func(
 
     disutility_working = (
         params["disutility_part_time_constant"] * part_time
-        + params["disutility_part_time_age"] * age * part_time
+        + params["disutility_part_time_age"] * period * part_time
+        + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_constant"] * full_time
-        + params["disutility_full_time_age"] * age * full_time
+        + params["disutility_full_time_age"] * period * full_time
+        + params["disutility_full_time_age"] * period * full_time
+        + params["disutility_full_time_age_squared"] * (period**2) * full_time
     )
     # disutility_working_informal_care = (
     #     params["disutility_part_time_constant"] * part_time * informal_care
