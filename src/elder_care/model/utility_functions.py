@@ -4,10 +4,7 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from elder_care.model.shared import (
-    is_full_time,
-    is_part_time,
-)
+from elder_care.model.shared import is_full_time, is_part_time
 
 
 def create_utility_functions():
