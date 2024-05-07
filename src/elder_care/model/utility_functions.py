@@ -145,7 +145,6 @@ def utility_func(
         + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_constant"] * full_time
         + params["disutility_full_time_age"] * period * full_time
-        + params["disutility_full_time_age"] * period * full_time
         + params["disutility_full_time_age_squared"] * (period**2) * full_time
     )
     # disutility_working_informal_care = (
