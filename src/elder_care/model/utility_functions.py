@@ -4,7 +4,15 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from elder_care.model.shared import is_full_time, is_part_time
+from elder_care.model.shared import (
+    is_full_time,
+    is_part_time,
+    WEEKLY_HOURS_FULL_TIME,
+    WEEKLY_HOURS_PART_TIME,
+    N_WEEKS,
+    N_MONTHS,
+    TOTAL_WEEKLY_HOURS,
+)
 
 
 def create_utility_functions():
@@ -105,9 +113,9 @@ def utility_func(
     part_time = is_part_time(choice)
     full_time = is_full_time(choice)
 
-    # working_hours_weekly = (
-    #     part_time * WEEKLY_HOURS_PART_TIME + full_time * WEEKLY_HOURS_FULL_TIME
-    # )
+    working_hours_weekly = (
+        part_time * WEEKLY_HOURS_PART_TIME + full_time * WEEKLY_HOURS_FULL_TIME
+    )
     # From SOEP data we know that the 25% and 75% percentile in the care hours
     # distribution are 7 and 21 hours per week in a comparative sample.
     # We use these discrete mass-points as discrete choices of non-intensive and
@@ -115,18 +123,18 @@ def utility_func(
     # In SHARE, respondents inform about the frequency with which they provide
     # informal care. We use this information to proxy the care provision in the data.
     # caregiving_hours_weekly = informal_care * WEEKLY_INTENSIVE_INFORMAL_HOURS
-    # leisure_hours = (
-    #     (TOTAL_WEEKLY_HOURS - working_hours_weekly)
-    #     * N_WEEKS  # month
-    #     * N_MONTHS  # year
-    # )
+    leisure_hours = (
+        (TOTAL_WEEKLY_HOURS - working_hours_weekly)
+        * N_WEEKS  # month
+        * N_MONTHS  # year
+    )
 
     # age is a proxy for health impacting the taste for free-time.
-    # utility_leisure = (
-    #     params["utility_leisure_constant"]
-    #     + params["utility_leisure_age"] * age
-    #     + params["utility_leisure_age_squared"] * age**2
-    # ) * jnp.log(leisure_hours)
+    utility_leisure = (
+        params["utility_leisure_constant"]
+        + params["utility_leisure_age"] * period
+        + params["utility_leisure_age_squared"] * (period**2)
+    ) * jnp.log(leisure_hours)
 
     utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
 
@@ -211,7 +219,7 @@ def utility_func(
 
     return (
         utility_consumption
-        # + utility_leisure
+        + utility_leisure
         + disutility_working
         # + disutility_working_informal_care
     )
