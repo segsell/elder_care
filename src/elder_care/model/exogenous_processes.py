@@ -204,7 +204,7 @@ def exog_health_transition_mother_with_survival(period, mother_health, options):
 
 
 def exog_health_transition_mother_with_survival_medium_bad(
-    period, mother_health, options
+    period, mother_health, options,
 ):
     """Compute exogenous health transition probabilities.
 

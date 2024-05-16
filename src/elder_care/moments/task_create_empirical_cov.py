@@ -713,9 +713,8 @@ def get_var_coefficients_savings_rate_regression_soep():
             "savings_rate_high_education": 0.001675821834,
             "savings_rate_part_time": 0.001171840416,
             "savings_rate_full_time": 0.001959585317,
-        }
+        },
     )
-    
 
 
 # var

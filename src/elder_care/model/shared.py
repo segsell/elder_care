@@ -120,10 +120,10 @@ COMBINATION_CARE = jnp.array([3, 7, 11, 15])
 # FORMAL_CARE = jnp.array([1, 3, 5, 7, 9, 11, 13, 15])
 # INFORMAL_CARE = jnp.array([2, 3, 6, 7, 10, 11, 14, 15])
 INFORMAL_CARE = jnp.array(
-    list(set(PURE_INFORMAL_CARE.tolist() + COMBINATION_CARE.tolist()))
+    list(set(PURE_INFORMAL_CARE.tolist() + COMBINATION_CARE.tolist())),
 )
 FORMAL_CARE = jnp.array(
-    list(set(PURE_FORMAL_CARE.tolist() + COMBINATION_CARE.tolist()))
+    list(set(PURE_FORMAL_CARE.tolist() + COMBINATION_CARE.tolist())),
 )
 CARE = jnp.concatenate([FORMAL_CARE, INFORMAL_CARE])
 

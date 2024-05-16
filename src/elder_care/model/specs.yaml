@@ -13,7 +13,7 @@ max_ret_age: 70
 mother_start_age: 65
 father_start_age: 67
 
-max_init_experience: 10 # 5 * 2 
+max_init_experience: 10 # 5 * 2
 experience_cap: 52 # 30 * 2
 
 # Parameters of the policy environment

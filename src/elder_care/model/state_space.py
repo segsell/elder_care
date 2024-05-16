@@ -1,7 +1,10 @@
 import numpy as np
 
 from elder_care.model.shared import (
+    BAD_HEALTH,
+    CARE,
     FULL_TIME_AND_NO_WORK,
+    NO_CARE,
     NO_RETIREMENT,
     OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
@@ -10,9 +13,6 @@ from elder_care.model.shared import (
     is_full_time,
     is_part_time,
     is_retired,
-    BAD_HEALTH,
-    CARE,
-    NO_CARE,
 )
 
 
