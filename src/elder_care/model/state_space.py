@@ -10,6 +10,9 @@ from elder_care.model.shared import (
     is_full_time,
     is_part_time,
     is_retired,
+    BAD_HEALTH,
+    CARE,
+    NO_CARE,
 )
 
 
@@ -30,7 +33,7 @@ def get_state_specific_feasible_choice_set(
     lagged_choice,
     part_time_offer,
     full_time_offer,
-    # mother_health,
+    mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.
@@ -50,13 +53,13 @@ def get_state_specific_feasible_choice_set(
     """
     age = options["start_age"] + period
 
-    # _feasible_choice_set_all = list(np.arange(options["n_choices"]))
-    feasible_choice_set = np.arange(options["n_choices"])
+    _feasible_choice_set_all = np.arange(options["n_choices"])
+    # feasible_choice_set = np.arange(options["n_choices"])
 
-    # if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
-    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
-    # else:
-    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
+    if mother_health == BAD_HEALTH:
+        feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
+    else:
+        feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
     if age < options["min_ret_age"]:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]

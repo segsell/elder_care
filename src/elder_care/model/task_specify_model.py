@@ -3,6 +3,9 @@
 from pathlib import Path
 from typing import Annotated, Any
 
+
+import pytask
+
 import numpy as np
 import yaml
 from dcegm.pre_processing.setup_model import setup_and_save_model
@@ -16,6 +19,7 @@ from elder_care.model.budget import budget_constraint
 from elder_care.model.exogenous_processes import (
     prob_full_time_offer,
     prob_part_time_offer,
+    exog_health_transition_mother_with_survival,
 )
 from elder_care.model.shared import ALL
 from elder_care.model.state_space import (
@@ -27,11 +31,13 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 
+from elder_care.utils import load_dict_from_pickle
+
 
 # @pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
-    # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
     path_to_save: Annotated[Path, Product] = BLD / "model" / "model.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
@@ -39,7 +45,7 @@ def task_specify_and_setup_model(
     start_params["sigma"] = specs["income_shock_scale"]
 
     """
-    options = get_options_dict(path_to_specs)
+    options = get_options_dict(path_to_specs, path_to_exog)
 
     return setup_and_save_model(
         options=options,
@@ -53,23 +59,23 @@ def task_specify_and_setup_model(
 
 def get_options_dict(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
-    # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
 ):
 
     specs, wage_params = load_specs(path_to_specs)
 
-    # exog_params = load_dict_from_pickle(path_to_exog)
+    exog_params = load_dict_from_pickle(path_to_exog)
 
-    exog_params = {
-        "part_time_constant": -2.102635900186225,
-        "part_time_not_working_last_period": -1.0115255914421664,
-        "part_time_high_education": 0.48013160890989515,
-        "part_time_above_retirement_age": -2.110713962590601,
-        "full_time_constant": -1.9425261133765783,
-        "full_time_not_working_last_period": -2.097935912953995,
-        "full_time_high_education": 0.8921957457184644,
-        "full_time_above_retirement_age": -3.1212459549307496,
-    }
+    # exog_params = {
+    #     "part_time_constant": -2.102635900186225,
+    #     "part_time_not_working_last_period": -1.0115255914421664,
+    #     "part_time_high_education": 0.48013160890989515,
+    #     "part_time_above_retirement_age": -2.110713962590601,
+    #     "full_time_constant": -1.9425261133765783,
+    #     "full_time_not_working_last_period": -2.097935912953995,
+    #     "full_time_high_education": 0.8921957457184644,
+    #     "full_time_above_retirement_age": -3.1212459549307496,
+    # }
 
     n_periods = specs["n_periods"]
     choices = np.arange(len(ALL), dtype=np.int8)
@@ -83,10 +89,10 @@ def get_options_dict(
             "states": np.arange(2, dtype=np.int8),
             "transition": prob_full_time_offer,
         },
-        # "mother_health": {
-        #     "states": np.arange(3, dtype=np.int8),
-        #     "transition": exog_health_transition_mother_with_survival,
-        # },
+        "mother_health": {
+            "states": np.arange(3, dtype=np.int8),
+            "transition": exog_health_transition_mother_with_survival,
+        },
     }
 
     return {
@@ -98,6 +104,7 @@ def get_options_dict(
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
+                    start=10,  # 5 * 2
                     stop=specs["experience_cap"] + 1,
                     dtype=np.uint8,
                 ),
@@ -105,8 +112,9 @@ def get_options_dict(
             },
             "exogenous_processes": exog_processes,
         },
-        "model_params": specs | wage_params
-        # | exog_params
+        "model_params": specs
+        | wage_params
+        | exog_params
         | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 

@@ -11,6 +11,8 @@ from elder_care.model.shared import (
     is_part_time,
     is_retired,
     is_working,
+    is_pure_informal_care,
+    is_combination_care,
 )
 
 TWO_YEARS = 2
@@ -109,13 +111,23 @@ def budget_constraint(
     means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
     unemployment_benefits = means_test * options["unemployment_benefits"] * 12
 
+    cash_benefits_informal_care = (
+        is_pure_informal_care(lagged_choice) * options["informal_care_benefits"] * 12
+        + is_combination_care(lagged_choice)
+        * (options["informal_care_benefits"] / 2)
+        * 12
+    )
+
     income = jnp.maximum(
         is_working(lagged_choice) * labor_income
         + is_retired(lagged_choice) * retirement_income,
         unemployment_benefits,
     )
+    income_and_cash_benefits = income + cash_benefits_informal_care
 
-    return (1 + options["interest_rate"]) * savings_end_of_previous_period + income
+    return (
+        1 + options["interest_rate"]
+    ) * savings_end_of_previous_period + income_and_cash_benefits
 
 
 def get_exog_stochastic_wage(

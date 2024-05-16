@@ -693,17 +693,29 @@ def get_var_employment_by_age_soep():
 
 def get_var_coefficients_savings_rate_regression_soep():
 
+    # return pd.Series(
+    #     {
+    #         "savings_rate_constant": 0.000548694929,
+    #         "savings_rate_age": 0.005125798833,
+    #         "savings_rate_age_squared": 0.001756701331,
+    #         "savings_rate_high_education": 0.000000488544,
+    #         "savings_rate_part_time": 0.001620693283,
+    #         "savings_rate_full_time": 0.002157233215,
+    #         "savings_rate_informal_care": 0.000301182374,
+    #     },
+    # )
+
     return pd.Series(
         {
-            "savings_rate_constant": 0.000548694929,
-            "savings_rate_age": 0.005125798833,
-            "savings_rate_age_squared": 0.001756701331,
-            "savings_rate_high_education": 0.000000488544,
-            "savings_rate_part_time": 0.001620693283,
-            "savings_rate_full_time": 0.002157233215,
-            "savings_rate_informal_care": 0.000301182374,
-        },
+            "savings_rate_constant": 0.000157686647,
+            "savings_rate_age": 0.000374270803,
+            "savings_rate_age_squared": 0.000000040382,
+            "savings_rate_high_education": 0.001675821834,
+            "savings_rate_part_time": 0.001171840416,
+            "savings_rate_full_time": 0.001959585317,
+        }
     )
+    
 
 
 # var
