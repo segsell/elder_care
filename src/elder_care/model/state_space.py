@@ -54,7 +54,6 @@ def get_state_specific_feasible_choice_set(
     age = options["start_age"] + period
 
     _feasible_choice_set_all = np.arange(options["n_choices"])
-    # feasible_choice_set = np.arange(options["n_choices"])
 
     if mother_health == BAD_HEALTH:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]

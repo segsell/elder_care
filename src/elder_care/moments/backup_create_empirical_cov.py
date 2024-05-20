@@ -7,7 +7,7 @@ import pandas as pd
 from pytask import Product
 
 from elder_care.config import BLD
-from elder_care.model.shared import BAD_HEALTH, FEMALE
+from elder_care.model.shared import BAD_HEALTH, FEMALE, MEDIUM_HEALTH
 from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
 
 
@@ -327,25 +327,42 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
     sibling_var,
     weight,
 ):
-    no_care_mother_bad_health = get_weighted_variance_one_condition(
+
+    informal_care_mother_medium_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="no_care",
+        moment_unweighted="informal_care_child",
         condition_var="health",
-        condition_val=BAD_HEALTH,
+        condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
     informal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="informal_care_child_no_comb",
+        moment_unweighted="informal_care_child",
         condition_var="health",
         condition_val=BAD_HEALTH,
         weight=weight,
     )
+
+    formal_care_mother_medium_health = get_weighted_variance_one_condition(
+        dat=mother,
+        moment_unweighted="formal_care",
+        condition_var="health",
+        condition_val=MEDIUM_HEALTH,
+        weight=weight,
+    )
     formal_care_mother_bad_health = get_weighted_variance_one_condition(
         dat=mother,
-        moment_unweighted="formal_care_no_comb",
+        moment_unweighted="formal_care",
         condition_var="health",
         condition_val=BAD_HEALTH,
+        weight=weight,
+    )
+
+    comb_care_mother_medium_health = get_weighted_variance_one_condition(
+        dat=mother,
+        moment_unweighted="combination_care",
+        condition_var="health",
+        condition_val=MEDIUM_HEALTH,
         weight=weight,
     )
     comb_care_mother_bad_health = get_weighted_variance_one_condition(
@@ -356,53 +373,77 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    # no_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-    #     dat=mother,
-    #     moment_unweighted="no_care",
-    #     condition_var_one="health",
-    #     condition_val_one=BAD_HEALTH,
-    #     condition_var_two=sibling_var,
-    #     condition_val_two=True,
-    #     weight=weight,
-    # )
-    # informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-    #     dat=mother,
-    #     moment_unweighted="informal_care_child_no_comb",
-    #     condition_var_one="health",
-    #     condition_val_one=BAD_HEALTH,
-    #     condition_var_two=sibling_var,
-    #     condition_val_two=True,
-    #     weight=weight,
-    # )
-    # formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-    #     dat=mother,
-    #     moment_unweighted="formal_care_no_comb",
-    #     condition_var_one="health",
-    #     condition_val_one=BAD_HEALTH,
-    #     condition_var_two=sibling_var,
-    #     condition_val_two=True,
-    #     weight=weight,
-    # )
-    # comb_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-    #     dat=mother,
-    #     moment_unweighted="combination_care",
-    #     condition_var_one="health",
-    #     condition_val_one=BAD_HEALTH,
-    #     condition_var_two=sibling_var,
-    #     condition_val_two=True,
-    #     weight=weight,
-    # )
+    informal_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="informal_care_child",
+        condition_var_one="health",
+        condition_val_one=MEDIUM_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
+    informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="informal_care_child",
+        condition_var_one="health",
+        condition_val_one=BAD_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
+
+    formal_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="formal_care",
+        condition_var_one="health",
+        condition_val_one=MEDIUM_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
+    formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="formal_care",
+        condition_var_one="health",
+        condition_val_one=BAD_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
+
+    comb_mother_medium_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="combination_care",
+        condition_var_one="health",
+        condition_val_one=MEDIUM_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
+    comb_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+        dat=mother,
+        moment_unweighted="combination_care",
+        condition_var_one="health",
+        condition_val_one=BAD_HEALTH,
+        condition_var_two=sibling_var,
+        condition_val_two=True,
+        weight=weight,
+    )
 
     return pd.Series(
         {
-            "no_care_mother_health_2": no_care_mother_bad_health,
+            "informal_care_mother_health_1": informal_care_mother_medium_health,
             "informal_care_mother_health_2": informal_care_mother_bad_health,
+            "formal_care_mother_health_1": formal_care_mother_medium_health,
             "formal_care_mother_health_2": formal_care_mother_bad_health,
+            "combination_care_mother_health_1": comb_care_mother_medium_health,
             "combination_care_mother_health_2": comb_care_mother_bad_health,
-            #     "no_care_sibling_mother_health_2": no_care_mother_bad_health_sibling,
-            #     "informal_care_sibling_mother_health_2": informal_mother_bad_health_sibling,
-            #     "formal_care_sibling_mother_health_2": formal_mother_bad_health_sibling,
-            #     "combination_care_sibling_mother_health_2": comb_mother_bad_health_sibling,
+            "informal_care_sibling_mother_health_1": informal_mother_medium_health_sibling,  # noqa: E501
+            "informal_care_sibling_mother_health_2": informal_mother_bad_health_sibling,
+            "formal_care_sibling_mother_health_1": formal_mother_medium_health_sibling,
+            "formal_care_sibling_mother_health_2": formal_mother_bad_health_sibling,
+            "combination_care_sibling_mother_health_1": comb_mother_medium_health_sibling,  # noqa: E501
+            "combination_care_sibling_mother_health_2": comb_mother_bad_health_sibling,
         },
     )
 
@@ -652,16 +693,27 @@ def get_var_employment_by_age_soep():
 
 def get_var_coefficients_savings_rate_regression_soep():
 
+    # return pd.Series(
+    #     {
+    #         "savings_rate_constant": 0.000548694929,
+    #         "savings_rate_age": 0.005125798833,
+    #         "savings_rate_age_squared": 0.001756701331,
+    #         "savings_rate_high_education": 0.000000488544,
+    #         "savings_rate_part_time": 0.001620693283,
+    #         "savings_rate_full_time": 0.002157233215,
+    #         "savings_rate_informal_care": 0.000301182374,
+    #     },
+    # )
+
     return pd.Series(
         {
-            "savings_rate_constant": 0.000548694929,
-            "savings_rate_age": 0.005125798833,
-            "savings_rate_age_squared": 0.001756701331,
-            "savings_rate_high_education": 0.000000488544,
-            "savings_rate_part_time": 0.001620693283,
-            "savings_rate_full_time": 0.002157233215,
-            # "savings_rate_informal_care": 0.000301182374,
-        },
+            "savings_rate_constant": 0.000157686647,
+            "savings_rate_age": 0.000374270803,
+            "savings_rate_age_squared": 0.000000040382,
+            "savings_rate_high_education": 0.001675821834,
+            "savings_rate_part_time": 0.001171840416,
+            "savings_rate_full_time": 0.001959585317,
+        }
     )
 
 
