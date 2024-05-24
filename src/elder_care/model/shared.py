@@ -3,6 +3,7 @@
 import jax.numpy as jnp
 
 BASE_YEAR = 2015
+BETA = 0.95  # discount factor for calculation of net present value
 
 FEMALE = 2
 MALE = 1
@@ -126,7 +127,10 @@ FORMAL_CARE = jnp.array(
     list(set(PURE_FORMAL_CARE.tolist() + COMBINATION_CARE.tolist())),
 )
 CARE = jnp.concatenate([FORMAL_CARE, INFORMAL_CARE])
+CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, FORMAL_CARE, INFORMAL_CARE])
 
+PURE_FORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, PURE_FORMAL_CARE])
+PURE_INFORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, PURE_INFORMAL_CARE])
 
 # For NO_INFORMAL_CARE and NO_FORMAL_CARE, we need to perform set operations before
 # converting to JAX arrays.

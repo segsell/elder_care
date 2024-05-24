@@ -7,6 +7,8 @@ import pandas as pd
 
 from elder_care.model.shared import (
     AGE_BINS_SIM,
+    BETA,
+    RETIREMENT_AGE,
     ALL,
     BAD_HEALTH,
     COMBINATION_CARE,
@@ -25,6 +27,8 @@ from elder_care.model.shared import (
     PURE_INFORMAL_CARE,
     RETIREMENT,
 )
+
+from elder_care.model.budget import calc_net_income_pensions
 
 
 def simulate_moments(arr, idx):
@@ -112,21 +116,21 @@ def simulate_moments(arr, idx):
     # Employment by age
     # ================================================================================
 
-    share_out_of_labor_by_age = get_share_by_age(
-        arr,
-        ind=idx,
-        choice=OUT_OF_LABOR,
-    )
-    share_working_part_time_by_age = get_share_by_age(
-        arr,
-        ind=idx,
-        choice=PART_TIME,
-    )
-    share_working_full_time_by_age = get_share_by_age(
-        arr,
-        ind=idx,
-        choice=FULL_TIME,
-    )
+    # share_out_of_labor_by_age = get_share_by_age(
+    #     arr,
+    #     ind=idx,
+    #     choice=OUT_OF_LABOR,
+    # )
+    # share_working_part_time_by_age = get_share_by_age(
+    #     arr,
+    #     ind=idx,
+    #     choice=PART_TIME,
+    # )
+    # share_working_full_time_by_age = get_share_by_age(
+    #     arr,
+    #     ind=idx,
+    #     choice=FULL_TIME,
+    # )
 
     # ================================================================================
     # Savings rate
@@ -447,11 +451,11 @@ def simulate_moments(arr, idx):
 
     return jnp.asarray(
         # employment shares
-        share_out_of_labor_by_age
-        + share_working_part_time_by_age
-        + share_working_full_time_by_age
+        # share_out_of_labor_by_age
+        # + share_working_part_time_by_age
+        # + share_working_full_time_by_age
         # assets and savings
-        + savings_rate_coeffs.tolist()
+        savings_rate_coeffs.tolist()
         # employment shares by caregiving status
         # no informal care
         + share_not_working_no_informal_care_by_age_bin
@@ -774,6 +778,129 @@ def create_simulation_array_from_df(data, options):
     )
 
     data.loc[:, "income"] = data["working_hours"] * data["wage"]
+
+    # Create a mapping of column indices
+    column_indices = {col: idx for idx, col in enumerate(data.columns)}
+
+    data = data.dropna()
+
+    return jnp.array(data), column_indices
+
+
+def create_simulation_array_from_df_counterfactual(data, options):
+    """Create simulation array from dict."""
+    data = data.copy()  # Make a copy to avoid modifying a slice
+
+    options = options["model_params"]
+    n_agents = options["n_agents"]
+    n_periods = options["n_periods"]
+
+    # Assigning the 'agent' and age-related calculations
+    data.loc[:, "agent"] = jnp.tile(jnp.arange(n_agents), n_periods)
+    period_indices = jnp.tile(jnp.arange(n_periods)[:, None], (1, n_agents)).ravel()
+
+    data.loc[:, "age"] = options["start_age"] + period_indices
+    data.loc[:, "age_squared"] = data["age"] ** 2
+    data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
+
+    # Financial calculations
+    data.loc[:, "wealth"] = data["savings"] + data["consumption"]
+    data.loc[:, "savings_rate"] = jnp.where(
+        jnp.array(data["wealth"]) > 0,
+        jnp.divide(jnp.array(data["savings"]), jnp.array(data["wealth"])),
+        0,
+    )
+
+    data.loc[:, "experience"] = data["experience"] / 2
+    data.loc[:, "experience_squared"] = data["experience"] ** 2
+
+    # Employment status
+    data.loc[:, "lagged_part_time"] = jnp.isin(
+        jnp.array(data["lagged_choice"]),
+        PART_TIME,
+    ).astype(np.int8)
+
+    data.loc[:, "choice_retired"] = jnp.isin(
+        jnp.array(data["choice"]),
+        RETIREMENT,
+    ).astype(np.int8)
+    data.loc[:, "choice_part_time"] = jnp.isin(
+        jnp.array(data["choice"]),
+        PART_TIME,
+    ).astype(np.int8)
+    data.loc[:, "choice_full_time"] = jnp.isin(
+        jnp.array(data["choice"]),
+        FULL_TIME,
+    ).astype(np.int8)
+    data.loc[:, "choice_informal_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        INFORMAL_CARE,
+    ).astype(np.int8)
+
+    # Wage calculations
+    data.loc[:, "log_wage"] = (
+        options["wage_constant"]
+        + options["wage_age"] * data["age"]
+        + options["wage_age_squared"] * data["age_squared"]
+        + options["wage_experience"] * data["experience"]
+        + options["wage_experience_squared"] * data["experience_squared"]
+        + options["wage_high_education"] * data["high_educ"]
+        + options["wage_part_time"] * data["lagged_part_time"]
+    )
+
+    data.loc[:, "wage"] = jnp.exp(
+        jnp.array(data["log_wage"]) + jnp.array(data["income_shock"]),
+    )
+
+    # Working hours and income calculation
+    data.loc[:, "working_hours"] = jax.vmap(_assign_working_hours_vectorized)(
+        data["lagged_choice"].values,
+    )
+    data.loc[:, "labor_income"] = data["wage"] * data["working_hours"]
+
+    # Unemployment benefits
+    data.loc[:, "means_test"] = (
+        data.loc[:, "savings"] < options["unemployment_wealth_thresh"]
+    )
+    data.loc[:, "unemployment_benefits"] = (
+        data.loc[:, "means_test"] * options["unemployment_benefits"] * 12
+    )
+
+    # retirement benefits
+    data.loc[:, "pension_factor"] = (
+        1 - (data.loc[:, "age"] - RETIREMENT_AGE) * options["early_retirement_penalty"]
+    )
+    data.loc[:, "retirement_income_gross_one_year"] = (
+        options["pension_point_value"]
+        * data.loc[:, "experience"]
+        * data.loc[:, "pension_factor"]
+        * data.loc[:, "choice_retired"]  # only receive benefits if actually retired
+        * 12
+    )
+    data.loc[:, "retirement_income"] = jax.vmap(calc_net_income_pensions)(
+        data.loc[:, "retirement_income_gross_one_year"].values
+    )
+
+    # Cumulative life time income
+    data["cum_labor_income"] = data.groupby(level="agent")["labor_income"].transform(
+        "cumsum"
+    )
+    data["cum_unemployment_benefits"] = data.groupby(level="agent")[
+        "unemployment_benefits"
+    ].transform("cumsum")
+    data["cum_retirement_income"] = data.groupby(level="agent")[
+        "retirement_income"
+    ].transform("cumsum")
+
+    # Discount factor
+    data["beta"] = BETA ** data.index.get_level_values("period")
+
+    # Net Present Value for each income stream
+    data["NPV_labor_income"] = data["labor_income"] * data["beta"]
+    data["NPV_unemployment_benefits"] = data["unemployment_benefits"] * data["beta"]
+    data["NPV_retirement_income"] = data["retirement_income"] * data["beta"]
+
+    # npv_data = data.groupby(level='agent')[['NPV_labor_income', 'NPV_unemployment_benefits', 'NPV_retirement_income']].sum()
 
     # Create a mapping of column indices
     column_indices = {col: idx for idx, col in enumerate(data.columns)}
