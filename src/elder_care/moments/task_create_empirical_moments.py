@@ -2220,7 +2220,6 @@ def get_employment_by_age_soep():
 def get_employment_by_age_bin_informal_parental_caregivers_soep():
     """Get employment shares by age bin of informal parental caregivers.
 
-
     return pd.Series(
         {
             "not_working_age_40_45": 0.4051896,
@@ -2247,7 +2246,6 @@ def get_employment_by_age_bin_informal_parental_caregivers_soep():
     )
 
     """
-
     return pd.Series(
         {
             "not_working_age_40_45": 0.4167665,
@@ -2303,7 +2301,6 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
     )
 
     """
-
     return pd.Series(
         {
             "not_working_age_40_45": 0.3079041,
