@@ -3,8 +3,6 @@
 from pathlib import Path
 from typing import Annotated, Any
 
-import pytask
-
 import numpy as np
 import yaml
 from dcegm.pre_processing.setup_model import setup_and_save_model
