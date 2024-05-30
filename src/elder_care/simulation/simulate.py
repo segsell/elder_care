@@ -5,12 +5,12 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 
+from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
     AGE_BINS_SIM,
-    BETA,
-    RETIREMENT_AGE,
     ALL,
     BAD_HEALTH,
+    BETA,
     COMBINATION_CARE,
     FORMAL_CARE,
     FULL_TIME,
@@ -26,9 +26,8 @@ from elder_care.model.shared import (
     PURE_FORMAL_CARE,
     PURE_INFORMAL_CARE,
     RETIREMENT,
+    RETIREMENT_AGE,
 )
-
-from elder_care.model.budget import calc_net_income_pensions
 
 
 def simulate_moments(arr, idx):
@@ -878,12 +877,12 @@ def create_simulation_array_from_df_counterfactual(data, options):
         * 12
     )
     data.loc[:, "retirement_income"] = jax.vmap(calc_net_income_pensions)(
-        data.loc[:, "retirement_income_gross_one_year"].values
+        data.loc[:, "retirement_income_gross_one_year"].values,
     )
 
     # Cumulative life time income
     data["cum_labor_income"] = data.groupby(level="agent")["labor_income"].transform(
-        "cumsum"
+        "cumsum",
     )
     data["cum_unemployment_benefits"] = data.groupby(level="agent")[
         "unemployment_benefits"

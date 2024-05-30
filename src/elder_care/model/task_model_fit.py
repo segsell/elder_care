@@ -1,11 +1,10 @@
 """Functions to evaluate the fit of the simulated moments to the data moments."""
 
 import pytask
-import numpy as np
-import jax.numpy as jnp
-import pandas as pd
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 from elder_care.config import BLD
 
@@ -345,11 +344,11 @@ _SIM_MOMENTS = np.array(
 @pytask.mark.skip()
 def task_model_fit(path_to_empirical_moments=BLD / "moments" / "empirical_moments.csv"):
     """Evaluate the fit of the simulated moments to the data moments."""
-
     empirical_moments = pd.read_csv(path_to_empirical_moments, index_col=0).iloc[:, 0]
 
     simulated_moments = add_index_to_simulated_moments(
-        empirical_moments=empirical_moments, simulated_moments=SIM_MOMENTS
+        empirical_moments=empirical_moments,
+        simulated_moments=SIM_MOMENTS,
     )
 
     comparison = pd.concat([empirical_moments, simulated_moments], axis=1)
@@ -362,7 +361,8 @@ def task_model_fit(path_to_empirical_moments=BLD / "moments" / "empirical_moment
 
 
 def add_index_to_simulated_moments(
-    empirical_moments: pd.DataFrame, simulated_moments: np.ndarray
+    empirical_moments: pd.DataFrame,
+    simulated_moments: np.ndarray,
 ) -> pd.DataFrame:
     """Convert simulated moments to pandas DataFrame.
 
@@ -372,6 +372,7 @@ def add_index_to_simulated_moments(
 
     Returns:
         pd.DataFrame: Simulated moments as pandas DataFrame.
+
     """
     idx = dict(enumerate(empirical_moments.index, start=0))
 
@@ -381,12 +382,13 @@ def add_index_to_simulated_moments(
 
 
 def plot_labor_shares(df, working_status):
-    """
-    Plots the labor shares of empirical and simulated moments against age for a specified working status.
+    """Plots the labor shares of empirical and simulated moments against age for a
+    specified working status.
 
     Parameters:
         df (pandas.DataFrame): DataFrame with the index as "working_status_age_x" and two columns 'empirical' and 'simulated'.
         working_status (str): Working status to filter the DataFrame on.
+
     """
     # Prepare the data: filter rows for the specified working status and extract age
     pattern = f"{working_status}_age_"
@@ -426,7 +428,7 @@ def plot_labor_shares(df, working_status):
             67,
             68,
             69,
-        ]
+        ],
     )
 
     # Plotting
@@ -444,7 +446,8 @@ def plot_labor_shares(df, working_status):
     plt.xlabel("Age")
     plt.ylabel("Labor Shares")
     plt.xticks(
-        ages, rotation=45
+        ages,
+        rotation=45,
     )  # Set x-ticks to be the ages, rotate for better visibility
     plt.legend()
     plt.grid(True)
@@ -481,13 +484,13 @@ def plot_working_status(empirical, simulated, working_status):
         {
             "Age": ages_empirical,
             f"Share of {working_status.capitalize()} (Empirical)": shares_empirical,
-        }
+        },
     )
     df_simulated = pd.DataFrame(
         {
             "Age": ages_simulated,
             f"Share of {working_status.capitalize()} (Simulated)": shares_simulated,
-        }
+        },
     )
 
     # Sort the DataFrames by Age for better visualization
