@@ -7,7 +7,7 @@ import numpy as np
 
 from elder_care.model.shared import (
     RETIREMENT_AGE,
-    is_combination_care,
+    # is_combination_care,
     is_full_time,
     is_part_time,
     is_pure_informal_care,
@@ -112,10 +112,12 @@ def budget_constraint(
     unemployment_benefits = means_test * options["unemployment_benefits"] * 12
 
     cash_benefits_informal_care = (
-        is_pure_informal_care(lagged_choice) * options["informal_care_benefits"] * 12
-        + is_combination_care(lagged_choice)
-        * (options["informal_care_benefits"] / 2)
+        is_pure_informal_care(lagged_choice)
+        * options["informal_care_benefits"]
         * 12
+        # + is_combination_care(lagged_choice)
+        # * (options["informal_care_benefits"] / 2)
+        # * 12
     )
 
     income = jnp.maximum(

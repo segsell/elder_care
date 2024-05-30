@@ -4,8 +4,8 @@ import numpy as np
 
 from elder_care.model.shared import FULL_TIME, PART_TIME, WORK_NO_CARE
 
-MIN_INIT_EXPER = 5
-MAX_INIT_EXPER = 10
+MIN_INIT_EXPER = 5  # * 2
+MAX_INIT_EXPER = 10  # * 2
 
 
 def draw_initial_states(

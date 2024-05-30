@@ -1,6 +1,7 @@
 import numpy as np
 
 from elder_care.model.shared import (
+    AGE_50,
     BAD_HEALTH,
     CARE_AND_NO_CARE,
     PURE_INFORMAL_CARE,
@@ -67,7 +68,7 @@ def get_state_specific_feasible_choice_set_no_informal_care(
 
     _feasible_choice_set_all = np.arange(options["n_choices"])
 
-    if mother_health == BAD_HEALTH:
+    if (mother_health == BAD_HEALTH) & (age >= AGE_50):
         feasible_choice_set = [
             i for i in _feasible_choice_set_all if i in PURE_FORMAL_CARE_AND_NO_CARE
         ]

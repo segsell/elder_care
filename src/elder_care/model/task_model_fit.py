@@ -1,5 +1,6 @@
 """Functions to evaluate the fit of the simulated moments to the data moments."""
 
+import pytask
 import numpy as np
 import jax.numpy as jnp
 import pandas as pd
@@ -341,6 +342,7 @@ _SIM_MOMENTS = np.array(
 )
 
 
+@pytask.mark.skip()
 def task_model_fit(path_to_empirical_moments=BLD / "moments" / "empirical_moments.csv"):
     """Evaluate the fit of the simulated moments to the data moments."""
 

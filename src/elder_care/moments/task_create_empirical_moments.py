@@ -320,17 +320,17 @@ def task_create_moments(
 
     all_moments = pd.concat(
         [
-            # employment_by_age_soep,
+            employment_by_age_soep,
             ols_coeffs_savings_rate,
-            employment_by_age_bin_non_caregivers_soep,
-            employment_by_age_bin_caregivers_soep,
+            # employment_by_age_bin_non_caregivers_soep,
+            # employment_by_age_bin_caregivers_soep,
             # #
             # share_informal_care_by_age_bin,
-            caregiving_by_mother_health_and_presence_of_sibling_normalized,
+            # caregiving_by_mother_health_and_presence_of_sibling_normalized,
             # #
             employment_transitions_soep,
-            care_transitions_estimation_data,
-            care_transitions_parent_child_data,
+            # care_transitions_estimation_data,
+            # care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,
