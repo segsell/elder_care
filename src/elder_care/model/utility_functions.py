@@ -5,19 +5,8 @@ from typing import Any
 import jax.numpy as jnp
 
 from elder_care.model.shared import (
-    is_bad_health,
-    is_combination_care,
     is_full_time,
-    is_informal_care,
-    is_no_care,
-    is_no_informal_care,
     is_part_time,
-    is_pure_formal_care,
-    is_pure_informal_care,
-    is_in_age_range,
-    AGE_40,
-    AGE_50,
-    AGE_80,
 )
 
 

@@ -8,23 +8,14 @@ import pandas as pd
 from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
     AGE_BINS_SIM,
-    ALL,
     BAD_HEALTH,
     BETA,
-    COMBINATION_CARE,
-    FORMAL_CARE,
     FULL_TIME,
     INFORMAL_CARE,
     MAX_AGE_SIM,
     MIN_AGE_SIM,
-    NO_CARE,
-    NO_FORMAL_CARE,
-    NO_INFORMAL_CARE,
-    NO_WORK,
     OUT_OF_LABOR,
     PART_TIME,
-    PURE_FORMAL_CARE,
-    PURE_INFORMAL_CARE,
     RETIREMENT,
     RETIREMENT_AGE,
 )
@@ -482,7 +473,7 @@ def simulate_moments(arr, idx):
         + part_time_to_full_time
         + full_time_to_no_work
         + full_time_to_part_time
-        + full_time_to_full_time
+        + full_time_to_full_time,
         # +
         # # Caregiving transitions
         # no_informal_care_to_no_informal_care

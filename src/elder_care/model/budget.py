@@ -5,9 +5,8 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import (
+from elder_care.model.shared import (  # is_combination_care,
     RETIREMENT_AGE,
-    # is_combination_care,
     is_full_time,
     is_part_time,
     is_pure_informal_care,

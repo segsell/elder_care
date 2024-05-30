@@ -1,9 +1,6 @@
 import numpy as np
 
 from elder_care.model.shared import (
-    AGE_50,
-    BAD_HEALTH,
-    CARE_AND_NO_CARE,
     FULL_TIME_AND_NO_WORK,
     NO_CARE,
     NO_RETIREMENT,

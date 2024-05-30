@@ -11,6 +11,7 @@ import pytask
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods_for_model
+from dcegm.solve import get_solve_func_for_model
 from pytask import Product
 
 from elder_care.config import BLD
@@ -36,8 +37,6 @@ from elder_care.simulation.simulate import (
     simulate_moments,
 )
 from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
-
-from dcegm.solve import get_solve_func_for_model
 
 jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
