@@ -7,16 +7,16 @@ import pandas as pd
 from pytask import Product
 
 from elder_care.config import BLD
-from elder_care.model.shared import BAD_HEALTH, FEMALE
+from elder_care.model.shared import BAD_HEALTH
 from elder_care.moments.task_create_empirical_moments import deflate_income_and_wealth
 
 
 # @pytask.mark.skip(reason="Compare mean with other module")
 def task_create_empirical_var(
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
-    path_to_parent_child_hh_weight: Path = BLD
-    / "data"
-    / "parent_child_data_hh_weight.csv",
+    # path_to_parent_child_hh_weight: Path = BLD
+    # / "data"
+    # / "parent_child_data_hh_weight.csv",
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD
     / "moments"
@@ -24,60 +24,60 @@ def task_create_empirical_var(
 ) -> None:
     """Create empirical covariance matrix for the model."""
     dat_hh_weight = pd.read_csv(path_to_hh_weight)
-    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
     cpi_data = pd.read_csv(path_to_cpi)
 
     dat = dat_hh_weight.copy()
     dat = deflate_income_and_wealth(dat, cpi_data)
 
-    weight = "hh_weight"
-    intensive_care_var = "intensive_care_no_other"
+    # parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    # weight = "hh_weight"
+    # intensive_care_var = "intensive_care_no_other"
 
     # ================================================================================
     # Parent child data (mother)
     # ================================================================================
 
-    parent = parent_hh_weight.copy()
+    # parent = parent_hh_weight.copy()
 
-    parent["informal_care_child_weighted"] = (
-        parent["informal_care_child"] * parent[weight]
-    )
-    parent["home_care_weighted"] = parent["home_care"] * parent[weight]
-    parent["formal_care_weighted"] = parent["formal_care"] * parent[weight]
-    parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
-    parent["no_combination_care_weighted"] = (
-        parent["no_combination_care"] * parent[weight]
-    )
+    # parent["informal_care_child_weighted"] = (
+    #     parent["informal_care_child"] * parent[weight]
+    # )
+    # parent["home_care_weighted"] = parent["home_care"] * parent[weight]
+    # parent["formal_care_weighted"] = parent["formal_care"] * parent[weight]
+    # parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
+    # parent["no_combination_care_weighted"] = (
+    #     parent["no_combination_care"] * parent[weight]
+    # )
 
-    parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
-    parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
+    # parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
+    # parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
 
-    dat["no_intensive_informal_weighted"] = dat["no_intensive_informal"] * dat[weight]
-    dat["intensive_care_no_other_weighted"] = (
-        dat["intensive_care_no_other"] * dat[weight]
-    )
+    # dat["no_intensive_informal_weighted"] = dat["no_intensive_informal"] * dat[weight]
+    # dat["intensive_care_no_other_weighted"] = (
+    #     dat["intensive_care_no_other"] * dat[weight]
+    # )
 
-    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
-    parent["no_informal_care_child_weighted"] = (
-        parent["no_informal_care_child"] * parent[weight]
-    )
-    parent["only_formal_weighted"] = parent["only_formal"] * parent[weight]
-    parent["no_only_formal_weighted"] = parent["no_only_formal"] * parent[weight]
-    parent["no_only_informal_weighted"] = parent["no_only_informal"] * parent[weight]
+    # parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    # parent["no_informal_care_child_weighted"] = (
+    #     parent["no_informal_care_child"] * parent[weight]
+    # )
+    # parent["only_formal_weighted"] = parent["only_formal"] * parent[weight]
+    # parent["no_only_formal_weighted"] = parent["no_only_formal"] * parent[weight]
+    # parent["no_only_informal_weighted"] = parent["no_only_informal"] * parent[weight]
 
-    mother = parent[(parent["gender"] == FEMALE)]
+    # mother = parent[(parent["gender"] == FEMALE)]
 
-    parent["only_informal_care_child_weighted"] = (
-        parent["informal_care_child"] * parent[weight]
-    )
-    parent["no_only_informal_care_child_weighted"] = (
-        parent["no_informal_care_child"] * parent[weight]
-    )
-    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
-    parent["no_formal_care_weighted"] = parent["no_formal_care"] * parent[weight]
-    parent["no_informal_care_child_weighted"] = (
-        parent["no_informal_care_child"] * parent[weight]
-    )
+    # parent["only_informal_care_child_weighted"] = (
+    #     parent["informal_care_child"] * parent[weight]
+    # )
+    # parent["no_only_informal_care_child_weighted"] = (
+    #     parent["no_informal_care_child"] * parent[weight]
+    # )
+    # parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    # parent["no_formal_care_weighted"] = parent["no_formal_care"] * parent[weight]
+    # parent["no_informal_care_child_weighted"] = (
+    #     parent["no_informal_care_child"] * parent[weight]
+    # )
 
     # ================================================================================
     # SOEP
@@ -85,18 +85,18 @@ def task_create_empirical_var(
 
     employment_by_age_soep = get_var_employment_by_age_soep()
 
-    ols_coeffs_savings_rate = get_var_coefficients_savings_rate_regression_soep()
+    # ols_coeffs_savings_rate = get_var_coefficients_savings_rate_regression_soep()
 
-    employment_by_age_bin_non_caregivers_soep = (
-        get_var_employment_by_age_bin_non_informal_caregivers_soep()
-    )
-    employment_by_age_bin_caregivers_soep = (
-        get_var_employment_by_age_bin_informal_parental_caregivers_soep()
-    )
+    # employment_by_age_bin_non_caregivers_soep = (
+    #     get_var_employment_by_age_bin_non_informal_caregivers_soep()
+    # )
+    # employment_by_age_bin_caregivers_soep = (
+    #     get_var_employment_by_age_bin_informal_parental_caregivers_soep()
+    # )
 
-    share_informal_care_by_age_bin = (
-        get_var_share_informal_maternal_care_by_age_bin_soep()
-    )
+    # share_informal_care_by_age_bin = (
+    #     get_var_share_informal_maternal_care_by_age_bin_soep()
+    # )
 
     employment_transitions_soep = get_var_employment_transitions_soep()
 
@@ -104,21 +104,21 @@ def task_create_empirical_var(
     # SHARE
     # ================================================================================
 
-    caregiving_by_mother_health_and_presence_of_sibling = (
-        get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
-            mother,
-            sibling_var="has_two_daughters",
-            weight=weight,
-        )
-    )
+    # caregiving_by_mother_health_and_presence_of_sibling = (
+    #     get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
+    #         mother,
+    #         sibling_var="has_two_daughters",
+    #         weight=weight,
+    #     )
+    # )
 
-    care_transitions_estimation_data = get_var_care_transitions_from_estimation_data(
-        dat,
-        intensive_care_var=intensive_care_var,
-    )
-    care_transitions_parent_child_data = get_care_transitions_from_parent_child_data(
-        parent,
-    )
+    # care_transitions_estimation_data = get_var_care_transitions_from_estimation_data(
+    #     dat,
+    #     intensive_care_var=intensive_care_var,
+    # )
+    # care_transitions_parent_child_data = get_care_transitions_from_parent_child_data(
+    #     parent,
+    # )
 
     # ================================================================================
     # Combine variances
@@ -127,16 +127,16 @@ def task_create_empirical_var(
     all_vars = pd.concat(
         [
             employment_by_age_soep,
-            ols_coeffs_savings_rate,
-            employment_by_age_bin_non_caregivers_soep,
-            employment_by_age_bin_caregivers_soep,
+            # ols_coeffs_savings_rate,
+            # employment_by_age_bin_non_caregivers_soep,
+            # employment_by_age_bin_caregivers_soep,
             #
-            share_informal_care_by_age_bin,
-            caregiving_by_mother_health_and_presence_of_sibling,
+            # share_informal_care_by_age_bin,
+            # caregiving_by_mother_health_and_presence_of_sibling,
             #
             employment_transitions_soep,
-            care_transitions_estimation_data,
-            care_transitions_parent_child_data,
+            # care_transitions_estimation_data,
+            # care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,
@@ -324,7 +324,7 @@ def get_care_transitions_from_parent_child_data(parent):
 
 def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
     mother,
-    sibling_var,
+    # sibling_var,
     weight,
 ):
     no_care_mother_bad_health = get_weighted_variance_one_condition(
@@ -356,42 +356,42 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
         weight=weight,
     )
 
-    no_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-        dat=mother,
-        moment_unweighted="no_care",
-        condition_var_one="health",
-        condition_val_one=BAD_HEALTH,
-        condition_var_two=sibling_var,
-        condition_val_two=True,
-        weight=weight,
-    )
-    informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-        dat=mother,
-        moment_unweighted="informal_care_child_no_comb",
-        condition_var_one="health",
-        condition_val_one=BAD_HEALTH,
-        condition_var_two=sibling_var,
-        condition_val_two=True,
-        weight=weight,
-    )
-    formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-        dat=mother,
-        moment_unweighted="formal_care_no_comb",
-        condition_var_one="health",
-        condition_val_one=BAD_HEALTH,
-        condition_var_two=sibling_var,
-        condition_val_two=True,
-        weight=weight,
-    )
-    comb_mother_bad_health_sibling = get_weighted_variance_two_conditions(
-        dat=mother,
-        moment_unweighted="combination_care",
-        condition_var_one="health",
-        condition_val_one=BAD_HEALTH,
-        condition_var_two=sibling_var,
-        condition_val_two=True,
-        weight=weight,
-    )
+    # no_care_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+    #     dat=mother,
+    #     moment_unweighted="no_care",
+    #     condition_var_one="health",
+    #     condition_val_one=BAD_HEALTH,
+    #     condition_var_two=sibling_var,
+    #     condition_val_two=True,
+    #     weight=weight,
+    # )
+    # informal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+    #     dat=mother,
+    #     moment_unweighted="informal_care_child_no_comb",
+    #     condition_var_one="health",
+    #     condition_val_one=BAD_HEALTH,
+    #     condition_var_two=sibling_var,
+    #     condition_val_two=True,
+    #     weight=weight,
+    # )
+    # formal_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+    #     dat=mother,
+    #     moment_unweighted="formal_care_no_comb",
+    #     condition_var_one="health",
+    #     condition_val_one=BAD_HEALTH,
+    #     condition_var_two=sibling_var,
+    #     condition_val_two=True,
+    #     weight=weight,
+    # )
+    # comb_mother_bad_health_sibling = get_weighted_variance_two_conditions(
+    #     dat=mother,
+    #     moment_unweighted="combination_care",
+    #     condition_var_one="health",
+    #     condition_val_one=BAD_HEALTH,
+    #     condition_var_two=sibling_var,
+    #     condition_val_two=True,
+    #     weight=weight,
+    # )
 
     return pd.Series(
         {
@@ -399,10 +399,6 @@ def get_var_caregiving_status_by_mother_health_and_presence_of_sibling(
             "informal_care_mother_health_2": informal_care_mother_bad_health,
             "formal_care_mother_health_2": formal_care_mother_bad_health,
             "combination_care_mother_health_2": comb_care_mother_bad_health,
-            "no_care_sibling_mother_health_2": no_care_mother_bad_health_sibling,
-            "informal_care_sibling_mother_health_2": informal_mother_bad_health_sibling,
-            "formal_care_sibling_mother_health_2": formal_mother_bad_health_sibling,
-            "combination_care_sibling_mother_health_2": comb_mother_bad_health_sibling,
         },
     )
 
@@ -660,7 +656,7 @@ def get_var_coefficients_savings_rate_regression_soep():
             "savings_rate_high_education": 0.000000488544,
             "savings_rate_part_time": 0.001620693283,
             "savings_rate_full_time": 0.002157233215,
-            "savings_rate_informal_care": 0.000301182374,
+            # "savings_rate_informal_care": 0.000301182374,
         },
     )
 
