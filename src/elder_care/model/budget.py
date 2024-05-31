@@ -121,12 +121,10 @@ def budget_constraint(
 
 
 def get_exog_stochastic_wage(
-    period: int,
     lagged_choice: int,
     experience: int,
     high_educ: int,
     wage_shock: float,
-    options: dict[str, float],
     params: dict[str, float],
 ) -> float:
     """Computes the current level of deterministic and stochastic income.
@@ -189,12 +187,8 @@ def get_exog_stochastic_wage(
             and a stochastic shock.
 
     """
-    # age = options["start_age"] + period
-
     log_wage = (
         params["wage_constant"]
-        # + options["wage_age"] * age
-        # + options["wage_age_squared"] * age**2
         + params["wage_experience"] * (experience / 2)
         + params["wage_experience_squared"] * (experience / 2) ** 2
         + params["wage_high_education"] * high_educ

@@ -5,10 +5,9 @@ from typing import Annotated, Any
 
 import numpy as np
 import yaml
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
-import pytask
 
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
@@ -61,16 +60,16 @@ def get_options_dict(
 
     # exog_params = load_dict_from_pickle(path_to_exog)
 
-    exog_params = {
-        "part_time_constant": -2.102635900186225,
-        "part_time_not_working_last_period": -1.0115255914421664,
-        "part_time_high_education": 0.48013160890989515,
-        "part_time_above_retirement_age": -2.110713962590601,
-        "full_time_constant": -1.9425261133765783,
-        "full_time_not_working_last_period": -2.097935912953995,
-        "full_time_high_education": 0.8921957457184644,
-        "full_time_above_retirement_age": -3.1212459549307496,
-    }
+    # exog_params = {
+    #     "part_time_constant": -2.102635900186225,
+    #     "part_time_not_working_last_period": -1.0115255914421664,
+    #     "part_time_high_education": 0.48013160890989515,
+    #     "part_time_above_retirement_age": -2.110713962590601,
+    #     "full_time_constant": -1.9425261133765783,
+    #     "full_time_not_working_last_period": -2.097935912953995,
+    #     "full_time_high_education": 0.8921957457184644,
+    #     "full_time_above_retirement_age": -3.1212459549307496,
+    # }
 
     n_periods = specs["n_periods"]
     choices = np.arange(len(ALL), dtype=np.int8)

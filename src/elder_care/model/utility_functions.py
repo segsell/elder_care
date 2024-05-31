@@ -4,16 +4,7 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from elder_care.model.shared import (
-    N_MONTHS,
-    N_WEEKS,
-    TOTAL_WEEKLY_HOURS,
-    WEEKLY_HOURS_FULL_TIME,
-    WEEKLY_HOURS_PART_TIME,
-    is_full_time,
-    is_informal_care,
-    is_part_time,
-)
+from elder_care.model.shared import is_full_time, is_part_time
 
 
 def create_utility_functions():
@@ -44,7 +35,7 @@ def utility_func(
     period: int,
     # mother_health: int,
     # has_sibling: int,
-    options: dict,
+    # options: dict,
     params: dict,
 ) -> jnp.array:
     """Computes the agent's current utility based on a CRRA utility function.
@@ -218,12 +209,7 @@ def utility_func(
     #     * has_sibling
     # )
 
-    return (
-        utility_consumption
-        # + utility_leisure
-        + disutility_working
-        # + disutility_working_informal_care
-    )
+    return utility_consumption + disutility_working
 
 
 def marginal_utility(consumption, params):

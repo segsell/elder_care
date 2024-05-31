@@ -50,13 +50,7 @@ def get_state_specific_feasible_choice_set(
     """
     age = options["start_age"] + period
 
-    # _feasible_choice_set_all = list(np.arange(options["n_choices"]))
     feasible_choice_set = np.arange(options["n_choices"])
-
-    # if mother_health in (MEDIUM_HEALTH, BAD_HEALTH):
-    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in CARE]
-    # else:
-    #     feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
     if age < options["min_ret_age"]:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]
