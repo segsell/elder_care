@@ -890,7 +890,9 @@ def create_simulation_array_from_df_counterfactual(data, options):
     data["NPV_unemployment_benefits"] = data["unemployment_benefits"] * data["beta"]
     data["NPV_retirement_income"] = data["retirement_income"] * data["beta"]
 
-    # npv_data = data.groupby(level='agent')[['NPV_labor_income', 'NPV_unemployment_benefits', 'NPV_retirement_income']].sum()
+    # npv_data = data.groupby(level="agent")[
+    #     ["NPV_labor_income", "NPV_unemployment_benefits", "NPV_retirement_income"]
+    # ].sum()
 
     # Create a mapping of column indices
     column_indices = {col: idx for idx, col in enumerate(data.columns)}
