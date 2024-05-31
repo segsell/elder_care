@@ -41,7 +41,7 @@ repos:
     hooks:
     -   id: setup-cfg-fmt
 -   repo: https://github.com/psf/black
-    rev: 24.4.0
+    rev: 24.4.2
     hooks:
     -   id: black
 -   repo: https://github.com/PyCQA/docformatter
@@ -50,7 +50,7 @@ repos:
     -   id: docformatter
         args: [--in-place, --wrap-summaries, "88", --wrap-descriptions, "88", --blank]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.1
+    rev: v0.4.5
     hooks:
     -   id: ruff
 -   repo: https://github.com/dosisod/refurb
@@ -92,7 +92,7 @@ repos:
         #         path/to/file.py
         #     )$
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
     -   id: codespell
         exclude: src/elder_care/moments/task_care_mix_statistical_office.py

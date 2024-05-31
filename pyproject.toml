@@ -77,13 +77,14 @@ lint.extend-ignore = [
 "docs/source/conf.py" = ["INP001"]
 "src/elder_care/sandbox/run.py" = ["INP001"]
 "src/elder_care/utils.py" = ["S301"]
-"src/elder_care/simulation/initial_conditions.py" = ["PD008"]
+"src/elder_care/simulation/initial_conditions.py" = ["ERA001", "PD008"]
 "src/elder_care/moments/task_create_empirical_moments.py" = ["ERA001"]
 "src/elder_care/moments/task_create_empirical_cov.py" = ["ERA001"]
 "src/elder_care/model/shared.py" = ["ERA001"]
 "src/elder_care/model/task_debugging.py" = ["ERA001"]
 "src/elder_care/model/task_specify_model.py" = ["ERA001"]
 "src/elder_care/model/utility_functions.py" = ["ERA001"]
+"src/elder_care/simulation/simulate.py" = ["ERA001"]
 
 
 

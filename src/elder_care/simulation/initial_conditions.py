@@ -1,13 +1,11 @@
-"""Initial conditions for the simulation."""
-
 import jax
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import FULL_TIME, PART_TIME
+from elder_care.model.shared import FULL_TIME, PART_TIME, WORK_NO_CARE
 
-MIN_INIT_EXPER = 5
-MAX_INIT_EXPER = 10
+MIN_INIT_EXPER = 5  # * 2
+MAX_INIT_EXPER = 10  # * 2
 
 
 def draw_initial_states(
@@ -27,21 +25,20 @@ def draw_initial_states(
     informal_care = get_initial_share_two(initial_conditions, "share_informal_care")
 
     """
-    n_choices = 16
+    # n_choices = 3  # exclude retirement
 
     employment = get_initial_share_three(
         initial_conditions,
         ["share_not_working", "share_part_time", "share_full_time"],
     )
-    employment = jnp.concatenate([employment, jnp.array([0])])
 
-    informal_care = jnp.array([1, 0])  # agents start with no informal care provided
-    formal_care = jnp.array([1, 0])  # agents start with no formal care provided
-    informal_formal = jnp.outer(informal_care, formal_care)
-    lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
+    # informal_care = jnp.array([1, 0])  # agents start with no informal care provided
+    # formal_care = jnp.array([1, 0])  # agents start with no formal care provided
+    # informal_formal = jnp.outer(informal_care, formal_care)
+    # lagged_choice_probs = jnp.outer(employment, informal_formal).flatten()
+    lagged_choice_probs = employment
 
     high_educ = get_initial_share_two(initial_conditions, "share_high_educ")
-    has_sibling = get_initial_share_two(initial_conditions, "share_has_sister")
 
     mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
 
@@ -74,7 +71,7 @@ def draw_initial_states(
         "lagged_choice": draw_random_array(
             seed=seed - 1,
             n_agents=n_agents,
-            values=jnp.arange(n_choices),
+            values=WORK_NO_CARE,
             probabilities=lagged_choice_probs,
         ).astype(np.int16),
         "high_educ": draw_random_array(
@@ -83,12 +80,12 @@ def draw_initial_states(
             values=jnp.array([0, 1]),
             probabilities=high_educ,
         ).astype(np.int16),
-        "has_sibling": draw_random_array(
-            seed=seed - 3,
-            n_agents=n_agents,
-            values=jnp.array([0, 1]),
-            probabilities=has_sibling,
-        ).astype(np.int16),
+        # "has_sibling": draw_random_array(
+        #     seed=seed - 3,
+        #     n_agents=n_agents,
+        #     values=jnp.array([0, 1]),
+        #     probabilities=has_sibling,
+        # ).astype(np.int16),
         "experience": experience,
         "mother_health": draw_random_array(
             seed=seed - 5,

@@ -180,7 +180,6 @@ def get_moment_error_vec(
     crit_val = root_contribs @ root_contribs
 
     """
-    # ! random seed !
     seed = int(time.time())
 
     params_all = params | params_fixed
@@ -209,62 +208,6 @@ def get_moment_error_vec(
     return _sim_raw - emp_moments
 
 
-def criterion_solve_and_simulate_short(
-    params,
-    options,
-    chol_weights,
-    model_loaded,
-    emp_moments,
-    solve_func,
-    initial_states,
-    initial_resources,
-):
-    """Criterion function for the estimation.
-
-    chol_weights = jnp.eye(len(emp_moments))
-
-    err = sim_moments - emp_moments
-    # crit_val = jnp.dot(jnp.dot(err.T, chol_weights), err)
-
-    # deviations = sim_moments - np.array(emp_moments)
-    root_contribs = err @ chol_weights
-    crit_val = root_contribs @ root_contribs
-
-    """
-    # ! random seed !
-    seed = int(time.time()) + 10
-
-    value, policy_left, policy_right, endog_grid = solve_func(params)
-
-    sim_dict = simulate_all_periods_for_model(
-        states_initial=initial_states,
-        resources_initial=initial_resources,
-        n_periods=options["model_params"]["n_periods"],
-        params=params,
-        seed=seed,
-        endog_grid_solved=endog_grid,
-        value_solved=value,
-        policy_left_solved=policy_left,
-        policy_right_solved=policy_right,
-        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
-        model=model_loaded,
-    )
-
-    data = create_simulation_df_from_dict(sim_dict)
-    arr, idx = create_simulation_array_from_df(data=data, options=options)
-    _sim_moments_raw = simulate_moments(arr, idx)
-
-    sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
-    sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
-
-    err_vec = (sim_moments - emp_moments) / emp_moments
-
-    root_contribs = err_vec @ chol_weights
-    crit_val = root_contribs @ root_contribs
-
-    return {"root_contributions": root_contribs, "value": crit_val}
-
-
 def criterion_solve_and_simulate(
     params,
     options,
@@ -288,7 +231,7 @@ def criterion_solve_and_simulate(
 
     """
     # ! random seed !
-    seed = int(time.time()) + 10
+    seed = int(time.time())
 
     value, policy_left, policy_right, endog_grid = solve_func(params)
 
@@ -313,7 +256,7 @@ def criterion_solve_and_simulate(
     sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
     sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
 
-    err_vec = (sim_moments - emp_moments) / emp_moments
+    err_vec = sim_moments - emp_moments
 
     root_contribs = err_vec @ chol_weights
     crit_val = root_contribs @ root_contribs

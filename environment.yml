@@ -23,7 +23,6 @@ dependencies:
   - networkx
   - pandas
   - plotly
-  - pytask
   - scipy
   - seaborn
   - statsmodels
@@ -33,6 +32,8 @@ dependencies:
   - nb_black
   - pdbpp
   - pre-commit
+  - pytask
+  - pytask-parallel
   - pytest
   - pytest-cov
   - pytest-xdist
