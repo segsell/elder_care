@@ -66,7 +66,7 @@ def prob_full_time_offer(period, lagged_choice, high_educ, options, params):
 # =====================================================================================
 
 
-def prob_survival_mother(period, mother_health, mother_alive, options):
+def prob_survival_mother_medium_bad(period, mother_health, mother_alive, options):
     """Predicts the survival probability based on logit parameters.
 
     coefs_male = np.array(
@@ -109,7 +109,7 @@ def prob_survival_mother(period, mother_health, mother_alive, options):
     return jnp.array([1 - prob_survival, prob_survival])
 
 
-def prob_survival_father(period, father_health, father_alive, options):
+def prob_survival_mother(period, mother_health, mother_alive, options):
     """Predicts the survival probability based on logit parameters.
 
     coefs_male = np.array(
@@ -134,25 +134,80 @@ def prob_survival_father(period, father_health, father_alive, options):
         float: Predicted binary survival probability.
 
     """
-    father_age = options["father_start_age"] + period
+    mother_age = options["mother_start_age"] + period
 
     logit = (
-        options["survival_prob_father_constant"]
-        + options["survival_prob_father_lagged_age"] * father_age
-        + options["survival_prob_father_lagged_age_squared"] * (father_age**2)
-        + options["survival_prob_father_lagged_health_medium"]
-        * is_medium_health(father_health)
-        + options["survival_prob_father_lagged_health_bad"]
-        * is_bad_health(father_health)
+        options["survival_prob_mother_constant"]
+        + options["survival_prob_mother_lagged_age"] * mother_age
+        + options["survival_prob_mother_lagged_age_squared"] * (mother_age**2)
+        + options["survival_prob_mother_lagged_health_bad"]
+        * is_bad_health(mother_health)
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))
 
-    prob_survival = father_alive * prob_logit
+    prob_survival = mother_alive * prob_logit
 
     return jnp.array([1 - prob_survival, prob_survival])
 
 
 def exog_health_transition_mother_with_survival(period, mother_health, options):
+    """Compute exogenous health transition probabilities.
+
+    Multinomial logit model with three health states: good, medium, bad.
+
+    This function computes the transition probabilities for an individual's health
+    state based on their current age, squared age, and lagged health states.
+    It uses a set of predefined parameters for medium and bad health states to
+    calculate linear combinations, and then applies the softmax function to these
+    linear combinations to get the transition probabilities.
+
+
+    Returns:
+        jnp.ndarray: Array of shape (3,) representing the probabilities of
+            transitioning to good, medium, and bad health states, respectively.
+
+    """
+    mother_age = options["mother_start_age"] + period
+    mother_age_squared = mother_age**2
+
+    good_health = mother_health == GOOD_HEALTH
+    bad_health = mother_health == BAD_HEALTH
+    alive = mother_health != DEAD
+
+    mother_survival_prob = prob_survival_mother(
+        period=period,
+        mother_health=mother_health,
+        mother_alive=alive,
+        options=options,
+    )
+    prob_dead = mother_survival_prob[0]
+    prob_alive = mother_survival_prob[1]
+
+    outcome_bad_health = (
+        options["mother_bad_health"]["bad_health_age"] * mother_age
+        + options["mother_bad_health"]["bad_health_age_squared"] * mother_age_squared
+        + options["mother_bad_health"]["bad_health_lagged_good_health"] * good_health
+        + options["mother_bad_health"]["bad_health_lagged_bad_health"] * bad_health
+        + options["mother_bad_health"]["bad_health_constant"]
+    )
+
+    linear_comb = jnp.array([0, outcome_bad_health])
+    health_trans_probs = _softmax(linear_comb)
+
+    return jnp.array(
+        [
+            health_trans_probs[0] * prob_alive,
+            health_trans_probs[1] * prob_alive,
+            prob_dead,
+        ],
+    )
+
+
+def exog_health_transition_mother_with_survival_medium_bad(
+    period,
+    mother_health,
+    options,
+):
     """Compute exogenous health transition probabilities.
 
     Multinomial logit model with three health states: good, medium, bad.

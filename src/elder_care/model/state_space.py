@@ -30,7 +30,6 @@ def get_state_specific_feasible_choice_set(
     lagged_choice,
     part_time_offer,
     full_time_offer,
-    # mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.

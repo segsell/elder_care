@@ -270,6 +270,16 @@ def task_create_moments(
     #     )
     # )
 
+    # first_half = caregiving_by_mother_health_and_presence_of_sibling[:4]
+    # second_half = caregiving_by_mother_health_and_presence_of_sibling[4:]
+
+    # normalized_first_half = first_half / first_half.sum()
+    # normalized_second_half = second_half / second_half.sum()
+
+    # caregiving_by_mother_health_and_presence_of_sibling_normalized = pd.concat(
+    #     [normalized_first_half, normalized_second_half],
+    # )
+
     # ================================================================================
     # Labor and caregiving transitions
     # ================================================================================
@@ -945,7 +955,6 @@ def get_emplyoment_transitions_share(dat, weight):
 
 def get_caregiving_status_by_mother_health_and_presence_of_sibling(
     mother,
-    sibling_var,
     weight,
 ):
     """Get caregiving status by mother's health and marital status.
@@ -996,18 +1005,24 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
     combination_care_mother_sibling_health_2,0.06878949679959141
 
     """
+    no_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
+        mother,
+        parent="mother",
+        moment="no_care_weighted",
+        weight=weight,
+    )
     informal_care_by_mother_health = (
         get_caregiving_status_by_parental_health_any_sibling(
             mother,
             parent="mother",
-            moment="informal_care_child_weighted",
+            moment="informal_care_child_no_comb_weighted",
             weight=weight,
         )
     )
     formal_care_by_mother_health = get_caregiving_status_by_parental_health_any_sibling(
         mother,
         parent="mother",
-        moment="formal_care_weighted",
+        moment="formal_care_no_comb_weighted",
         weight=weight,
     )
 
@@ -1020,45 +1035,57 @@ def get_caregiving_status_by_mother_health_and_presence_of_sibling(
         )
     )
 
-    informal_care_by_mother_health_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="informal_care_child_weighted",
-            has_other_sibling=True,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-    formal_care_by_mother_health_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="formal_care_weighted",
-            has_other_sibling=True,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
-    combination_care_by_mother_health_sibling = (
-        get_caregiving_status_by_parental_health_and_presence_of_sibling(
-            mother,
-            parent="mother",
-            moment="combination_care_weighted",
-            has_other_sibling=True,
-            sibling_var=sibling_var,
-            weight=weight,
-        )
-    )
+    # no_care_by_mother_health_sibling = (
+    #     get_caregiving_status_by_parental_health_and_presence_of_sibling(
+    #         mother,
+    #         parent="mother",
+    #         moment="no_care_weighted",
+    #         has_other_sibling=True,
+    #         sibling_var=sibling_var,
+    #         weight=weight,
+    #     )
+    # )
+    # informal_care_by_mother_health_sibling = (
+    #     get_caregiving_status_by_parental_health_and_presence_of_sibling(
+    #         mother,
+    #         parent="mother",
+    #         moment="informal_care_child_no_comb_weighted",
+    #         has_other_sibling=True,
+    #         sibling_var=sibling_var,
+    #         weight=weight,
+    #     )
+    # )
+    # formal_care_by_mother_health_sibling = (
+    #     get_caregiving_status_by_parental_health_and_presence_of_sibling(
+    #         mother,
+    #         parent="mother",
+    #         moment="formal_care_no_comb_weighted",
+    #         has_other_sibling=True,
+    #         sibling_var=sibling_var,
+    #         weight=weight,
+    #     )
+    # )
+    # combination_care_by_mother_health_sibling = (
+    #     get_caregiving_status_by_parental_health_and_presence_of_sibling(
+    #         mother,
+    #         parent="mother",
+    #         moment="combination_care_weighted",
+    #         has_other_sibling=True,
+    #         sibling_var=sibling_var,
+    #         weight=weight,
+    #     )
+    # )
 
     return pd.concat(
         [
+            no_care_by_mother_health,
             informal_care_by_mother_health,
             formal_care_by_mother_health,
             combination_care_by_mother_health,
-            informal_care_by_mother_health_sibling,
-            formal_care_by_mother_health_sibling,
-            combination_care_by_mother_health_sibling,
+            # no_care_by_mother_health_sibling,
+            # informal_care_by_mother_health_sibling,
+            # formal_care_by_mother_health_sibling,
+            # combination_care_by_mother_health_sibling,
         ],
         ignore_index=False,
         axis=0,
@@ -1795,7 +1822,7 @@ def get_caregiving_status_by_parental_health_any_sibling(
                 dat["health"] == health,
                 weight,
             ].sum()
-            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [BAD_HEALTH]
         },
     )
 
@@ -1830,7 +1857,7 @@ def get_caregiving_status_by_parental_health_and_presence_of_sibling(
                 (dat[sibling_var] == has_other_sibling) & (dat["health"] == health),
                 weight,
             ].sum()
-            for health in [MEDIUM_HEALTH, BAD_HEALTH]
+            for health in [BAD_HEALTH]
         },
     )
 
@@ -1876,15 +1903,26 @@ def get_coefficients_savings_rate_regression():
     2015 prices.
 
     """
+    # return pd.Series(
+    #     {
+    #         "savings_rate_constant": 1.929170502311,
+    #         "savings_rate_age": -0.0755207021,
+    #         "savings_rate_age_squared": 0.0007550297,
+    #         "savings_rate_high_education": 0.0050211845,
+    #         "savings_rate_part_time": 0.0809547016,
+    #         "savings_rate_full_time": 0.1041300926,
+    #         "savings_rate_informal_care": -0.0339010984,
+    #     },
+    # )
+
     return pd.Series(
         {
-            "savings_rate_constant": 1.929170502311,
-            "savings_rate_age": -0.0755207021,
-            "savings_rate_age_squared": 0.0007550297,
-            "savings_rate_high_education": 0.0050211845,
-            "savings_rate_part_time": 0.0809547016,
-            "savings_rate_full_time": 0.1041300926,
-            "savings_rate_informal_care": -0.0339010984,
+            "savings_rate_constant": -0.9054951203922390,
+            "savings_rate_age": 0.0397000841,
+            "savings_rate_age_squared": -0.0003955014,
+            "savings_rate_high_education": 0.0424789561,
+            "savings_rate_part_time": 0.0553201853,
+            "savings_rate_full_time": 0.0783182866,
         },
     )
 
@@ -1972,101 +2010,202 @@ def get_employment_by_age_soep():
     "full_time_age_70": 0.005553627,
 
     """
+    # return pd.Series(
+    #     {
+    #         # not working
+    #         "not_working_age_40": 0.3624795,
+    #         "not_working_age_41": 0.3429091,
+    #         "not_working_age_42": 0.3217345,
+    #         "not_working_age_43": 0.3128681,
+    #         "not_working_age_44": 0.3001430,
+    #         "not_working_age_45": 0.2968833,
+    #         "not_working_age_46": 0.2921024,
+    #         "not_working_age_47": 0.2930369,
+    #         "not_working_age_48": 0.2827195,
+    #         "not_working_age_49": 0.2772086,
+    #         "not_working_age_50": 0.2789733,
+    #         "not_working_age_51": 0.2890753,
+    #         "not_working_age_52": 0.2981818,
+    #         "not_working_age_53": 0.3093333,
+    #         "not_working_age_54": 0.3253968,
+    #         "not_working_age_55": 0.3312008,
+    #         "not_working_age_56": 0.3494705,
+    #         "not_working_age_57": 0.3658537,
+    #         "not_working_age_58": 0.4085761,
+    #         "not_working_age_59": 0.4484105,
+    #         "not_working_age_60": 0.5026279,
+    #         "not_working_age_61": 0.6012961,
+    #         "not_working_age_62": 0.6930100,
+    #         "not_working_age_63": 0.7615607,
+    #         "not_working_age_64": 0.8543746,
+    #         "not_working_age_65": 0.8963161,
+    #         "not_working_age_66": 0.9447926,
+    #         "not_working_age_67": 0.9586930,
+    #         "not_working_age_68": 0.9703130,
+    #         "not_working_age_69": 0.9747814,
+    #         # part-time
+    #         "part_time_age_40": 0.37338666,
+    #         "part_time_age_41": 0.37436364,
+    #         "part_time_age_42": 0.38436831,
+    #         "part_time_age_43": 0.38283063,
+    #         "part_time_age_44": 0.38827315,
+    #         "part_time_age_45": 0.38005343,
+    #         "part_time_age_46": 0.37396322,
+    #         "part_time_age_47": 0.36248392,
+    #         "part_time_age_48": 0.35486308,
+    #         "part_time_age_49": 0.36013918,
+    #         "part_time_age_50": 0.34748272,
+    #         "part_time_age_51": 0.33326514,
+    #         "part_time_age_52": 0.32491979,
+    #         "part_time_age_53": 0.31377778,
+    #         "part_time_age_54": 0.30905696,
+    #         "part_time_age_55": 0.31471457,
+    #         "part_time_age_56": 0.30509329,
+    #         "part_time_age_57": 0.29766588,
+    #         "part_time_age_58": 0.27831715,
+    #         "part_time_age_59": 0.25571668,
+    #         "part_time_age_60": 0.23430152,
+    #         "part_time_age_61": 0.18230487,
+    #         "part_time_age_62": 0.14037090,
+    #         "part_time_age_63": 0.11734104,
+    #         "part_time_age_64": 0.07310628,
+    #         "part_time_age_65": 0.05763518,
+    #         "part_time_age_66": 0.03640704,
+    #         "part_time_age_67": 0.02897657,
+    #         "part_time_age_68": 0.02065182,
+    #         "part_time_age_69": 0.01782112,
+    #         # full-time
+    #         "full_time_age_40": 0.264133794,
+    #         "full_time_age_41": 0.282727273,
+    #         "full_time_age_42": 0.293897216,
+    #         "full_time_age_43": 0.304301267,
+    #         "full_time_age_44": 0.311583840,
+    #         "full_time_age_45": 0.323063224,
+    #         "full_time_age_46": 0.333934367,
+    #         "full_time_age_47": 0.344479148,
+    #         "full_time_age_48": 0.362417375,
+    #         "full_time_age_49": 0.362652233,
+    #         "full_time_age_50": 0.373543929,
+    #         "full_time_age_51": 0.377659574,
+    #         "full_time_age_52": 0.376898396,
+    #         "full_time_age_53": 0.376888889,
+    #         "full_time_age_54": 0.365546218,
+    #         "full_time_age_55": 0.354084646,
+    #         "full_time_age_56": 0.345436208,
+    #         "full_time_age_57": 0.336480462,
+    #         "full_time_age_58": 0.313106796,
+    #         "full_time_age_59": 0.295872839,
+    #         "full_time_age_60": 0.263070539,
+    #         "full_time_age_61": 0.216398986,
+    #         "full_time_age_62": 0.166619116,
+    #         "full_time_age_63": 0.121098266,
+    #         "full_time_age_64": 0.072519084,
+    #         "full_time_age_65": 0.046048723,
+    #         "full_time_age_66": 0.018800358,
+    #         "full_time_age_67": 0.012330456,
+    #         "full_time_age_68": 0.009035173,
+    #         "full_time_age_69": 0.007397445,
+    #     },
+    # )
+
     return pd.Series(
         {
             # not working
-            "not_working_age_40": 0.3624795,
-            "not_working_age_41": 0.3429091,
-            "not_working_age_42": 0.3217345,
-            "not_working_age_43": 0.3128681,
-            "not_working_age_44": 0.3001430,
-            "not_working_age_45": 0.2968833,
-            "not_working_age_46": 0.2921024,
-            "not_working_age_47": 0.2930369,
-            "not_working_age_48": 0.2827195,
-            "not_working_age_49": 0.2772086,
-            "not_working_age_50": 0.2789733,
-            "not_working_age_51": 0.2890753,
-            "not_working_age_52": 0.2981818,
-            "not_working_age_53": 0.3093333,
-            "not_working_age_54": 0.3253968,
-            "not_working_age_55": 0.3312008,
-            "not_working_age_56": 0.3494705,
-            "not_working_age_57": 0.3658537,
-            "not_working_age_58": 0.4085761,
-            "not_working_age_59": 0.4484105,
-            "not_working_age_60": 0.5026279,
-            "not_working_age_61": 0.6012961,
-            "not_working_age_62": 0.6930100,
-            "not_working_age_63": 0.7615607,
-            "not_working_age_64": 0.8543746,
-            "not_working_age_65": 0.8963161,
-            "not_working_age_66": 0.9447926,
-            "not_working_age_67": 0.9586930,
-            "not_working_age_68": 0.9703130,
-            "not_working_age_69": 0.9747814,
+            # "not_working_age_39": 0.3664165,
+            "not_working_age_40": 0.3403393,
+            "not_working_age_41": 0.3274064,
+            "not_working_age_42": 0.3086635,
+            "not_working_age_43": 0.3051788,
+            "not_working_age_44": 0.2938053,
+            "not_working_age_45": 0.2880788,
+            "not_working_age_46": 0.2839928,
+            "not_working_age_47": 0.2833299,
+            "not_working_age_48": 0.2724570,
+            "not_working_age_49": 0.2681223,
+            "not_working_age_50": 0.2711299,
+            "not_working_age_51": 0.2745417,
+            "not_working_age_52": 0.2898975,
+            "not_working_age_53": 0.3013211,
+            "not_working_age_54": 0.3162991,
+            "not_working_age_55": 0.3244014,
+            "not_working_age_56": 0.3404255,
+            "not_working_age_57": 0.3546940,
+            "not_working_age_58": 0.3884817,
+            "not_working_age_59": 0.4228265,
+            "not_working_age_60": 0.4646717,
+            "not_working_age_61": 0.5338518,
+            "not_working_age_62": 0.6121121,
+            "not_working_age_63": 0.6659180,
+            "not_working_age_64": 0.7886279,
+            "not_working_age_65": 0.8381944,
+            "not_working_age_66": 0.9186047,
+            "not_working_age_67": 0.9398907,
+            "not_working_age_68": 0.9544950,
+            "not_working_age_69": 0.9628099,
             # part-time
-            "part_time_age_40": 0.37338666,
-            "part_time_age_41": 0.37436364,
-            "part_time_age_42": 0.38436831,
-            "part_time_age_43": 0.38283063,
-            "part_time_age_44": 0.38827315,
-            "part_time_age_45": 0.38005343,
-            "part_time_age_46": 0.37396322,
-            "part_time_age_47": 0.36248392,
-            "part_time_age_48": 0.35486308,
-            "part_time_age_49": 0.36013918,
-            "part_time_age_50": 0.34748272,
-            "part_time_age_51": 0.33326514,
-            "part_time_age_52": 0.32491979,
-            "part_time_age_53": 0.31377778,
-            "part_time_age_54": 0.30905696,
-            "part_time_age_55": 0.31471457,
-            "part_time_age_56": 0.30509329,
-            "part_time_age_57": 0.29766588,
-            "part_time_age_58": 0.27831715,
-            "part_time_age_59": 0.25571668,
-            "part_time_age_60": 0.23430152,
-            "part_time_age_61": 0.18230487,
-            "part_time_age_62": 0.14037090,
-            "part_time_age_63": 0.11734104,
-            "part_time_age_64": 0.07310628,
-            "part_time_age_65": 0.05763518,
-            "part_time_age_66": 0.03640704,
-            "part_time_age_67": 0.02897657,
-            "part_time_age_68": 0.02065182,
-            "part_time_age_69": 0.01782112,
+            # "part_time_age_39": 0.35974423,
+            "part_time_age_40": 0.37756394,
+            "part_time_age_41": 0.37339972,
+            "part_time_age_42": 0.39116239,
+            "part_time_age_43": 0.38532676,
+            "part_time_age_44": 0.39095379,
+            "part_time_age_45": 0.38246305,
+            "part_time_age_46": 0.37397068,
+            "part_time_age_47": 0.36328045,
+            "part_time_age_48": 0.35676364,
+            "part_time_age_49": 0.35764192,
+            "part_time_age_50": 0.34697509,
+            "part_time_age_51": 0.33464841,
+            "part_time_age_52": 0.32162030,
+            "part_time_age_53": 0.30945122,
+            "part_time_age_54": 0.30473373,
+            "part_time_age_55": 0.30957811,
+            "part_time_age_56": 0.30311862,
+            "part_time_age_57": 0.29926306,
+            "part_time_age_58": 0.28551483,
+            "part_time_age_59": 0.26388357,
+            "part_time_age_60": 0.24231089,
+            "part_time_age_61": 0.20677036,
+            "part_time_age_62": 0.17567568,
+            "part_time_age_63": 0.16058394,
+            "part_time_age_64": 0.10321384,
+            "part_time_age_65": 0.08611111,
+            "part_time_age_66": 0.04883721,
+            "part_time_age_67": 0.03642987,
+            "part_time_age_68": 0.02885683,
+            "part_time_age_69": 0.02066116,
             # full-time
-            "full_time_age_40": 0.264133794,
-            "full_time_age_41": 0.282727273,
-            "full_time_age_42": 0.293897216,
-            "full_time_age_43": 0.304301267,
-            "full_time_age_44": 0.311583840,
-            "full_time_age_45": 0.323063224,
-            "full_time_age_46": 0.333934367,
-            "full_time_age_47": 0.344479148,
-            "full_time_age_48": 0.362417375,
-            "full_time_age_49": 0.362652233,
-            "full_time_age_50": 0.373543929,
-            "full_time_age_51": 0.377659574,
-            "full_time_age_52": 0.376898396,
-            "full_time_age_53": 0.376888889,
-            "full_time_age_54": 0.365546218,
-            "full_time_age_55": 0.354084646,
-            "full_time_age_56": 0.345436208,
-            "full_time_age_57": 0.336480462,
-            "full_time_age_58": 0.313106796,
-            "full_time_age_59": 0.295872839,
-            "full_time_age_60": 0.263070539,
-            "full_time_age_61": 0.216398986,
-            "full_time_age_62": 0.166619116,
-            "full_time_age_63": 0.121098266,
-            "full_time_age_64": 0.072519084,
-            "full_time_age_65": 0.046048723,
-            "full_time_age_66": 0.018800358,
-            "full_time_age_67": 0.012330456,
-            "full_time_age_68": 0.009035173,
-            "full_time_age_69": 0.007397445,
+            # "full_time_age_39": 0.27383931,
+            "full_time_age_40": 0.28209673,
+            "full_time_age_41": 0.29919393,
+            "full_time_age_42": 0.30017414,
+            "full_time_age_43": 0.30949445,
+            "full_time_age_44": 0.31524090,
+            "full_time_age_45": 0.32945813,
+            "full_time_age_46": 0.34203655,
+            "full_time_age_47": 0.35338966,
+            "full_time_age_48": 0.37077936,
+            "full_time_age_49": 0.37423581,
+            "full_time_age_50": 0.38189502,
+            "full_time_age_51": 0.39080993,
+            "full_time_age_52": 0.38848219,
+            "full_time_age_53": 0.38922764,
+            "full_time_age_54": 0.37896719,
+            "full_time_age_55": 0.36602052,
+            "full_time_age_56": 0.35645584,
+            "full_time_age_57": 0.34604293,
+            "full_time_age_58": 0.32600349,
+            "full_time_age_59": 0.31328993,
+            "full_time_age_60": 0.29301746,
+            "full_time_age_61": 0.25937786,
+            "full_time_age_62": 0.21221221,
+            "full_time_age_63": 0.17349803,
+            "full_time_age_64": 0.10815822,
+            "full_time_age_65": 0.07569444,
+            "full_time_age_66": 0.03255814,
+            "full_time_age_67": 0.02367942,
+            "full_time_age_68": 0.01664817,
+            "full_time_age_69": 0.01652893,
         },
     )
 
@@ -2074,33 +2213,6 @@ def get_employment_by_age_soep():
 def get_employment_by_age_bin_informal_parental_caregivers_soep():
     """Get employment shares by age bin of informal parental caregivers.
 
-    return pd.Series({
-        "not_working_age_40_45": 0.4051896,
-        "part_time_age_40_45": 0.3702595,
-        "full_time_age_40_45": 0.2245509,
-        #
-        "not_working_age_45_50": 0.3209970,
-        "part_time_age_45_50": 0.3655589,
-        "full_time_age_45_50": 0.3134441,
-        #
-        "not_working_age_50_55": 0.3302812,
-        "part_time_age_50_55": 0.3871812,
-        "full_time_age_50_55": 0.2825376,
-        #
-        "not_working_age_55_60": 0.4206566,
-        "part_time_age_55_60": 0.3201094,
-        "full_time_age_55_60": 0.2592339,
-        #
-        "not_working_age_60_65": 0.7387153,
-        "part_time_age_60_65": 0.1336806,
-        "full_time_age_60_65": 0.1276042,
-        #
-        "not_working_age_65_70": 0.9545455,
-        "part_time_age_65_70": 0.0275974,
-        "full_time_age_65_70": 0.0178571,
-    })
-
-    """
     return pd.Series(
         {
             "not_working_age_40_45": 0.4051896,
@@ -2126,9 +2238,36 @@ def get_employment_by_age_bin_informal_parental_caregivers_soep():
         },
     )
 
+    """
+    return pd.Series(
+        {
+            "not_working_age_40_45": 0.4167665,
+            "not_working_age_45_50": 0.3173242,
+            "not_working_age_50_55": 0.3320868,
+            "not_working_age_55_60": 0.4177419,
+            "not_working_age_60_65": 0.6845550,
+            "not_working_age_65_70": 0.9522184,
+            #
+            "part_time_age_40_45": 0.37125749,
+            "part_time_age_45_50": 0.37135506,
+            "part_time_age_50_55": 0.38070307,
+            "part_time_age_55_60": 0.31532258,
+            "part_time_age_60_65": 0.14921466,
+            "part_time_age_65_70": 0.03071672,
+            #
+            "full_time_age_40_45": 0.21197605,
+            "full_time_age_45_50": 0.31132075,
+            "full_time_age_50_55": 0.28721017,
+            "full_time_age_55_60": 0.26693548,
+            "full_time_age_60_65": 0.16623037,
+            "full_time_age_65_70": 0.01706485,
+        },
+    )
+
 
 def get_employment_by_age_bin_non_informal_caregivers_soep():
-    """Get employment shares by age bin of non-informal caregivers."""
+    """Get employment shares by age bin of non-informal caregivers.
+
     return pd.Series(
         {
             "not_working_age_40_45": 0.3199924,
@@ -2151,6 +2290,32 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
             "full_time_age_55_60": 0.336887723,
             "full_time_age_60_65": 0.172194346,
             "full_time_age_65_70": 0.019225773,
+        },
+    )
+
+    """
+    return pd.Series(
+        {
+            "not_working_age_40_45": 0.3079041,
+            "not_working_age_45_50": 0.2767420,
+            "not_working_age_50_55": 0.2860789,
+            "not_working_age_55_60": 0.3547595,
+            "not_working_age_60_65": 0.5851641,
+            "not_working_age_65_70": 0.9099719,
+            #
+            "part_time_age_40_45": 0.38604479,
+            "part_time_age_45_50": 0.36865951,
+            "part_time_age_50_55": 0.31827999,
+            "part_time_age_55_60": 0.28984453,
+            "part_time_age_60_65": 0.18830243,
+            "part_time_age_65_70": 0.05075236,
+            #
+            "full_time_age_40_45": 0.30605114,
+            "full_time_age_45_50": 0.35459848,
+            "full_time_age_50_55": 0.39564108,
+            "full_time_age_55_60": 0.35539595,
+            "full_time_age_60_65": 0.22653352,
+            "full_time_age_65_70": 0.03927569,
         },
     )
 

@@ -99,9 +99,14 @@ def utility_func(
     rho = params["rho"]
     # age = options["start_age"] + period
 
+    # no_care = is_no_care(choice)
     # informal_care = is_informal_care(choice)
-    # formal_care = is_formal_care(choice)
+    # no_informal_care = is_no_informal_care(choice)
     # combination_care = is_combination_care(choice)
+
+    # pure_informal_care = is_pure_informal_care(choice)
+    # pure_formal_care = is_pure_formal_care(choice)
+
     part_time = is_part_time(choice)
     full_time = is_full_time(choice)
 
@@ -124,89 +129,108 @@ def utility_func(
     # age is a proxy for health impacting the taste for free-time.
     # utility_leisure = (
     #     params["utility_leisure_constant"]
-    #     + params["utility_leisure_age"] * age
-    #     + params["utility_leisure_age_squared"] * age**2
+    #     + params["utility_leisure_age"] * period
+    #     + params["utility_leisure_age_squared"] * (period**2)
     # ) * jnp.log(leisure_hours)
 
     utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
 
+    # disutility_working = (
+    #     params["disutility_part_time_constant"] * part_time
+    #     + params["disutility_part_time_age"] * period * part_time
+    #     + params["disutility_part_time_age_squared"] * (period**2) * part_time
+    #     + params["disutility_full_time_constant"] * full_time
+    #     + params["disutility_full_time_age"] * period * full_time
+    #     + params["disutility_full_time_age_squared"] * (period**2) * full_time
+    # )
+
     disutility_working = (
         params["disutility_part_time_constant"] * part_time
-        + params["disutility_part_time_age"] * period * part_time
-        + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_constant"] * full_time
+        #
+        # + params["disutility_part_time_age_40_50"]
+        # * period
+        # * part_time
+        # * is_in_age_range(period, 0, 10)
+        # + params["disutility_full_time_age_40_50"]
+        # * period
+        # * full_time
+        # * is_in_age_range(period, 0, 10)
+        # + params["disutility_part_time_age_50_plus"]
+        # * period
+        # * part_time
+        # * is_in_age_range(period, 10, 40)
+        # + params["disutility_full_time_age_50_plus"]
+        # * period
+        # * full_time
+        # * is_in_age_range(period, 10, 40)
+        # + params["disutility_part_time_age_squared_50_plus"]
+        # * (period**2)
+        # * part_time
+        # * is_in_age_range(period, 10, 40)
+        # + params["disutility_full_time_age_squared_50_plus"]
+        # * (period**2)
+        # * full_time
+        # * is_in_age_range(period, 10, 40)
+        + params["disutility_part_time_age"] * period * part_time
         + params["disutility_full_time_age"] * period * full_time
+        + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_age_squared"] * (period**2) * full_time
     )
-    # disutility_working_informal_care = (
-    #     params["disutility_part_time_constant"] * part_time * informal_care
-    #     + params["disutility_part_time_age"] * age * part_time * informal_care
+
+    # disutility_working_no_informal_care = (
+    #     params["disutility_part_time_constant"] * part_time * no_informal_care
+    #     + params["disutility_part_time_age"] * period * part_time * no_informal_care
     #     + params["disutility_part_time_age_squared"]
-    #     * age**2
+    #     * (period) ** 2
+    #     * part_time
+    #     * no_informal_care
+    #     + params["disutility_full_time_constant"] * full_time * no_informal_care
+    #     + params["disutility_full_time_age"] * period * full_time * no_informal_care
+    #     + params["disutility_full_time_age_squared"]
+    #     * (period**2)
+    #     * full_time
+    #     * no_informal_care
+    # )
+
+    # disutility_working_informal_care = (
+    #     params["disutility_part_time_informal_care_constant"]
     #     * part_time
     #     * informal_care
-    #     + params["disutility_full_time_constant"] * full_time * informal_care
-    #     + params["disutility_full_time_age"] * age * full_time * informal_care
-    #     + params["disutility_full_time_age_squared"]
-    #     * age**2
+    #     + params["disutility_part_time_informal_care_age"]
+    #     * period
+    #     * part_time
+    #     * informal_care
+    #     + params["disutility_part_time_informal_care_age_squared"]
+    #     * (period) ** 2
+    #     * part_time
+    #     * informal_care
+    #     + params["disutility_full_time_informal_care_constant"]
+    #     * full_time
+    #     * informal_care
+    #     + params["disutility_full_time_informal_care_age"]
+    #     * period
+    #     * full_time
+    #     * informal_care
+    #     + params["disutility_full_time_informal_care_age_squared"]
+    #     * (period**2)
     #     * full_time
     #     * informal_care
     # )
 
-    # disutility_working = (
-    #     params["disutility_part_time"] * part_time
-    #     + params["disutility_full_time"] * full_time
-    # )
-
     # utility_caregiving = (
-    #     # informal care by parental health status
-    #     params["utility_informal_care_parent_medium_health"]
-    #     * informal_care
-    #     * is_medium_health(mother_health)
+    #     params["utility_informal_care_parent_bad_health"]
+    #     * no_care
+    #     * is_bad_health(mother_health)
     #     + params["utility_informal_care_parent_bad_health"]
-    #     * informal_care
+    #     * pure_informal_care
     #     * is_bad_health(mother_health)
-    #     + params["utility_formal_care_parent_medium_health"]
-    #     * formal_care
-    #     * is_medium_health(mother_health)
-    #     + params["utility_formal_care_parent_bad_health"]
-    #     * formal_care
-    #     * is_bad_health(mother_health)
-    #     # combination care by parental health status
-    #     + params["utility_combination_care_parent_medium_health"]
-    #     * combination_care
-    #     * is_medium_health(mother_health)
-    #     + params["utility_combination_care_parent_bad_health"]
-    #     * combination_care
-    #     * is_bad_health(mother_health)
-    #     #
-    #     # informal care if sibling present
-    #     + params["utility_informal_care_medium_health_sibling"]
-    #     * informal_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
-    #     + params["utility_informal_care_bad_health_sibling"]
-    #     * informal_care
-    #     * is_bad_health(mother_health)
-    #     * has_sibling
-    #     # formal care if sibling present
-    #     + params["utility_formal_care_medium_health_sibling"]
-    #     * formal_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
-    #     + params["utility_formal_care_bad_health_sibling"]
-    #     * formal_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
-    #     # combination care if sibling present
-    #     + params["utility_combination_care_medium_health_sibling"]
-    #     * combination_care
-    #     * is_medium_health(mother_health)
-    #     * has_sibling
-    #     + params["utility_combination_care_bad_health_sibling"]
-    #     * combination_care
-    #     * is_bad_health(mother_health)
-    #     * has_sibling
+    #     # + params["utility_formal_care_parent_bad_health"]
+    #     # * pure_formal_care
+    #     # * is_bad_health(mother_health)
+    #     # + params["utility_combination_care_parent_bad_health"]
+    #     # * combination_care
+    #     # * is_bad_health(mother_health)
     # )
 
     return utility_consumption + disutility_working
