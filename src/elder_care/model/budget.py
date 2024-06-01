@@ -5,11 +5,10 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import (  # is_combination_care,
+from elder_care.model.shared import (  # is_combination_care,; is_pure_informal_care,
     RETIREMENT_AGE,
     is_full_time,
     is_part_time,
-    is_pure_informal_care,
     is_retired,
     is_working,
 )
@@ -47,6 +46,7 @@ def budget_constraint(
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
+    params: dict[str, Any],
 ) -> float:
     """Budget constraint.
 
@@ -95,12 +95,11 @@ def budget_constraint(
     )
 
     wage_from_previous_period = get_exog_stochastic_wage(
-        period=period,
         lagged_choice=lagged_choice,
         experience=experience,
         high_educ=high_educ,
         wage_shock=income_shock_previous_period,
-        options=options,
+        params=params,
     )
     wage = jnp.maximum(wage_from_previous_period, options["min_wage"])
     labor_income = wage * working_hours
@@ -114,16 +113,16 @@ def budget_constraint(
     means_test = savings_end_of_previous_period < options["unemployment_wealth_thresh"]
     unemployment_benefits = means_test * options["unemployment_benefits"] * 12
 
-    cash_benefits_informal_care = (
-        is_pure_informal_care(lagged_choice) * options["informal_care_benefits"] * 12
-    )
+    # cash_benefits_informal_care = (
+    #     is_pure_informal_care(lagged_choice) * options["informal_care_benefits"] * 12
+    # )
 
     income = jnp.maximum(
         is_working(lagged_choice) * labor_income
         + is_retired(lagged_choice) * retirement_income,
         unemployment_benefits,
     )
-    income_and_cash_benefits = income + cash_benefits_informal_care
+    income_and_cash_benefits = income  # + cash_benefits_informal_care
 
     return (
         1 + options["interest_rate"]
@@ -203,6 +202,7 @@ def get_exog_stochastic_wage(
         + params["wage_experience_squared"] * (experience / 2) ** 2
         + params["wage_high_education"] * high_educ
         + params["wage_part_time"] * is_part_time(lagged_choice)
+        # + params["wage_above_retirement_age"] * (period >= 25)
     )
 
     return jnp.exp(log_wage + wage_shock)

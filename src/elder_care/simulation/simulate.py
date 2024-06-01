@@ -126,19 +126,19 @@ def simulate_moments(arr, idx):
     # Savings rate
     # ================================================================================
 
-    savings_rate_coeffs = fit_ols(
-        x=arr[
-            :,
-            [
-                idx["age"],
-                idx["age_squared"],
-                idx["high_educ"],
-                idx["choice_part_time"],
-                idx["choice_full_time"],
-            ],
-        ],
-        y=arr[:, idx["savings_rate"]],
-    )
+    # savings_rate_coeffs = fit_ols(
+    #     x=arr[
+    #         :,
+    #         [
+    #             idx["age"],
+    #             idx["age_squared"],
+    #             idx["high_educ"],
+    #             idx["choice_part_time"],
+    #             idx["choice_full_time"],
+    #         ],
+    #     ],
+    #     y=arr[:, idx["savings_rate"]],
+    # )
 
     # ================================================================================
     # Labor shares by informal caregiving status
@@ -445,7 +445,7 @@ def simulate_moments(arr, idx):
         + share_working_part_time_by_age
         + share_working_full_time_by_age
         # assets and savings
-        + savings_rate_coeffs.tolist()
+        # + savings_rate_coeffs.tolist()
         # employment shares by caregiving status
         # no informal care
         # + share_not_working_no_informal_care_by_age_bin
@@ -696,7 +696,7 @@ def get_care_mix_by_mother_age_bin(df_arr, ind, choice, care_type, age_bins):
 # you'll likely need to vectorize this logic.
 
 
-def create_simulation_array_from_df(data, options):
+def create_simulation_array_from_df(data, options, params):
     """Create simulation array from dict."""
     data = data.copy()  # Make a copy to avoid modifying a slice
 
@@ -749,13 +749,11 @@ def create_simulation_array_from_df(data, options):
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
-        options["wage_constant"]
-        + options["wage_age"] * data["age"]
-        + options["wage_age_squared"] * data["age_squared"]
-        + options["wage_experience"] * data["experience"]
-        + options["wage_experience_squared"] * data["experience_squared"]
-        + options["wage_high_education"] * data["high_educ"]
-        + options["wage_part_time"] * data["lagged_part_time"]
+        params["wage_constant"]
+        + params["wage_experience"] * data["experience"]
+        + params["wage_experience_squared"] * data["experience_squared"]
+        + params["wage_high_education"] * data["high_educ"]
+        + params["wage_part_time"] * data["lagged_part_time"]
     )
 
     data.loc[:, "wage"] = jnp.exp(
@@ -777,7 +775,7 @@ def create_simulation_array_from_df(data, options):
     return jnp.array(data), column_indices
 
 
-def create_simulation_array_from_df_counterfactual(data, options):
+def create_simulation_array_from_df_counterfactual(data, options, params):
     """Create simulation array from dict."""
     data = data.copy()  # Make a copy to avoid modifying a slice
 
@@ -829,13 +827,11 @@ def create_simulation_array_from_df_counterfactual(data, options):
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
-        options["wage_constant"]
-        + options["wage_age"] * data["age"]
-        + options["wage_age_squared"] * data["age_squared"]
-        + options["wage_experience"] * data["experience"]
-        + options["wage_experience_squared"] * data["experience_squared"]
-        + options["wage_high_education"] * data["high_educ"]
-        + options["wage_part_time"] * data["lagged_part_time"]
+        params["wage_constant"]
+        + params["wage_experience"] * data["experience"]
+        + params["wage_experience_squared"] * data["experience_squared"]
+        + params["wage_high_education"] * data["high_educ"]
+        + params["wage_part_time"] * data["lagged_part_time"]
     )
 
     data.loc[:, "wage"] = jnp.exp(
@@ -902,7 +898,7 @@ def create_simulation_array_from_df_counterfactual(data, options):
     return jnp.array(data), column_indices
 
 
-def create_simulation_array(sim_dict, options):
+def create_simulation_array(sim_dict, options, params):
     """Create simulation array from dict."""
     options = options["model_params"]
     n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
@@ -937,13 +933,11 @@ def create_simulation_array(sim_dict, options):
     is_informal_care = jnp.isin(choice, INFORMAL_CARE)
 
     log_wage = (
-        options["wage_constant"]
-        + options["wage_age"] * age
-        + options["wage_age_squared"] * age_squared
-        + options["wage_experience"] * experience
-        + options["wage_experience_squared"] * experience_squared
-        + options["wage_high_education"] * high_educ
-        + options["wage_part_time"] * lagged_part_time
+        params["wage_constant"]
+        + params["wage_experience"] * experience
+        + params["wage_experience_squared"] * experience_squared
+        + params["wage_high_education"] * high_educ
+        + params["wage_part_time"] * lagged_part_time
     )
 
     wage = jnp.exp(log_wage + income_shock)

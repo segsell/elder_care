@@ -6,10 +6,10 @@ from functools import partial
 import estimagic as em
 import jax.numpy as jnp
 import pandas as pd
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.simulate import simulate_all_periods_for_model
 from dcegm.solve import get_solve_func_for_model
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.state_space import create_state_space_functions
@@ -201,7 +201,11 @@ def get_moment_error_vec(
     )
 
     data = create_simulation_df_from_dict(sim_dict)
-    arr, idx = create_simulation_array_from_df(data=data, options=options)
+    arr, idx = create_simulation_array_from_df(
+        data=data,
+        options=options,
+        params=params_all,
+    )
 
     _sim_raw = simulate_moments(arr, idx)
 
@@ -250,13 +254,17 @@ def criterion_solve_and_simulate(
     )
 
     data = create_simulation_df_from_dict(sim_dict)
-    arr, idx = create_simulation_array_from_df(data=data, options=options)
+    arr, idx = create_simulation_array_from_df(
+        data=data,
+        options=options,
+        params=params,
+    )
     _sim_moments_raw = simulate_moments(arr, idx)
 
     sim_moments = jnp.where(jnp.isnan(_sim_moments_raw), 0, _sim_moments_raw)
     sim_moments = jnp.where(jnp.isinf(sim_moments), 0, sim_moments)
 
-    err_vec = sim_moments - emp_moments
+    err_vec = (sim_moments - emp_moments) / emp_moments
 
     root_contribs = err_vec @ chol_weights
     crit_val = root_contribs @ root_contribs

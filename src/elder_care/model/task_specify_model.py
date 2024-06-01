@@ -5,16 +5,15 @@ from typing import Annotated, Any
 
 import numpy as np
 import yaml
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
 
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
 )
 from elder_care.model.budget import budget_constraint
 from elder_care.model.exogenous_processes import (
-    exog_health_transition_mother_with_survival,
     prob_full_time_offer,
     prob_part_time_offer,
 )
@@ -74,21 +73,21 @@ def get_options_dict(
     # }
 
     n_periods = specs["n_periods"]
-    choices = np.arange(len(ALL), dtype=np.int8)
+    choices = np.arange(len(ALL), dtype=np.uint8)
 
     exog_processes = {
         "part_time_offer": {
-            "states": np.arange(2, dtype=np.int8),
+            "states": np.arange(2, dtype=np.uint8),
             "transition": prob_part_time_offer,
         },
         "full_time_offer": {
-            "states": np.arange(2, dtype=np.int8),
+            "states": np.arange(2, dtype=np.uint8),
             "transition": prob_full_time_offer,
         },
-        "mother_health": {
-            "states": np.arange(3, dtype=np.int8),
-            "transition": exog_health_transition_mother_with_survival,
-        },
+        # "mother_health": {
+        #     "states": np.arange(3, dtype=np.int8),
+        #     "transition": exog_health_transition_mother_with_survival,
+        # },
     }
 
     return {
@@ -96,7 +95,6 @@ def get_options_dict(
             "n_periods": n_periods,
             "choices": choices,
             "income_shock_scale": specs["income_shock_scale"],
-            # "taste_shock_scale": specs["lambda"],
             "endogenous_states": {
                 "high_educ": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
@@ -108,10 +106,7 @@ def get_options_dict(
             },
             "exogenous_processes": exog_processes,
         },
-        "model_params": specs
-        | wage_params
-        | exog_params
-        | {"interest_rate": 0.04, "bequest_scale": 1.3},
+        "model_params": specs | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 
 
