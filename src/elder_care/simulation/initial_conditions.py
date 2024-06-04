@@ -40,17 +40,17 @@ def draw_initial_states(
 
     high_educ = get_initial_share_two(initial_conditions, "share_high_educ")
 
-    mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
+    # mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
 
-    _mother_health_probs = initial_conditions.loc[
-        ["mother_good_health", "mother_bad_health"]
-    ].to_numpy()
-    mother_health_probs = jnp.concatenate(
-        [
-            _mother_health_probs.ravel() * mother_alive[1],
-            jnp.atleast_1d(mother_alive[0]),
-        ],
-    )
+    # _mother_health_probs = initial_conditions.loc[
+    #     ["mother_good_health", "mother_bad_health"]
+    # ].to_numpy()
+    # mother_health_probs = jnp.concatenate(
+    #     [
+    #         _mother_health_probs.ravel() * mother_alive[1],
+    #         jnp.atleast_1d(mother_alive[0]),
+    #     ],
+    # )
 
     _experience = draw_from_discrete_normal(
         seed=seed - 4,
@@ -60,10 +60,13 @@ def draw_initial_states(
         std_dev=jnp.ones(n_agents, dtype=np.uint16)
         * float(initial_conditions.loc["experience_std"].iloc[0]),
     )
-    experience = jnp.clip(
-        _experience * 2,
-        a_min=MIN_INIT_EXPER * 2,
-        a_max=MAX_INIT_EXPER * 2,
+    experience = (
+        jnp.clip(
+            _experience,
+            a_min=MIN_INIT_EXPER,
+            a_max=MAX_INIT_EXPER,
+        )
+        * 2
     )
 
     initial_states = {
@@ -87,12 +90,12 @@ def draw_initial_states(
         #     probabilities=has_sibling,
         # ).astype(np.int16),
         "experience": experience,
-        "mother_health": draw_random_array(
-            seed=seed - 5,
-            n_agents=n_agents,
-            values=jnp.array([0, 1, 2]),
-            probabilities=mother_health_probs,
-        ).astype(np.int16),
+        # "mother_health": draw_random_array(
+        #     seed=seed - 5,
+        #     n_agents=n_agents,
+        #     values=jnp.array([0, 1, 2]),
+        #     probabilities=mother_health_probs,
+        # ).astype(np.int16),
     }
 
     initial_resources = draw_random_sequence_from_array(

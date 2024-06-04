@@ -86,13 +86,13 @@ MAX_LEISURE_HOURS = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 # Labor Choices
 # ==============================================================================
 
-ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
-NO_WORK = jnp.array([0, 1])
-PART_TIME = jnp.array([2, 3])
-FULL_TIME = jnp.array([4, 5])
-RETIREMENT = jnp.array([6, 7])
-WORK_NO_CARE = jnp.array([0, 2, 4])
-WORK_AND_NO_WORK = ALL
+# ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
+# NO_WORK = jnp.array([0, 1])
+# PART_TIME = jnp.array([2, 3])
+# FULL_TIME = jnp.array([4, 5])
+# RETIREMENT = jnp.array([6, 7])
+# WORK_NO_CARE = jnp.array([0, 2, 4])
+# WORK_AND_NO_WORK = ALL
 
 
 # ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
@@ -103,12 +103,13 @@ WORK_AND_NO_WORK = ALL
 # WORK_NO_CARE = jnp.array([0, 4, 8])
 # WORK_AND_NO_WORK = ALL
 
-# ALL = jnp.array([0, 1, 2, 3])
-# NO_WORK = jnp.array([0])
-# PART_TIME = jnp.array([1])
-# FULL_TIME = jnp.array([2])
-# RETIREMENT = jnp.array([3])
-# WORK_AND_NO_WORK = jnp.array([0, 1, 2, 3])
+ALL = jnp.array([0, 1, 2, 3])
+NO_WORK = jnp.array([0])
+PART_TIME = jnp.array([1])
+FULL_TIME = jnp.array([2])
+RETIREMENT = jnp.array([3])
+WORK_AND_NO_WORK = jnp.array([0, 1, 2, 3])
+WORK_NO_CARE = jnp.array([0, 1, 2])
 
 OUT_OF_LABOR = jnp.concatenate([NO_WORK, RETIREMENT])
 WORK = jnp.concatenate([PART_TIME, FULL_TIME])
