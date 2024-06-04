@@ -5,8 +5,9 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from elder_care.model.shared import (  # is_combination_care,
+from elder_care.model.shared import (  # is_combination_care,; is_pure_informal_care,
     RETIREMENT_AGE,
+    is_combination_care,
     is_full_time,
     is_part_time,
     is_pure_informal_care,
@@ -47,6 +48,7 @@ def budget_constraint(
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
+    params: dict[str, Any],
 ) -> float:
     """Budget constraint.
 
@@ -95,12 +97,11 @@ def budget_constraint(
     )
 
     wage_from_previous_period = get_exog_stochastic_wage(
-        period=period,
         lagged_choice=lagged_choice,
         experience=experience,
         high_educ=high_educ,
         wage_shock=income_shock_previous_period,
-        options=options,
+        params=params,
     )
     wage = jnp.maximum(wage_from_previous_period, options["min_wage"])
     labor_income = wage * working_hours
@@ -116,6 +117,9 @@ def budget_constraint(
 
     cash_benefits_informal_care = (
         is_pure_informal_care(lagged_choice) * options["informal_care_benefits"] * 12
+        + is_combination_care(lagged_choice)
+        * (options["informal_care_benefits"] / 2)
+        * 12
     )
 
     income = jnp.maximum(
@@ -138,6 +142,8 @@ def get_exog_stochastic_wage(
     params: dict[str, float],
 ) -> float:
     """Computes the current level of deterministic and stochastic income.
+
+    # + params["wage_above_retirement_age"] * (period >= 25)
 
     Note that income is paid at the end of the current period, i.e. after
     the (potential) labor supply choice has been made. This is equivalent to
