@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import pytask
+from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
 
-from dcegm.pre_processing.setup_model import setup_and_save_model
 from elder_care.config import BLD, SRC
 from elder_care.counterfactual.state_space_counterfactual import (
     create_state_space_functions_no_informal_care,
