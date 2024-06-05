@@ -17,6 +17,7 @@ dependencies:
   # Package dependencies
   - estimagic
   - jax
+  - linearmodels
   - numpy
   - numba
   - pandas
@@ -25,6 +26,7 @@ dependencies:
   - plotly
   - scipy
   - seaborn
+  - scikit-learn
   - statsmodels
   - tranquilo>=0.0.4
 

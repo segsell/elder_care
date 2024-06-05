@@ -221,6 +221,7 @@ def multiply_rows_with_weight(dat, weight):
         "married",
         "has_two_daughters",
         "has_two_children",
+        "has_daughter",
         "wave",
         weight,
     ]
@@ -299,6 +300,7 @@ def multiply_rows_with_weight(dat, weight):
         "informal_care_child_no_comb",
         dat["informal_care_child_no_comb"],
     )
+    dat_weighted.insert(41, "has_daughter", dat["has_daughter"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -597,6 +599,7 @@ def create_children_information(dat):
     ["has_two_daughters", "has_two_children"]] = np.nan
 
     """
+    dat["has_daughter"] = 0
     dat["has_two_daughters"] = 0  # Assuming less than two daughters by default
     dat["has_two_children"] = 0  # Assuming less than two children by default
 
@@ -612,6 +615,9 @@ def create_children_information(dat):
 
         if non_nan_count >= AT_LEAST_TWO:
             dat.loc[index, "has_two_children"] = DUMMY_TRUE
+
+        if female_count >= 1:
+            dat.loc[index, "has_daughter"] = DUMMY_TRUE
 
         # Update 'has_two_daughters_loop' based on female count
         if female_count >= AT_LEAST_TWO:
