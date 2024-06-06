@@ -1,20 +1,20 @@
 import numpy as np
 
 from elder_care.model.shared import (
+    BAD_HEALTH,
+    CARE_AND_NO_CARE,
+    FORMAL_CARE_AND_NO_CARE,
     FULL_TIME_AND_NO_WORK,
+    NO_CARE,
     NO_RETIREMENT,
     OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
     RETIREMENT,
     WORK_AND_NO_WORK,
-    FORMAL_CARE_AND_NO_CARE,
-    BAD_HEALTH,
-    CARE_AND_NO_CARE,
-    NO_CARE,
+    is_formal_care,
     is_full_time,
     is_part_time,
     is_retired,
-    is_formal_care,
 )
 
 
