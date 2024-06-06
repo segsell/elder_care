@@ -7,9 +7,14 @@ from elder_care.model.shared import (
     PART_TIME_AND_NO_WORK,
     RETIREMENT,
     WORK_AND_NO_WORK,
+    FORMAL_CARE_AND_NO_CARE,
+    BAD_HEALTH,
+    CARE_AND_NO_CARE,
+    NO_CARE,
     is_full_time,
     is_part_time,
     is_retired,
+    is_formal_care,
 )
 
 
@@ -30,6 +35,7 @@ def get_state_specific_feasible_choice_set(
     lagged_choice,
     part_time_offer,
     full_time_offer,
+    mother_health,
     options,
 ):
     """Get feasible choice set for current parent state.
@@ -50,6 +56,22 @@ def get_state_specific_feasible_choice_set(
     age = options["start_age"] + period
 
     feasible_choice_set = np.arange(options["n_choices"])
+
+    _feasible_choice_set_all = list(np.arange(options["n_choices"]))
+
+    # Can only provide care if mother is alive and in bad health
+    if mother_health == BAD_HEALTH:
+        feasible_choice_set = [
+            i for i in _feasible_choice_set_all if i in CARE_AND_NO_CARE
+        ]
+
+        # Absorbing nursing home
+        if is_formal_care(lagged_choice):
+            feasible_choice_set = [
+                i for i in feasible_choice_set if i in FORMAL_CARE_AND_NO_CARE
+            ]
+    else:
+        feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
     if age < options["min_ret_age"]:
         feasible_choice_set = [i for i in feasible_choice_set if i in NO_RETIREMENT]

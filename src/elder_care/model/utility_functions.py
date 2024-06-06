@@ -4,7 +4,17 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from elder_care.model.shared import is_full_time, is_part_time
+from elder_care.model.shared import (
+    is_full_time,
+    is_part_time,
+    is_no_informal_care,
+    is_informal_care,
+    is_no_care,
+    is_pure_informal_care,
+    is_formal_care,
+    is_combination_care,
+    is_bad_health,
+)
 
 
 def create_utility_functions():
@@ -176,7 +186,16 @@ def utility_func(
         + params["disutility_full_time_age"] * period * full_time
         + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_age_squared"] * (period**2) * full_time
-    )
+    ) * is_no_informal_care(choice)
+
+    disutility_working_informal_care = (
+        params["disutility_part_time_constant"] * part_time
+        + params["disutility_full_time_constant"] * full_time
+        + params["disutility_part_time_age"] * period * part_time
+        + params["disutility_full_time_age"] * period * full_time
+        + params["disutility_part_time_age_squared"] * (period**2) * part_time
+        + params["disutility_full_time_age_squared"] * (period**2) * full_time
+    ) * is_informal_care(choice)
 
     # disutility_working_no_informal_care = (
     #     params["disutility_part_time_constant"] * part_time * no_informal_care
@@ -218,22 +237,25 @@ def utility_func(
     #     * informal_care
     # )
 
-    # utility_caregiving = (
-    #     params["utility_informal_care_parent_bad_health"]
-    #     * no_care
-    #     * is_bad_health(mother_health)
-    #     + params["utility_informal_care_parent_bad_health"]
-    #     * pure_informal_care
-    #     * is_bad_health(mother_health)
-    #     # + params["utility_formal_care_parent_bad_health"]
-    #     # * pure_formal_care
-    #     # * is_bad_health(mother_health)
-    #     # + params["utility_combination_care_parent_bad_health"]
-    #     # * combination_care
-    #     # * is_bad_health(mother_health)
-    # )
+    utility_caregiving = (
+        params["utility_informal_care_parent_bad_health"] * is_no_care(choice)
+        # * is_bad_health(mother_health)
+        + params["utility_informal_care_parent_bad_health"]
+        * is_pure_informal_care(choice)
+        # * is_bad_health(mother_health)
+        + params["utility_formal_care_parent_bad_health"] * is_formal_care(choice)
+        # * is_bad_health(mother_health)
+        + params["utility_combination_care_parent_bad_health"]
+        * is_combination_care(choice)
+        # * is_bad_health(mother_health)
+    )
 
-    return utility_consumption + disutility_working
+    return (
+        utility_consumption
+        + disutility_working
+        + disutility_working_informal_care
+        + utility_caregiving
+    )
 
 
 def marginal_utility(consumption, params):
