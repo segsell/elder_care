@@ -4,18 +4,24 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
 
 from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
     AGE_BINS_SIM,
     BAD_HEALTH,
     BETA,
+    COMBINATION_CARE,
+    DEAD,
+    FORMAL_CARE,
     FULL_TIME,
     INFORMAL_CARE,
     MAX_AGE_SIM,
     MIN_AGE_SIM,
+    NO_CARE,
     OUT_OF_LABOR,
     PART_TIME,
+    PURE_INFORMAL_CARE,
     RETIREMENT,
     RETIREMENT_AGE,
 )
@@ -139,6 +145,59 @@ def simulate_moments(arr, idx):
     #     ],
     #     y=arr[:, idx["savings_rate"]],
     # )
+
+    # ================================================================================
+    # Care mix
+    # ================================================================================
+
+    no_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_80_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_no_care"]],
+    )
+    pure_informal_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_80_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_pure_informal_care"]],
+    )
+    combination_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_80_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_combination_care"]],
+    )
+    formal_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_80_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_formal_care"]],
+    )
 
     # ================================================================================
     # Labor shares by informal caregiving status
@@ -519,6 +578,25 @@ def fit_ols(x, y):
     return coef
 
 
+def fit_logit(x, y):
+    """Fit a logistic regression model.
+
+    Args:
+        x (jnp.ndarray): Array of shape (n, p) of x-values.
+        y (jnp.ndarray): Array of shape (n, k) of y-values.
+
+    Returns:
+        coef (np.ndarray): Array of shape (p, k) of coefficients.
+
+    """
+    model = LogisticRegression()
+    model.fit(x, y)
+
+    breakpoint()
+    # np.array([model.intercept_[0]] + list(model.coef_[0]))
+    return model.coef_
+
+
 def get_share_by_age(df_arr, ind, choice):
     """Get share of agents choosing lagged choice by age bin."""
     choice_mask = jnp.isin(df_arr[:, ind["choice"]], choice)
@@ -710,7 +788,24 @@ def create_simulation_array_from_df(data, options, params):
 
     data.loc[:, "age"] = options["start_age"] + period_indices
     data.loc[:, "age_squared"] = data["age"] ** 2
+
+    # Mother age bins
+    data.loc[:, "mother_alive"] = data["mother_health"] < DEAD
+
     data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
+    data.loc[data["mother_alive"] == False, "mother_age"] = np.nan
+
+    bins = [65, 70, 75, 80, 85, np.inf]
+    labels = ["65_70", "70_75", "75_80", "80_85", "80_plus"]
+
+    data["mother_age_bin"] = pd.cut(
+        data["mother_age"],
+        bins=bins,
+        labels=labels,
+        right=False,
+    )
+    dummies = pd.get_dummies(data["mother_age_bin"], prefix="mother_age_bin")
+    data = pd.concat([data, dummies], axis=1)
 
     # Financial calculations
     data.loc[:, "wealth"] = data["savings"] + data["consumption"]
@@ -728,24 +823,41 @@ def create_simulation_array_from_df(data, options, params):
     data.loc[:, "lagged_part_time"] = jnp.isin(
         jnp.array(data["lagged_choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
 
     data.loc[:, "choice_retired"] = jnp.isin(
         jnp.array(data["choice"]),
         RETIREMENT,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_part_time"] = jnp.isin(
         jnp.array(data["choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_full_time"] = jnp.isin(
         jnp.array(data["choice"]),
         FULL_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_informal_care"] = jnp.isin(
         jnp.array(data["choice"]),
         INFORMAL_CARE,
-    ).astype(np.int8)
+    ).astype(np.uint8)
+
+    data.loc[:, "choice_no_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        NO_CARE,
+    ).astype(np.uint8)
+    data.loc[:, "choice_pure_informal_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        PURE_INFORMAL_CARE,
+    ).astype(np.uint8)
+    data.loc[:, "choice_combination_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        COMBINATION_CARE,
+    ).astype(np.uint8)
+    data.loc[:, "choice_formal_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        FORMAL_CARE,
+    ).astype(np.uint8)
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
@@ -806,24 +918,24 @@ def create_simulation_array_from_df_counterfactual(data, options, params):
     data.loc[:, "lagged_part_time"] = jnp.isin(
         jnp.array(data["lagged_choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
 
     data.loc[:, "choice_retired"] = jnp.isin(
         jnp.array(data["choice"]),
         RETIREMENT,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_part_time"] = jnp.isin(
         jnp.array(data["choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_full_time"] = jnp.isin(
         jnp.array(data["choice"]),
         FULL_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_informal_care"] = jnp.isin(
         jnp.array(data["choice"]),
         INFORMAL_CARE,
-    ).astype(np.int8)
+    ).astype(np.uint8)
 
     # Wage calculations
     data.loc[:, "log_wage"] = (

@@ -9,11 +9,7 @@ from pytask import Product
 from sklearn.linear_model import LogisticRegression
 
 from elder_care.config import BLD
-from elder_care.model.shared import (
-    AGE_65,
-    BAD_HEALTH,
-    FEMALE,
-)
+from elder_care.model.shared import AGE_65, BAD_HEALTH, FEMALE
 
 
 def table(df_col):
@@ -100,7 +96,7 @@ def task_create_care_mix_moments(
         parent["no_informal_care_child"] * parent[weight]
     )
 
-    #
+    # Parent-child sample
     mother = mother[mother["health"] == BAD_HEALTH]
     mother = mother[mother["age"] >= AGE_65]
     mother = mother[mother["has_daughter"] == 1]
@@ -119,7 +115,10 @@ def task_create_care_mix_moments(
     # breakpoint()
 
     coeff_no_care = weighted_logistic_regression(
-        mother, age_dummies, outcome="no_care", weight=weight,
+        mother,
+        age_dummies,
+        outcome="no_care",
+        weight=weight,
     )
     coeff_pure_informal_care = weighted_logistic_regression(
         mother,
@@ -128,7 +127,10 @@ def task_create_care_mix_moments(
         weight=weight,
     )
     coeff_combination_care = weighted_logistic_regression(
-        mother, age_dummies, outcome="combination_care", weight=weight,
+        mother,
+        age_dummies,
+        outcome="combination_care",
+        weight=weight,
     )
 
     # features = age_dummies.columns.tolist()
