@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 from typing import Annotated
 
+import linearmodels as lm
 import numpy as np
 import pandas as pd
-import linearmodels as lm
 from pytask import Product
 
 from elder_care.config import BLD
@@ -886,7 +886,7 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
         .reset_index()
     )
     first_treatment_year = first_treatment_year.rename(
-        columns={"int_year": "treatment_year"}
+        columns={"int_year": "treatment_year"},
     )
 
     # Group by mergeid to calculate the first treatment year
@@ -910,7 +910,7 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
 
     # For individuals who never receive the treatment, set distance_to_treat to NaN or some other value
     dat["distance_to_treat"] = dat["distance_to_treat"].where(
-        dat["treatment_year"].notna(), 0
+        dat["treatment_year"].notna(), 0,
     )
 
     gender = FEMALE
@@ -1044,9 +1044,7 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
     from matplotlib import pyplot as plt
 
     # outcome = "ep013_"
-
     # Condition on working (full-time) before
-
     # Calculate conditional means for FEMALE
     conditional_means_female = calculate_conditional_means(dat, FEMALE, outcome)
     # data = conditional_means_female.copy()
@@ -1106,7 +1104,7 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
 
     # Adding titles and labels
     plt.title(
-        f"Event Study: Conditional Means of {outcome} by Distance to Treatment (Binned)"
+        f"Event Study: Conditional Means of {outcome} by Distance to Treatment (Binned)",
     )
     plt.xlabel("Binned Distance to Treatment (years)")
     plt.ylabel(f"Mean {outcome}")
