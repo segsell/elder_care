@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 from typing import Annotated
 
+import pytask
+
 import linearmodels as lm
 import numpy as np
 import pandas as pd
@@ -101,6 +103,7 @@ def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
+@pytask.mark.skip()
 def task_create_estimation_data(
     path_to_raw_data: Path = BLD / "data" / "data_merged.csv",
     path_to_main: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
@@ -918,7 +921,8 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
 
     # For individuals who never receive the treatment, set distance_to_treat to NaN or some other value
     dat["distance_to_treat"] = dat["distance_to_treat"].where(
-        dat["treatment_year"].notna(), 0,
+        dat["treatment_year"].notna(),
+        0,
     )
 
     # gender = FEMALE

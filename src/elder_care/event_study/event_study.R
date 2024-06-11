@@ -19,12 +19,15 @@ is.data.table(dat)
 dat_female_raw <-subset(dat, gender == 2)
 dat_male_raw <-subset(dat, gender == 1)
 
+
 # Step 2: Drop rows where distance_to_treat is -1, -3, -5, 1, 3, 5
 dat_female <- dat_female_raw %>%
   filter(!distance_to_treat %in% c(-1, -3, -5, 1, 3, 5))
 dat_male <- dat_male_raw %>%
   filter(!distance_to_treat %in% c(-1, -3, -5, 1, 3, 5))
 
+table(dat_female$intensive_care_no_other)
+table(dat_male$intensive_care_no_other)
 
 #dat<-subset(data, time_to_treat > -15 & time_to_treat < 15)
 #dat_female<-subset(dat_female, binned_distance_to_treat > -7 & binned_distance_to_treat < 7)

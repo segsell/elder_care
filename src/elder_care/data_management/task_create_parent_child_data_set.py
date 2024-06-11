@@ -46,6 +46,8 @@ YES_PERMANENTLY = 3
 DUMMY_TRUE = 1
 AT_LEAST_TWO = 2
 
+DEFAULT = 0
+
 
 def table(df_col):
     """Return frequency table."""
@@ -111,6 +113,49 @@ def task_create_parent_child_data(
     dat = create_care_combinations(dat, informal_care_var="informal_care_child")
     dat = create_health_variables(dat)
 
+    # ==============================================================================
+
+    # informal_care_child
+
+    treatment_condition = (dat["lagged_health"] == 0) & (dat["health"] == 1)
+
+    dat["treatment_condition"] = treatment_condition
+    dat["treat_ever"] = (
+        dat.groupby("mergeid")["treatment_condition"].transform("max").astype(int)
+    )
+
+    first_treatment_year = (
+        dat.loc[treatment_condition]
+        .groupby("mergeid")["int_year"]
+        .first()
+        .reset_index()
+    )
+    first_treatment_year = first_treatment_year.rename(
+        columns={"int_year": "treatment_year"},
+    )
+
+    dat = dat.merge(first_treatment_year, on="mergeid", how="left")
+
+    # Calculate the distance to the treatment year
+    dat["distance_to_treat"] = dat["int_year"] - dat["treatment_year"]
+
+    # For individuals who never receive the treatment, set distance_to_treat to NaN or some other value
+    dat["distance_to_treat"] = dat["distance_to_treat"].where(
+        dat["treatment_year"].notna(),
+        0,
+    )
+
+    # Create subset of dat of families with at least one daughter
+    treatment_group = dat[dat["has_one_daughter"] == DUMMY_TRUE]
+    treatment_group["binned_distance_to_treat"] = treatment_group[
+        "distance_to_treat"
+    ].apply(bin_distance_to_treat)
+
+    path_to_save = BLD / "event_study" / "sandbox_parents.csv"
+    treatment_group.to_csv(path_to_save, index=False)
+    breakpoint()
+
+    # ==============================================================================
     dat = dat.reset_index(drop=True)
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
     dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
@@ -315,15 +360,23 @@ def create_health_variables(dat):
     """
     dat = replace_negative_values_with_nan(dat, "ph003_")
 
+    # _cond = [
+    #     (dat["ph003_"] == HEALTH_EXCELLENT)
+    #     | (dat["ph003_"] == HEALTH_VERY_GOOD)
+    #     | (dat["ph003_"] == HEALTH_GOOD),
+    #     (dat["ph003_"] == HEALTH_FAIR) | (dat["ph003_"] == HEALTH_POOR),
+    # ]
     _cond = [
         (dat["ph003_"] == HEALTH_EXCELLENT)
         | (dat["ph003_"] == HEALTH_VERY_GOOD)
-        | (dat["ph003_"] == HEALTH_GOOD),
-        (dat["ph003_"] == HEALTH_FAIR) | (dat["ph003_"] == HEALTH_POOR),
+        | (dat["ph003_"] == HEALTH_GOOD)
+        | (dat["ph003_"] == HEALTH_FAIR),
+        (dat["ph003_"] == HEALTH_POOR),
     ]
     _val = [0, 1]
 
     dat["health"] = np.select(_cond, _val, default=np.nan)
+    dat["lagged_health"] = dat.groupby("mergeid")["health"].shift(1)
 
     return dat
 
@@ -422,7 +475,7 @@ def create_care_variables(dat):
         & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
     ]
     _val = [1, 1, 0, np.nan, np.nan]
-    dat["informal_care_child"] = np.select(_cond, _val, default=np.nan)
+    dat["informal_care_child"] = np.select(_cond, _val, default=0)
 
     # informal care general
     _cond = [
@@ -486,6 +539,7 @@ def create_care_variables(dat):
     dat = _create_lagged_var(dat, "no_informal_care_child")
     dat = _create_lagged_var(dat, "no_formal_care")
     dat = _create_lagged_var(dat, "no_combination_care")
+
     return _create_lagged_var(dat, "no_home_care")
 
 
@@ -599,6 +653,7 @@ def create_children_information(dat):
     """
     dat["has_two_daughters"] = 0  # Assuming less than two daughters by default
     dat["has_two_children"] = 0  # Assuming less than two children by default
+    dat["has_one_daughter"] = 0  # Assuming less than one daughter by default
 
     # Iterate through the DataFrame rows
     for index, row in dat.iterrows():
@@ -612,6 +667,9 @@ def create_children_information(dat):
 
         if non_nan_count >= AT_LEAST_TWO:
             dat.loc[index, "has_two_children"] = DUMMY_TRUE
+
+        if female_count >= 1:
+            dat.loc[index, "has_one_daughter"] = DUMMY_TRUE
 
         # Update 'has_two_daughters_loop' based on female count
         if female_count >= AT_LEAST_TWO:
@@ -663,3 +721,24 @@ def _process_negative_values(dat):
         dat[col] = np.where(dat[col] < 0, np.nan, dat[col])
 
     return dat
+
+
+def bin_distance_to_treat(distance):
+    if distance == 0:
+        return 0
+    elif distance in [-1, -2]:
+        return -2
+    elif distance in [-3, -4]:
+        return -4
+    elif distance in [-5, -6]:
+        return -6
+    elif distance <= -7:
+        return -7
+    elif distance in [1, 2]:
+        return 2
+    elif distance in [3, 4]:
+        return 4
+    elif distance in [5, 6]:
+        return 6
+    else:
+        return 7
