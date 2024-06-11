@@ -4,11 +4,10 @@ import re
 from pathlib import Path
 from typing import Annotated
 
-import pytask
-
 import linearmodels as lm
 import numpy as np
 import pandas as pd
+import pytask
 from pytask import Product
 
 from elder_care.config import BLD
