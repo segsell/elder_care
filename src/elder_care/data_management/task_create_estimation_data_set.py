@@ -869,18 +869,26 @@ def create_parental_health_status(dat, parent):
 def create_treatment_dummy_parent_in_bad_health(dat, parent):
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
-    dat["first_treatment_year"] = (
-        (dat[f"{parent}_lagged_health"] == 0) & (dat[f"{parent}_health"] == 1)
-    ).astype(int)
+    # dat["first_treatment_year"] = (
+    #     (dat[f"{parent}_lagged_health"] == 0) & (dat[f"{parent}_health"] == 1)
+    # ).astype(int)
 
     # Identify the first treatment year where mother_health switches from 0 to 1
-    treatment_condition = (dat["mother_lagged_health"] == 0) & (
+    treatment_condition_mother = (dat["mother_lagged_health"] == 0) & (
         dat["mother_health"] == 1
+    )
+    treatment_condition_father = (dat["father_lagged_health"] == 0) & (
+        dat["father_health"] == 1
+    )
+
+    dat["treatment_condition"] = treatment_condition_mother | treatment_condition_father
+    dat["treat_ever"] = (
+        dat.groupby("mergeid")["treatment_condition"].transform("max").astype(int)
     )
 
     # Create a DataFrame with the first treatment year for each mergeid
     first_treatment_year = (
-        dat.loc[treatment_condition]
+        dat.loc[treatment_condition_mother | treatment_condition_father]
         .groupby("mergeid")["int_year"]
         .first()
         .reset_index()
@@ -913,7 +921,7 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
         dat["treatment_year"].notna(), 0
     )
 
-    gender = FEMALE
+    # gender = FEMALE
 
     # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (dat[outcome] > 0)]
     pre_treatment_age = dat[(dat["distance_to_treat"] == 0) & (dat["age"] < 65)]
@@ -929,7 +937,7 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
         # & (dat["mergeid"].isin(valid_ids_working))
         & (dat["distance_to_treat"] > -999)
         # & (dat["working"] == True)
-        & (dat["gender"] == gender)
+        # & (dat["gender"] == gender)
     ]
 
     # Create the binned_distance_to_treat variable
@@ -965,6 +973,9 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
     #     ordered=True,
     # )
     # treatment_group = treatment_group.sort_values("binned_distance_to_treat")
+
+    path_to_save = BLD / "event_study" / "sandbox.csv"
+    treatment_group.to_csv(path_to_save, index=False)
 
     breakpoint()
 
@@ -1195,13 +1206,13 @@ def bin_distance_to_treat(distance):
     if distance == 0:
         return 0
     elif distance in [-1, -2]:
-        return 2
+        return -2
     elif distance in [-3, -4]:
-        return 4
+        return -4
     elif distance in [-5, -6]:
-        return 6
+        return -6
     elif distance <= -7:
-        return 7
+        return -7
     elif distance in [1, 2]:
         return 2
     elif distance in [3, 4]:
