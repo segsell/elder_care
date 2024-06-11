@@ -918,7 +918,8 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
 
     # For individuals who never receive the treatment, set distance_to_treat to NaN or some other value
     dat["distance_to_treat"] = dat["distance_to_treat"].where(
-        dat["treatment_year"].notna(), 0,
+        dat["treatment_year"].notna(),
+        0,
     )
 
     # gender = FEMALE
