@@ -732,13 +732,17 @@ def bin_distance_to_treat(distance):
         return -4
     elif distance in [-5, -6]:
         return -6
+    # elif distance in [-7, -8]:
+    #     return -8
     elif distance <= -7:
-        return -7
+        return -8
     elif distance in [1, 2]:
         return 2
     elif distance in [3, 4]:
         return 4
-    elif distance in [5, 6]:
-        return 6
+    # elif distance in [5, 6]:
+    #     return 6
+    # elif distance in [7, 8]:
+    #     return 8
     else:
-        return 7
+        return 6
