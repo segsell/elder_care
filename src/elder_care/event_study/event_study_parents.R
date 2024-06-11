@@ -95,4 +95,3 @@ iplot(mod_twfe_mother,
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_mother)
-
