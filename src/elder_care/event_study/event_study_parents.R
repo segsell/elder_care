@@ -178,7 +178,7 @@ summary(mod_twfe_mother)
 
 # DOES NOT WORK HERE WITH DIFFERENTIAL YEAR BINNING
 
-df = fread("https://raw.githubusercontent.com/LOST-STATS/LOST-STATS.github.io/master/Model_Estimation/Data/Event_Study_DiD/bacon_example.csv") 
+df = fread("https://raw.githubusercontent.com/LOST-STATS/LOST-STATS.github.io/master/Model_Estimation/Data/Event_Study_DiD/bacon_example.csv")
 
 dat_all$yyear_treated <- copy(dat_all$year_treated)
 setDT(dat_all)
@@ -199,4 +199,3 @@ iplot(mod_twfe_all,
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_all)
-
