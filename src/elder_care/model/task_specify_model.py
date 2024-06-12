@@ -7,6 +7,7 @@ import numpy as np
 import yaml
 from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
+import pytask
 
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
@@ -28,7 +29,7 @@ from elder_care.model.utility_functions import (
 )
 
 
-# @pytask.mark.skip(reason="Respecifying model.")
+@pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",

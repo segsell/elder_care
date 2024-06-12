@@ -428,7 +428,7 @@ def create_care_variables(dat):
     dat["formal_care"] = np.select(_cond, _val, default=0)
 
     dat = create_informal_care_by_child(dat)
-    dat = create_informal_care_by_daughter(dat)
+    dat = create_informal_care_by_daughter_and_son_separately(dat)
 
     # informal care general
     _cond = [
@@ -496,7 +496,7 @@ def create_care_variables(dat):
     return _create_lagged_var(dat, "no_home_care")
 
 
-def create_informal_care_by_daughter(dat):
+def create_informal_care_by_daughter_and_son_separately(dat):
     """Informal care by own children."""
     wave_early = dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
     wave_late = dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8])
@@ -638,6 +638,67 @@ def create_informal_care_by_daughter(dat):
     ]
     _val = [1, 1, 1, np.nan, np.nan, 0, np.nan, np.nan]
     dat["informal_care_daughter"] = np.select(_cond, _val, default=0)
+
+    _cond_son = [
+        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
+        wave_early & np.logical_or.reduce(early_waves_male),
+        wave_late & np.logical_or.reduce(late_waves_male),
+        # Drop care by sons if no daughter cares
+        # Rows in early waves where at least one male child provided help
+        # and no female child provided help.
+        wave_early
+        & (
+            np.logical_or.reduce(early_waves_female)
+            & ~np.logical_or.reduce(early_waves_male)
+        ),
+        # Rows in late waves where at least one male child provided help
+        # and no female child provided help.
+        wave_late
+        & (
+            np.logical_or.reduce(late_waves_female)
+            & ~np.logical_or.reduce(late_waves_male)
+        ),
+        # help from children without gender information
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
+    ]
+    _val = [1, 1, 1, np.nan, np.nan, 0, np.nan, np.nan]
+    dat["informal_care_son"] = np.select(_cond_son, _val, default=0)
+
+    # With other child
+    _cond = [
+        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
+        wave_early & np.logical_or.reduce(early_waves_female),
+        wave_late & np.logical_or.reduce(late_waves_female),
+        # help from children without gender information
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
+    ]
+    _val = [1, 1, 1, 0, np.nan, np.nan]
+    dat["informal_care_daughter_and_other_child"] = np.select(_cond, _val, default=0)
+
+    _cond_son = [
+        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
+        wave_early & np.logical_or.reduce(early_waves_male),
+        wave_late & np.logical_or.reduce(late_waves_male),
+        # help from children without gender information
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
+    ]
+    _val = [1, 1, 1, 0, np.nan, np.nan]
+    dat["informal_care_son_and_other_child"] = np.select(_cond_son, _val, default=0)
 
     return dat
 
