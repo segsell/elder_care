@@ -6,6 +6,7 @@ from typing import Annotated
 import numpy as np
 import pandas as pd
 from pytask import Product
+import pytask
 
 from elder_care.config import BLD
 
@@ -65,6 +66,7 @@ def count(df_col):
     return df_col.count()
 
 
+@pytask.mark.skip()
 def task_create_parent_child_data(
     path_to_raw_data: Path = BLD / "data" / "data_parent_child_merged.csv",
     # parent - child

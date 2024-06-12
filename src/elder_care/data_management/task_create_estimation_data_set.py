@@ -102,7 +102,6 @@ def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
-@pytask.mark.skip()
 def task_create_estimation_data(
     path_to_raw_data: Path = BLD / "data" / "data_merged.csv",
     path_to_main: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
@@ -246,6 +245,7 @@ def task_create_estimation_data(
 
     dat = create_working(dat)
 
+    dat = create_time_to_caregiving(dat)
     dat = create_treatment_dummy_parent_in_bad_health(dat, parent="mother")
     plot_conditional_means_event_study(dat)
 
@@ -868,6 +868,76 @@ def create_parental_health_status(dat, parent):
     return dat
 
 
+def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
+    """Create time to caregiving."""
+
+    parental_care = "intensive_care_new"
+
+    dat["parental_care"] = dat[parental_care].copy()
+    dat["lagged_parental_care"] = dat.groupby("mergeid")[parental_care].shift(1)
+
+    dat = dat.sort_values(by=["mergeid", "int_year"])
+
+    caregiving_condition = (dat["lagged_parental_care"] == 0) & (
+        dat["parental_care"] == 1
+    )
+
+    dat["caregiving_condition"] = caregiving_condition
+
+    dat["care_ever"] = (
+        dat.groupby("mergeid")["caregiving_condition"].transform("max").astype(int)
+    )
+
+    # Create a DataFrame with the first caregiving year for each mergeid
+    first_caregiving_year = (
+        dat.loc[caregiving_condition]
+        .groupby("mergeid")["int_year"]
+        .first()
+        .reset_index()
+        .rename(columns={"int_year": "caregiving_year"})
+    )
+
+    dat = dat.merge(first_caregiving_year, on="mergeid", how="left")
+
+    # Calculate the distance to the caregiving year
+    dat["distance_to_care"] = dat["int_year"] - dat["caregiving_year"]
+
+    # For individuals who never provide care, set distance_to_care to NaN
+    # or some other value
+    dat["distance_to_care"] = dat["distance_to_care"].where(
+        dat["caregiving_year"].notna(),
+        0,
+    )
+
+    # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (dat[outcome] > 0)]
+    pre_treatment_age = dat[(dat["distance_to_care"] == 0) & (dat["age"] < 65)]
+    valid_ids = pre_treatment_age["mergeid"].unique()
+
+    pre_treatment_working = dat[
+        (dat["distance_to_care"].isin([-2, -1])) & (dat["working"] == True)
+    ]
+    valid_ids_working = pre_treatment_working["mergeid"].unique()
+
+    treatment_group = dat[
+        (dat["mergeid"].isin(valid_ids))
+        # & (dat["mergeid"].isin(valid_ids_working))
+        & (dat["distance_to_care"] > -999)
+        # & (dat["working"] == True)
+        # & (dat["gender"] == gender)
+    ]
+
+    treatment_group["binned_distance_to_care"] = treatment_group[
+        "distance_to_care"
+    ].apply(bin_distance_to_treat)
+
+    path_to_save = BLD / "event_study" / "caregiving_sandbox.csv"
+    treatment_group.to_csv(path_to_save, index=False)
+
+    breakpoint()
+
+    # return dat
+
+
 def create_treatment_dummy_parent_in_bad_health(dat, parent):
     dat = dat.sort_values(by=["mergeid", "int_year"])
 
@@ -1204,6 +1274,24 @@ def weighted_mean(data, values, weights):
 
 
 def bin_distance_to_treat(distance):
+    # if distance == 0:
+    #     return 0
+    # elif distance in [-1, -2]:
+    #     return -2
+    # elif distance in [-3, -4]:
+    #     return -4
+    # elif distance in [-5, -6]:
+    #     return -6
+    # elif distance <= -7:
+    #     return -7
+    # elif distance in [1, 2]:
+    #     return 2
+    # elif distance in [3, 4]:
+    #     return 4
+    # elif distance in [5, 6]:
+    #     return 6
+    # else:
+    #     return 7
     if distance == 0:
         return 0
     elif distance in [-1, -2]:
@@ -1212,16 +1300,20 @@ def bin_distance_to_treat(distance):
         return -4
     elif distance in [-5, -6]:
         return -6
+    # elif distance in [-7, -8]:
+    #     return -8
     elif distance <= -7:
-        return -7
+        return -8
     elif distance in [1, 2]:
         return 2
     elif distance in [3, 4]:
         return 4
-    elif distance in [5, 6]:
-        return 6
+    # elif distance in [5, 6]:
+    #     return 6
+    # elif distance in [7, 8]:
+    #     return 8
     else:
-        return 7
+        return 6
 
 
 def create_parental_health_status_good_medium_bad(dat, parent):
@@ -1691,16 +1783,40 @@ def _create_intensive_parental_care(dat):
             & ((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
         ),  # include mother and father in law?
         (dat["sp008_"] == ANSWER_NO) & (dat["sp018_"] == ANSWER_NO),
-        (dat["sp008_"] == ANSWER_YES)
-        & (
-            (dat["sp011_1"] != GIVEN_HELP_DAILY)
-            & (dat["sp011_2"] != GIVEN_HELP_DAILY)
-            & (dat["sp011_3"] != GIVEN_HELP_DAILY)
-        )
-        & (dat["sp018_"] == ANSWER_NO),
+        # (dat["sp008_"] == ANSWER_YES)
+        # & (
+        #     (dat["sp011_1"] != GIVEN_HELP_DAILY)
+        #     & (dat["sp011_2"] != GIVEN_HELP_DAILY)
+        #     & (dat["sp011_3"] != GIVEN_HELP_DAILY)
+        # ),
+        # # & (dat["sp018_"] == ANSWER_NO),
+        (
+            (
+                (dat["sp011_1"] == GIVEN_HELP_DAILY)
+                & ~(dat["sp009_1"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_2"] == GIVEN_HELP_DAILY)
+                & ~(dat["sp009_2"].isin([MOTHER, FATHER]))
+            )
+            | (
+                (dat["sp011_3"] == GIVEN_HELP_DAILY)
+                & ~(dat["sp009_3"].isin([MOTHER, FATHER]))
+            )
+        ),
+        (
+            (dat["sp018_"] == 1)  # or personal care in hh
+            & ~((dat["sp019d2"] == 1) | (dat["sp019d3"] == 1))  # for mother or father
+        ),
     ]
-    _choice = [1, 0, 0]
-    dat["intensive_care_new"] = np.select(_cond, _choice, default=np.nan)
+    _choice = [
+        1,
+        0,
+        # np.nan,
+        np.nan,
+        np.nan,
+    ]
+    dat["intensive_care_new"] = np.select(_cond, _choice, default=0)
 
     return dat
 

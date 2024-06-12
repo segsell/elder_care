@@ -16,7 +16,7 @@ FEMALE <- 2
 
 # Load data
 data <- read.csv('/home/sebastian/Projects/elder_care/bld/event_study/sandbox_parents.csv')
-data <- subset(data, distance_to_treat >= -6 & distance_to_treat <= 12)
+#data <- subset(data, distance_to_treat >= -6 & distance_to_treat <= 12)
 
 table(data$int_year)
 
