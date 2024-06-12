@@ -36,6 +36,7 @@ RECEIVED_HELP_DAILY = 1
 CHILD_ONE_GAVE_HELP = 10
 STEP_CHILD_GAVE_HELP = 11
 OTHER_CHILD_GAVE_HELP = 19
+OTHER_CHILD_96 = 96
 
 ANSWER_YES = 1
 ANSWER_NO = 5
@@ -426,56 +427,8 @@ def create_care_variables(dat):
     _val = [1, np.nan]
     dat["formal_care"] = np.select(_cond, _val, default=0)
 
-    # informal care by own children
-    _cond = [
-        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
-        # help outside the household from own children
-        (
-            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
-            & (
-                (
-                    dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
-                )
-                | (
-                    dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                    # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
-                )
-                | (
-                    dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
-                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
-                )
-            )
-        )
-        | (
-            (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
-            & (
-                (
-                    dat["sp003_1"]
-                    == CHILD_ONE_GAVE_HELP
-                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
-                )
-                | (
-                    dat["sp003_2"]
-                    == CHILD_ONE_GAVE_HELP
-                    # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
-                )
-                | (
-                    dat["sp003_3"]
-                    == CHILD_ONE_GAVE_HELP
-                    # & (dat["sp005_3"] == RECEIVED_HELP_DAILY)
-                )
-            )
-        ),
-        (dat["mstat"].isin([3, 4, 5, 6]))
-        & (dat["sp020_"] == ANSWER_NO)
-        & (dat["sp002_"] == ANSWER_NO),
-        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
-        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
-        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
-    ]
-    _val = [1, 1, 0, np.nan, np.nan]
-    dat["informal_care_child"] = np.select(_cond, _val, default=0)
+    dat = create_informal_care_by_child(dat)
+    dat = create_informal_care_by_daughter(dat)
 
     # informal care general
     _cond = [
@@ -541,6 +494,211 @@ def create_care_variables(dat):
     dat = _create_lagged_var(dat, "no_combination_care")
 
     return _create_lagged_var(dat, "no_home_care")
+
+
+def create_informal_care_by_daughter(dat):
+    """Informal care by own children"""
+
+    wave_early = dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
+    wave_late = dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8])
+
+    early_waves_female = []
+    for i in range(1, OTHER_CHILD_GAVE_HELP - CHILD_ONE_GAVE_HELP + 1):
+        early_waves_female.append(
+            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == FEMALE)
+        )
+        early_waves_female.append(
+            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == FEMALE)
+        )
+        early_waves_female.append(
+            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == FEMALE)
+        )
+        # Assume female if no gender specified
+        early_waves_female.append(
+            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"].isna())
+        )
+        early_waves_female.append(
+            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"].isna())
+        )
+        early_waves_female.append(
+            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"].isna())
+        )
+
+    late_waves_female = []
+    for i in range(1, 21):  # i goes from 1 through 20
+        late_waves_female.append(
+            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_1"] == i)
+            & (dat[f"ch005_{i}"] == FEMALE)
+        )
+        late_waves_female.append(
+            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_2"] == i)
+            & (dat[f"ch005_{i}"] == FEMALE)
+        )
+        late_waves_female.append(
+            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_3"] == i)
+            & (dat[f"ch005_{i}"] == FEMALE)
+        )
+        #
+        late_waves_female.append(
+            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_1"] == i)
+            & (dat[f"ch005_{i}"].isna())
+        )
+        late_waves_female.append(
+            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_2"] == i)
+            & (dat[f"ch005_{i}"].isna())
+        )
+        late_waves_female.append(
+            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_3"] == i)
+            & (dat[f"ch005_{i}"].isna())
+        )
+
+    late_waves_female.append(
+        (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
+        & (dat[f"sp027_1"] == OTHER_CHILD_96)
+        # no gender information for other child
+    )
+    late_waves_female.append(
+        (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
+        & (dat[f"sp027_2"] == OTHER_CHILD_96)
+        # no gender information for other child
+    )
+    late_waves_female.append(
+        (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
+        & (dat[f"sp027_3"] == OTHER_CHILD_96)
+        # no gender information for other child
+    )
+
+    early_waves_male = []
+    for i in range(1, OTHER_CHILD_GAVE_HELP - CHILD_ONE_GAVE_HELP + 1):
+        early_waves_male.append(
+            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == MALE)
+        )
+        early_waves_male.append(
+            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == MALE)
+        )
+        early_waves_male.append(
+            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == MALE)
+        )
+
+    late_waves_male = []
+    for i in range(1, 21):  # i goes from 1 through 20
+        late_waves_male.append(
+            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_1"] == i)
+            & (dat[f"ch005_{i}"] == MALE)
+        )
+        late_waves_male.append(
+            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_2"] == i)
+            & (dat[f"ch005_{i}"] == MALE)
+        )
+        late_waves_male.append(
+            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
+            & (dat[f"sp027_3"] == i)
+            & (dat[f"ch005_{i}"] == MALE)
+        )
+
+    _cond = [
+        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
+        wave_early & np.logical_or.reduce(early_waves_female),
+        wave_late & np.logical_or.reduce(late_waves_female),
+        # Drop care by sons if no daughter cares
+        # Rows in early waves where at least one male child provided help
+        # and no female child provided help.
+        wave_early
+        & (
+            np.logical_or.reduce(early_waves_male)
+            & ~np.logical_or.reduce(early_waves_female)
+        ),
+        # Rows in late waves where at least one male child provided help
+        # and no female child provided help.
+        wave_late
+        & (
+            np.logical_or.reduce(late_waves_male)
+            & ~np.logical_or.reduce(late_waves_female)
+        ),
+        # help from children without gender information
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
+    ]
+    _val = [1, 1, 1, np.nan, np.nan, 0, np.nan, np.nan]
+    dat["informal_care_daughter"] = np.select(_cond, _val, default=0)
+
+    return dat
+
+
+def create_informal_care_by_child(dat):
+    # informal care by own children
+    _cond = [
+        dat["sp021d10"] == ANSWER_YES,  # help within household from own children
+        # help outside the household from own children
+        (
+            dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
+            & (
+                (
+                    dat["sp003_1"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    dat["sp003_2"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                    # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    dat["sp003_3"].between(CHILD_ONE_GAVE_HELP, OTHER_CHILD_GAVE_HELP)
+                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
+                )
+            )
+        )
+        | (
+            (dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8]))
+            & (
+                (
+                    dat["sp003_1"]
+                    == CHILD_ONE_GAVE_HELP
+                    # & (dat["sp005_1"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    dat["sp003_2"]
+                    == CHILD_ONE_GAVE_HELP
+                    # & (dat["sp005_2"] == RECEIVED_HELP_DAILY)
+                )
+                | (
+                    dat["sp003_3"]
+                    == CHILD_ONE_GAVE_HELP
+                    # & (dat["sp005_3"] == RECEIVED_HELP_DAILY)
+                )
+            )
+        ),
+        (dat["mstat"].isin([3, 4, 5, 6]))
+        & (dat["sp020_"] == ANSWER_NO)
+        & (dat["sp002_"] == ANSWER_NO),
+        (dat["sp020_"]).isna() & (dat["sp002_"]).isna(),
+        ((dat["sp020_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO))
+        & ((dat["sp002_"] == ANSWER_YES) & (dat["sp021d10"] == ANSWER_NO)),
+    ]
+    _val = [1, 1, 0, np.nan, np.nan]
+    dat["informal_care_child"] = np.select(_cond, _val, default=0)
+
+    return dat
 
 
 def create_care_combinations(dat, informal_care_var):

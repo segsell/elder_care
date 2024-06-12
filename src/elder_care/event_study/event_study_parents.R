@@ -10,12 +10,21 @@ library(did)
 library(lfe)
 library(dplyr)
 
+BAD <- 1
 FEMALE <- 2
 
 
 # Load data
 data <- read.csv('/home/sebastian/Projects/elder_care/bld/event_study/sandbox_parents.csv')
 data <- subset(data, distance_to_treat >= -6 & distance_to_treat <= 12)
+
+table(data$informal_care_child)
+# 0    1 
+# 3609  921 
+
+table(data$informal_care_daughter)
+
+
 
 dat_raw <- as.data.table(data, TRUE)
 is.data.table(dat_raw)
@@ -34,6 +43,21 @@ mergeids_to_drop <- dat_raw %>%
 
 dat <- dat_raw %>%
   anti_join(mergeids_to_drop, by = "mergeid")
+
+
+table(dat$informal_care_daughter)
+
+
+mergeids_to_drop_2 <- dat %>%
+  filter(treat_ever == 0 & health == BAD) %>%
+  select(mergeid) %>%
+  distinct()
+
+dat <- dat %>%
+  anti_join(mergeids_to_drop_2, by = "mergeid")
+
+
+table(dat$informal_care_daughter)
 
 
 x_min_value <- -10
@@ -63,13 +87,14 @@ dat_mother <- subset(dat, age >= 68 & gender == FEMALE)
 
 # ep013_
 
+# Control group: Parent never in bad health
 mod_twfe_all = feols(informal_care_child ~ i(binned_distance_to_treat, treat_ever, ref = -2)
-                          |
-                            #age ,                             ## FEs
-                           mergeid + age,                         ## FEs
-                          cluster = ~mergeid,   ## Clustered SEs
-                          weights = ~hh_weight,
-                          data = dat_all
+                     |
+                       #age ,                             ## FEs
+                       mergeid + age,                         ## FEs
+                     cluster = ~mergeid,   ## Clustered SEs
+                     weights = ~hh_weight,
+                     data = dat_all
 )
 iplot(mod_twfe_all,
       xlab = 'time to event (mother or father in bad health)',
@@ -82,7 +107,7 @@ summary(mod_twfe_all)
 
 mod_twfe_mother = feols(informal_care_child ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                         |
-                          #age ,                             ## FEs
+                          #age ,                              ## FEs
                           mergeid + age,                         ## FEs
                         cluster = ~mergeid,   ## Clustered SEs
                         weights = ~hh_weight,
@@ -91,7 +116,42 @@ mod_twfe_mother = feols(informal_care_child ~ i(binned_distance_to_treat, treat_
 iplot(mod_twfe_mother,
       xlab = 'time to event (mother in bad health)',
       ylab = 'informal care by child (daughter)',
-      #main = 'Informal Care by Child',
+      main = '',
+      x.lim = c(x_min_value, x_max_value),
+      y.lim = c(-10000, 100000))
+summary(mod_twfe_mother)
+
+
+
+mod_twfe_all = feols(informal_care_daughter ~ i(binned_distance_to_treat, treat_ever, ref = -2)
+                          |
+                            #age ,                             ## FEs
+                           mergeid + age,                         ## FEs
+                          cluster = ~mergeid,   ## Clustered SEs
+                          weights = ~hh_weight,
+                          data = dat_all
+)
+iplot(mod_twfe_all,
+      xlab = 'time to event (mother or father in bad health)',
+      ylab = 'informal care by daughter',
+      main = '',
+      x.lim = c(x_min_value, x_max_value),
+      y.lim = c(-10000, 100000))
+summary(mod_twfe_all)
+
+
+mod_twfe_mother = feols(informal_care_daughter ~ i(binned_distance_to_treat, treat_ever, ref = -2)
+                        |
+                          #age ,                              ## FEs
+                          mergeid + age,                         ## FEs
+                        cluster = ~mergeid,   ## Clustered SEs
+                        weights = ~design_weight,
+                        data = dat_mother
+)
+iplot(mod_twfe_mother,
+      xlab = 'time to event (mother in bad health)',
+      ylab = 'informal care by daughter',
+      main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_mother)
