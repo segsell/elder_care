@@ -564,18 +564,15 @@ def create_informal_care_by_daughter(dat):
         )
 
     late_waves_female.append(
-        (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
-        & (dat["sp027_1"] == OTHER_CHILD_96),
+        (dat["sp003_1"] == CHILD_ONE_GAVE_HELP) & (dat["sp027_1"] == OTHER_CHILD_96),
         # no gender information for other child
     )
     late_waves_female.append(
-        (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
-        & (dat["sp027_2"] == OTHER_CHILD_96),
+        (dat["sp003_2"] == CHILD_ONE_GAVE_HELP) & (dat["sp027_2"] == OTHER_CHILD_96),
         # no gender information for other child
     )
     late_waves_female.append(
-        (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
-        & (dat["sp027_3"] == OTHER_CHILD_96),
+        (dat["sp003_3"] == CHILD_ONE_GAVE_HELP) & (dat["sp027_3"] == OTHER_CHILD_96),
         # no gender information for other child
     )
 
