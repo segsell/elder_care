@@ -19,8 +19,8 @@ data <- read.csv('/home/sebastian/Projects/elder_care/bld/event_study/sandbox_pa
 data <- subset(data, distance_to_treat >= -6 & distance_to_treat <= 12)
 
 table(data$informal_care_child)
-# 0    1 
-# 3609  921 
+# 0    1
+# 3609  921
 
 table(data$informal_care_daughter)
 
@@ -155,4 +155,3 @@ iplot(mod_twfe_mother,
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_mother)
-

@@ -497,120 +497,119 @@ def create_care_variables(dat):
 
 
 def create_informal_care_by_daughter(dat):
-    """Informal care by own children"""
-
+    """Informal care by own children."""
     wave_early = dat["wave"].isin([WAVE_1, WAVE_2, WAVE_5])
     wave_late = dat["wave"].isin([WAVE_6, WAVE_7, WAVE_8])
 
     early_waves_female = []
     for i in range(1, OTHER_CHILD_GAVE_HELP - CHILD_ONE_GAVE_HELP + 1):
         early_waves_female.append(
-            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"] == FEMALE)
+            (dat["sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == FEMALE),
         )
         early_waves_female.append(
-            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"] == FEMALE)
+            (dat["sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == FEMALE),
         )
         early_waves_female.append(
-            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"] == FEMALE)
+            (dat["sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == FEMALE),
         )
         # Assume female if no gender specified
         early_waves_female.append(
-            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"].isna())
+            (dat["sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"].isna()),
         )
         early_waves_female.append(
-            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"].isna())
+            (dat["sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"].isna()),
         )
         early_waves_female.append(
-            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"].isna())
+            (dat["sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"].isna()),
         )
 
     late_waves_female = []
     for i in range(1, 21):  # i goes from 1 through 20
         late_waves_female.append(
-            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_1"] == i)
-            & (dat[f"ch005_{i}"] == FEMALE)
+            (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_1"] == i)
+            & (dat[f"ch005_{i}"] == FEMALE),
         )
         late_waves_female.append(
-            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_2"] == i)
-            & (dat[f"ch005_{i}"] == FEMALE)
+            (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_2"] == i)
+            & (dat[f"ch005_{i}"] == FEMALE),
         )
         late_waves_female.append(
-            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_3"] == i)
-            & (dat[f"ch005_{i}"] == FEMALE)
+            (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_3"] == i)
+            & (dat[f"ch005_{i}"] == FEMALE),
         )
         #
         late_waves_female.append(
-            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_1"] == i)
-            & (dat[f"ch005_{i}"].isna())
+            (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_1"] == i)
+            & (dat[f"ch005_{i}"].isna()),
         )
         late_waves_female.append(
-            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_2"] == i)
-            & (dat[f"ch005_{i}"].isna())
+            (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_2"] == i)
+            & (dat[f"ch005_{i}"].isna()),
         )
         late_waves_female.append(
-            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_3"] == i)
-            & (dat[f"ch005_{i}"].isna())
+            (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_3"] == i)
+            & (dat[f"ch005_{i}"].isna()),
         )
 
     late_waves_female.append(
-        (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
-        & (dat[f"sp027_1"] == OTHER_CHILD_96)
+        (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+        & (dat["sp027_1"] == OTHER_CHILD_96),
         # no gender information for other child
     )
     late_waves_female.append(
-        (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
-        & (dat[f"sp027_2"] == OTHER_CHILD_96)
+        (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+        & (dat["sp027_2"] == OTHER_CHILD_96),
         # no gender information for other child
     )
     late_waves_female.append(
-        (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
-        & (dat[f"sp027_3"] == OTHER_CHILD_96)
+        (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+        & (dat["sp027_3"] == OTHER_CHILD_96),
         # no gender information for other child
     )
 
     early_waves_male = []
     for i in range(1, OTHER_CHILD_GAVE_HELP - CHILD_ONE_GAVE_HELP + 1):
         early_waves_male.append(
-            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"] == MALE)
+            (dat["sp003_1"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == MALE),
         )
         early_waves_male.append(
-            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"] == MALE)
+            (dat["sp003_2"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == MALE),
         )
         early_waves_male.append(
-            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
-            & (dat[f"ch005_{i}"] == MALE)
+            (dat["sp003_3"] == CHILD_ONE_GAVE_HELP + i - 1)
+            & (dat[f"ch005_{i}"] == MALE),
         )
 
     late_waves_male = []
     for i in range(1, 21):  # i goes from 1 through 20
         late_waves_male.append(
-            (dat[f"sp003_1"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_1"] == i)
-            & (dat[f"ch005_{i}"] == MALE)
+            (dat["sp003_1"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_1"] == i)
+            & (dat[f"ch005_{i}"] == MALE),
         )
         late_waves_male.append(
-            (dat[f"sp003_2"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_2"] == i)
-            & (dat[f"ch005_{i}"] == MALE)
+            (dat["sp003_2"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_2"] == i)
+            & (dat[f"ch005_{i}"] == MALE),
         )
         late_waves_male.append(
-            (dat[f"sp003_3"] == CHILD_ONE_GAVE_HELP)
-            & (dat[f"sp027_3"] == i)
-            & (dat[f"ch005_{i}"] == MALE)
+            (dat["sp003_3"] == CHILD_ONE_GAVE_HELP)
+            & (dat["sp027_3"] == i)
+            & (dat[f"ch005_{i}"] == MALE),
         )
 
     _cond = [
