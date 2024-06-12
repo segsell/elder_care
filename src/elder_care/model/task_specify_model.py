@@ -28,8 +28,12 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 
+from elder_care.model.exogenous_processes import (
+    exog_health_transition_mother_with_survival,
+)
 
-@pytask.mark.skip(reason="Respecifying model.")
+
+# @pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
@@ -84,10 +88,10 @@ def get_options_dict(
             "states": np.arange(2, dtype=np.uint8),
             "transition": prob_full_time_offer,
         },
-        # "mother_health": {
-        #     "states": np.arange(3, dtype=np.int8),
-        #     "transition": exog_health_transition_mother_with_survival,
-        # },
+        "mother_health": {
+            "states": np.arange(3, dtype=np.uint8),
+            "transition": exog_health_transition_mother_with_survival,
+        },
     }
 
     return {

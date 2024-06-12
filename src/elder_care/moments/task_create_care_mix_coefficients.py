@@ -6,6 +6,7 @@ from typing import Annotated
 import numpy as np
 import pandas as pd
 from pytask import Product
+import pytask
 from sklearn.linear_model import LogisticRegression
 
 from elder_care.config import BLD
@@ -16,6 +17,7 @@ def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
+@pytask.mark.skip()
 def task_create_care_mix_moments(
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
     path_to_parent_child_hh_weight: Path = BLD

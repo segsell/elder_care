@@ -10,7 +10,7 @@ import pandas as pd
 import pytask
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
-from dcegm.simulation.simulate import simulate_all_periods_for_model
+from dcegm.simulation.simulate import simulate_all_periods
 from dcegm.solve import get_solve_func_for_model
 from pytask import Product
 
@@ -173,17 +173,16 @@ def task_debugging(
         seed=seed,
     )
 
-    sim_dict = simulate_all_periods_for_model(
+    sim_dict = simulate_all_periods(
         states_initial=initial_states,
         resources_initial=initial_resources,
         n_periods=options["model_params"]["n_periods"],
         params=params,
         seed=seed,
-        endog_grid_solved=results[3],
         value_solved=results[0],
-        policy_left_solved=results[1],
-        policy_right_solved=results[2],
-        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
+        policy_solved=results[1],
+        endog_grid_solved=results[2],
+        # choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
         model=model_loaded,
     )
     save_dict_to_pickle(sim_dict, path_to_save_sim_dict)

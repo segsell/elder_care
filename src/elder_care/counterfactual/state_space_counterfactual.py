@@ -8,7 +8,7 @@ from elder_care.model.shared import (
     NO_RETIREMENT,
     OUT_OF_LABOR,
     PART_TIME_AND_NO_WORK,
-    PURE_FORMAL_CARE_AND_NO_CARE,
+    FORMAL_CARE_AND_NO_CARE,
     PURE_INFORMAL_CARE,
     RETIREMENT,
     WORK_AND_NO_WORK,
@@ -65,7 +65,7 @@ def get_choice_set_no_informal_care(
 
     if (mother_health == BAD_HEALTH) & (age >= AGE_50):
         feasible_choice_set = [
-            i for i in _feasible_choice_set_all if i in PURE_FORMAL_CARE_AND_NO_CARE
+            i for i in _feasible_choice_set_all if i in FORMAL_CARE_AND_NO_CARE
         ]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
