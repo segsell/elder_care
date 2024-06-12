@@ -7,7 +7,6 @@ from typing import Annotated
 import linearmodels as lm
 import numpy as np
 import pandas as pd
-import pytask
 from pytask import Product
 
 from elder_care.config import BLD
@@ -870,7 +869,6 @@ def create_parental_health_status(dat, parent):
 
 def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
     """Create time to caregiving."""
-
     parental_care = "intensive_care_new"
 
     dat["parental_care"] = dat[parental_care].copy()
