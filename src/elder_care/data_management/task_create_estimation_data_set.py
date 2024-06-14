@@ -870,6 +870,7 @@ def create_parental_health_status(dat, parent):
 def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
     """Create time to caregiving."""
     parental_care = "intensive_care_new"
+    # parental_care = "intensive_care_general"
 
     dat["parental_care"] = dat[parental_care].copy()
     dat["lagged_parental_care"] = dat.groupby("mergeid")[parental_care].shift(1)
@@ -1985,8 +1986,8 @@ def _create_intensive_parental_care_with_in_laws_and_step_parents(dat):
         )
         & (dat["sp018_"] == ANSWER_NO),
     ]
-    _choice = [1, 0, 0]
-    dat["intensive_care_all_parents"] = np.select(_cond, _choice, default=np.nan)
+    _choice = [1, 0, np.nan]
+    dat["intensive_care_all_parents"] = np.select(_cond, _choice, default=0)
 
     return dat
 
@@ -2000,7 +2001,7 @@ def _create_intensive_care_general(dat):
             | (dat["sp011_3"] == GIVEN_HELP_DAILY)
         )
         | (dat["sp018_"] == 1),  # or personal care in hh
-        (dat["sp018_"] == ANSWER_NO)
+        (dat["sp008_"] == ANSWER_NO)
         & (dat["sp018_"] == ANSWER_NO),  # or personal care in hh
         (dat["sp008_"] == ANSWER_YES)
         & (
@@ -2010,8 +2011,8 @@ def _create_intensive_care_general(dat):
         )
         & (dat["sp018_"] == ANSWER_NO),
     ]
-    _choice = [1, 0, 0]
-    dat["intensive_care_general"] = np.select(_cond, _choice, default=np.nan)
+    _choice = [1, 0, np.nan]
+    dat["intensive_care_general"] = np.select(_cond, _choice, default=0)
 
     return dat
 
