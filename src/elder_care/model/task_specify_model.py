@@ -3,9 +3,8 @@
 from pathlib import Path
 from typing import Annotated, Any
 
-import pytask
-
 import numpy as np
+import pytask
 import yaml
 from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
@@ -29,7 +28,6 @@ from elder_care.model.utility_functions import (
     create_final_period_utility_functions,
     create_utility_functions,
 )
-
 from elder_care.utils import load_dict_from_pickle
 
 

@@ -137,7 +137,7 @@ PURE_INFORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, PURE_INFORMAL_CARE])
 # Convert the results of set operations to lists, then to JAX arrays.
 NO_INFORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(INFORMAL_CARE.tolist())))
 NO_COMBINATION_CARE = jnp.array(
-    list(set(ALL.tolist()) - set(COMBINATION_CARE.tolist()))
+    list(set(ALL.tolist()) - set(COMBINATION_CARE.tolist())),
 )
 NO_FORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(FORMAL_CARE.tolist())))
 
