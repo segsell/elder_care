@@ -41,13 +41,13 @@ table(dat_female$care_ever)
 
 table(dat_female$care_ever, dat_female$distance_to_care)
 
-unique_ids <- dat_female %>% 
+unique_ids <- dat_female %>%
   filter(!is.na(distance_to_care) & distance_to_care != 0) %>%
   distinct(mergeid)
 num_unique_ids <- nrow(unique_ids)
 num_unique_ids
 
-unique_ids <- dat_male %>% 
+unique_ids <- dat_male %>%
   filter(!is.na(distance_to_care) & distance_to_care != 0) %>%
   distinct(mergeid)
 num_unique_ids <- nrow(unique_ids)
