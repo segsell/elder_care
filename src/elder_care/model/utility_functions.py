@@ -188,12 +188,16 @@ def utility_func(
     ) * is_no_informal_care(choice)
 
     disutility_working_informal_care = (
-        params["disutility_part_time_constant"] * part_time
-        + params["disutility_full_time_constant"] * full_time
-        + params["disutility_part_time_age"] * period * part_time
-        + params["disutility_full_time_age"] * period * full_time
-        + params["disutility_part_time_age_squared"] * (period**2) * part_time
-        + params["disutility_full_time_age_squared"] * (period**2) * full_time
+        params["disutility_part_time_informal_care_constant"] * part_time
+        + params["disutility_full_time_informal_care_constant"] * full_time
+        + params["disutility_part_time_informal_care_age"] * period * part_time
+        + params["disutility_full_time_informal_care_age"] * period * full_time
+        + params["disutility_part_time_informal_care_age_squared"]
+        * (period**2)
+        * part_time
+        + params["disutility_full_time_informal_care_age_squared"]
+        * (period**2)
+        * full_time
     ) * is_informal_care(choice)
 
     # disutility_working_no_informal_care = (
@@ -242,10 +246,10 @@ def utility_func(
         + params["utility_informal_care_parent_bad_health"]
         * is_pure_informal_care(choice)
         # * is_bad_health(mother_health)
-        + params["utility_formal_care_parent_bad_health"] * is_formal_care(choice)
-        # * is_bad_health(mother_health)
         + params["utility_combination_care_parent_bad_health"]
         * is_combination_care(choice)
+        # * is_bad_health(mother_health)
+        + params["utility_formal_care_parent_bad_health"] * is_formal_care(choice)
         # * is_bad_health(mother_health)
     )
 

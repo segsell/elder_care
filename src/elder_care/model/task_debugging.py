@@ -17,11 +17,15 @@ from pytask import Product
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
-    FULL_TIME,
     NO_WORK,
-    OUT_OF_LABOR,
     PART_TIME,
+    FULL_TIME,
+    OUT_OF_LABOR,
     RETIREMENT,
+    INFORMAL_CARE,
+    FORMAL_CARE,
+    ALL,
+    AGE_BINS_SIM,
 )
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict
@@ -34,6 +38,7 @@ from elder_care.simulation.simulate import (
     create_simulation_array_from_df,
     create_simulation_df_from_dict,
     get_share_by_age,
+    get_share_by_type_by_age_bin,
     simulate_moments,
 )
 from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
@@ -41,34 +46,42 @@ from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
 jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
 
-PARAMS_OLD = {
+PARAMS = {
     "rho": 0.8,
     "beta": 0.959,
     "sigma": 0.5364562201,
-    "lambda": 0.9864699097918321,
+    "lambda": 1.0024565188638312,
     "interest_rate": 0.04,
     #
-    "disutility_part_time_constant": 0.33354121247199703,
-    "disutility_part_time_age": -0.12100801003524632,
-    "disutility_part_time_age_squared": 0.0007139083714654349,
-    "disutility_full_time_constant": 0.08529730099536248,
-    "disutility_full_time_age": -0.054504780075805004,
-    "disutility_full_time_age_squared": -0.0022061388612220744,
-    "disutility_part_time_informal_care_constant": 0.33354121247199703,
-    "disutility_part_time_informal_care_age": -0.12100801003524632,
-    "disutility_part_time_informal_care_age_squared": 0.0007139083714654349,
-    "disutility_full_time_informal_care_constant": 0.08529730099536248,
-    "disutility_full_time_informal_care_age": -0.054504780075805004,
-    "disutility_full_time_informal_care_age_squared": -0.0022061388612220744,
+    "disutility_part_time_constant": -1.1325945318518755,
+    "disutility_part_time_age": 2.959047551749629,
+    "disutility_part_time_age_squared": 0.08466169989356942,
+    "disutility_full_time_constant": 1.0114514159888124,
+    "disutility_full_time_age": 0.3052996873888407,
+    "disutility_full_time_age_squared": 0.5032327025372947,
     #
-    "part_time_constant": -2.102635900186225,
-    "part_time_not_working_last_period": -1.0115255914421664,
-    "part_time_high_education": 0.48013160890989515,
-    "part_time_above_retirement_age": -2.110713962590601,
-    "full_time_constant": -1.9425261133765783,
-    "full_time_not_working_last_period": -2.097935912953995,
-    "full_time_high_education": 0.8921957457184644,
-    "full_time_above_retirement_age": -3.1212459549307496,
+    "disutility_part_time_informal_care_constant": -1.1325945318518755,
+    "disutility_part_time_informal_care_age": 2.959047551749629,
+    "disutility_part_time_informal_care_age_squared": 0.08466169989356942,
+    "disutility_full_time_informal_care_constant": 1.0114514159888124,
+    "disutility_full_time_informal_care_age": 0.3052996873888407,
+    "disutility_full_time_informal_care_age_squared": 0.5032327025372947,
+    #
+    "part_time_constant": -2.108705825398208,
+    "part_time_not_working_last_period": -1.9513432887146251,
+    "part_time_high_education": 3.0168909139283073,
+    "part_time_above_retirement_age": -1.4626306391231516,
+    "full_time_constant": -3.509669706331148,
+    "full_time_not_working_last_period": -2.754513647434816,
+    "full_time_high_education": 2.6489281603375474,
+    "full_time_above_retirement_age": -3.0922669492895896,
+    #
+    "wage_constant": 2.036543017339472,
+    "wage_experience": 1.2298196564297121,
+    "wage_experience_squared": -0.04276311179999581,
+    "wage_high_education": 0.31239997233992,
+    "wage_part_time": -0.6683338057565962,
+    "wage_std_regression_residual": 0.41264342652997477,
     #
     "utility_no_care_parent_bad_health": -1,
     "utility_informal_care_parent_bad_health": 0.5,
@@ -76,35 +89,8 @@ PARAMS_OLD = {
     "utility_combination_care_parent_bad_health": 0.4,
 }
 
-PARAMS = {
-    "rho": 0.8,
-    "beta": 0.959,
-    "sigma": 0.5364562201,
-    "lambda": 0.9864699097918321,
-    "interest_rate": 0.04,
-    #
-    "disutility_part_time_constant": 0.33354121247199703,
-    "disutility_full_time_constant": 0.08529730099536248,
-    "disutility_part_time_age_40_50": -0.12100801003524632,
-    "disutility_full_time_age_40_50": -0.054504780075805004,
-    "disutility_part_time_age_50_plus": 0.0007139083714654349,
-    "disutility_full_time_age_50_plus": -0.0022061388612220744,
-    "disutility_part_time_age_squared_50_plus": 0.0007139083714654349,
-    "disutility_full_time_age_squared_50_plus": -0.0022061388612220744,
-    #
-    "part_time_constant": -2.102635900186225,
-    "part_time_not_working_last_period": -1.0115255914421664,
-    "part_time_high_education": 0.48013160890989515,
-    "part_time_above_retirement_age": -2.110713962590601,
-    "full_time_constant": -1.9425261133765783,
-    "full_time_not_working_last_period": -2.097935912953995,
-    "full_time_high_education": 0.8921957457184644,
-    "full_time_above_retirement_age": -3.1212459549307496,
-    #
-}
 
-
-@pytask.mark.skip()
+# @pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD
@@ -188,28 +174,33 @@ def task_debugging(
     save_dict_to_pickle(sim_dict, path_to_save_sim_dict)
 
     df_raw = create_simulation_df(sim_dict)
-    data = df_raw.notna()
+    # data = df_raw.notna()
 
-    #
-
-    n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
-
-    keys_to_drop = ["taste_shocks"]
-    dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
-
-    data = pd.DataFrame(
-        {key: val.ravel() for key, val in dict_to_df.items()},
-        index=pd.MultiIndex.from_product(
-            [np.arange(n_periods), np.arange(n_agents)],
-            names=["period", "agent"],
-        ),
+    data = create_simulation_df_from_dict(sim_dict)
+    arr, idx = create_simulation_array_from_df(
+        data=data,
+        options=options,
+        params=params,
     )
-    data["age"] = data["period"] + options["model_params"]["start_age"]
 
-    data_clean = data.dropna()
-    column_indices = {col: idx for idx, col in enumerate(data_clean.columns)}
-    idx = column_indices.copy()
-    arr = jnp.asarray(data_clean)
+    # n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
+
+    # keys_to_drop = ["taste_shocks"]
+    # dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
+
+    # data = pd.DataFrame(
+    #     {key: val.ravel() for key, val in dict_to_df.items()},
+    #     index=pd.MultiIndex.from_product(
+    #         [np.arange(n_periods), np.arange(n_agents)],
+    #         names=["period", "agent"],
+    #     ),
+    # )
+    # data["age"] = data["period"] + options["model_params"]["start_age"]
+
+    # data_clean = data.dropna()
+    # column_indices = {col: idx for idx, col in enumerate(data_clean.columns)}
+    # idx = column_indices.copy()
+    # arr = jnp.asarray(data_clean)
 
     share_not_working_by_age = get_share_by_age(
         arr,
@@ -237,45 +228,45 @@ def task_debugging(
         choice=OUT_OF_LABOR,
     )  # 15
 
-    # share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=INFORMAL_CARE,
-    #     care_type=ALL,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=INFORMAL_CARE,
+        care_type=ALL,
+        age_bins=AGE_BINS_SIM,
+    )
 
-    # share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=FORMAL_CARE,
-    #     care_type=ALL,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FORMAL_CARE,
+        care_type=ALL,
+        age_bins=AGE_BINS_SIM,
+    )
 
-    # share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=NO_WORK,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
-    # share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=PART_TIME,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
-    # share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=FULL_TIME,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=NO_WORK,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
 
-    # breakpoint()
+    breakpoint()
 
     return (
         share_not_working_by_age,

@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Annotated, Any
 
+import pytask
+
 import numpy as np
 import yaml
 from dcegm.pre_processing.setup_model import setup_and_save_model
@@ -28,11 +30,13 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 
+from elder_care.utils import load_dict_from_pickle
 
-# @pytask.mark.skip(reason="Respecifying model.")
+
+@pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
-    # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
     path_to_save: Annotated[Path, Product] = BLD / "model" / "model.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
@@ -40,7 +44,7 @@ def task_specify_and_setup_model(
     start_params["sigma"] = specs["income_shock_scale"]
 
     """
-    options = get_options_dict(path_to_specs)
+    options = get_options_dict(path_to_specs, path_to_exog)
 
     return setup_and_save_model(
         options=options,
@@ -54,12 +58,12 @@ def task_specify_and_setup_model(
 
 def get_options_dict(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
-    # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
 ):
 
-    specs, wage_params = load_specs(path_to_specs)
+    specs, _wage_params = load_specs(path_to_specs)
 
-    # exog_params = load_dict_from_pickle(path_to_exog)
+    exog_params = load_dict_from_pickle(path_to_exog)
 
     # exog_params = {
     #     "part_time_constant": -2.102635900186225,
@@ -106,7 +110,9 @@ def get_options_dict(
             },
             "exogenous_processes": exog_processes,
         },
-        "model_params": specs | {"interest_rate": 0.04, "bequest_scale": 1.3},
+        "model_params": specs
+        | exog_params
+        | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 
 

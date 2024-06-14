@@ -114,7 +114,6 @@ def task_create_care_mix_moments(
     )
     age_dummies = pd.get_dummies(mother["age_bin"], drop_first=True)
     mother = pd.concat([mother, age_dummies], axis=1)
-    # breakpoint()
 
     coeff_no_care = weighted_logistic_regression(
         mother,
