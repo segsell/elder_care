@@ -5,7 +5,6 @@ from typing import Annotated
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 import pandas as pd
 import pytask
 from dcegm.pre_processing.setup_model import load_and_setup_model
@@ -17,15 +16,15 @@ from pytask import Product
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
-    NO_WORK,
-    PART_TIME,
-    FULL_TIME,
-    OUT_OF_LABOR,
-    RETIREMENT,
-    INFORMAL_CARE,
-    FORMAL_CARE,
-    ALL,
     AGE_BINS_SIM,
+    ALL,
+    FORMAL_CARE,
+    FULL_TIME,
+    INFORMAL_CARE,
+    NO_WORK,
+    OUT_OF_LABOR,
+    PART_TIME,
+    RETIREMENT,
 )
 from elder_care.model.state_space import create_state_space_functions
 from elder_care.model.task_specify_model import get_options_dict

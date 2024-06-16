@@ -11,10 +11,9 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
+import numpy as np
 import pandas as pd
 from pytask import Product
-
-import numpy as np
 from sklearn.linear_model import LogisticRegression
 
 FEMALE = 2
