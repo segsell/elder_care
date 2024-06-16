@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
+import pytask
+
 from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
     AGE_BINS_SIM,
@@ -159,7 +161,7 @@ def simulate_moments(arr, idx):
                 idx["mother_age_bin_70_75"],
                 idx["mother_age_bin_75_80"],
                 idx["mother_age_bin_80_85"],
-                idx["mother_age_bin_80_plus"],
+                idx["mother_age_bin_85_plus"],
             ],
         ],
         y=arr[:, idx["choice_no_care"]],
@@ -171,7 +173,7 @@ def simulate_moments(arr, idx):
                 idx["mother_age_bin_70_75"],
                 idx["mother_age_bin_75_80"],
                 idx["mother_age_bin_80_85"],
-                idx["mother_age_bin_80_plus"],
+                idx["mother_age_bin_85_plus"],
             ],
         ],
         y=arr[:, idx["choice_pure_informal_care"]],
@@ -183,7 +185,7 @@ def simulate_moments(arr, idx):
                 idx["mother_age_bin_70_75"],
                 idx["mother_age_bin_75_80"],
                 idx["mother_age_bin_80_85"],
-                idx["mother_age_bin_80_plus"],
+                idx["mother_age_bin_85_plus"],
             ],
         ],
         y=arr[:, idx["choice_combination_care"]],
@@ -195,7 +197,7 @@ def simulate_moments(arr, idx):
                 idx["mother_age_bin_70_75"],
                 idx["mother_age_bin_75_80"],
                 idx["mother_age_bin_80_85"],
-                idx["mother_age_bin_80_plus"],
+                idx["mother_age_bin_85_plus"],
             ],
         ],
         y=arr[:, idx["choice_formal_care"]],
@@ -507,10 +509,10 @@ def simulate_moments(arr, idx):
         + share_working_full_time_by_age
         # regressions
         + savings_rate_coeffs.tolist()
-        + no_care_coeffs  # already a list
-        + pure_informal_care_coeffs  # already a list
-        + combination_care_coeffs  # already a list
-        + formal_care_coeffs  # already a list
+        + no_care_coeffs
+        + pure_informal_care_coeffs
+        + combination_care_coeffs
+        + formal_care_coeffs
         #
         # employment shares by caregiving status
         # no informal care
@@ -521,10 +523,10 @@ def simulate_moments(arr, idx):
         + share_not_working_informal_care_by_age_bin
         + share_part_time_informal_care_by_age_bin
         + share_full_time_informal_care_by_age_bin
-        #
-        # share of informal care in total population by age bin
-        # + share_informal_care_by_age_bin
-        #
+        # #
+        # # share of informal care in total population by age bin
+        # # + share_informal_care_by_age_bin
+        # #
         # Employment transitions
         + no_work_to_no_work
         + no_work_to_part_time
@@ -534,8 +536,8 @@ def simulate_moments(arr, idx):
         + part_time_to_full_time
         + full_time_to_no_work
         + full_time_to_part_time
-        + full_time_to_full_time,
-        # +
+        + full_time_to_full_time
+        +
         # # Caregiving transitions
         no_informal_care_to_no_informal_care
         + no_informal_care_to_informal_care
@@ -588,13 +590,13 @@ def fit_logit(x, y):
         y (jnp.ndarray): Array of shape (n, k) of y-values.
 
     Returns:
-        coef (np.ndarray): Array of shape (p, k) of coefficients.
+        coef (list)): list of length (k + 1,) of coefficients.
 
     """
     model = LogisticRegression()
     model.fit(x, y)
 
-    # jnp.array([model.intercept_[0]] + list(model.coef_[0]))
+    # return jnp.array([model.intercept_[0]] + list(model.coef_[0]))
     return [model.intercept_[0]] + list(model.coef_[0])
 
 
@@ -892,6 +894,7 @@ def create_simulation_array_from_df(data, options, params):
     return jnp.array(data, dtype=float), column_indices
 
 
+@pytask.mark.skip()
 def create_simulation_array_from_df_counterfactual(data, options, params):
     """Create simulation array from dict."""
     data = data.copy()  # Make a copy to avoid modifying a slice

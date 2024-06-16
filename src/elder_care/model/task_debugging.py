@@ -90,7 +90,7 @@ PARAMS = {
 }
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD
@@ -282,7 +282,7 @@ def task_debugging(
     )
 
 
-@pytask.mark.skip()
+# @pytask.mark.skip()
 def task_debug_simulate():
     """Debug simulate.
 
@@ -296,8 +296,10 @@ def task_debug_simulate():
 
     data = create_simulation_df_from_dict(sim_dict)
 
-    arr, idx = create_simulation_array_from_df(data=data, options=options)
-    out = simulate_moments(arr, idx)
+    arr, idx = create_simulation_array_from_df(
+        data=data, options=options, params=PARAMS
+    )
+    out = simulate_moments(arr, idx)  # 159
 
     # breakpoint()
 
