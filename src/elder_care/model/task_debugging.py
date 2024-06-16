@@ -296,7 +296,7 @@ def task_debug_simulate():
     data = create_simulation_df_from_dict(sim_dict)
 
     arr, idx = create_simulation_array_from_df(
-        data=data, options=options, params=PARAMS
+        data=data, options=options, params=PARAMS,
     )
     out = simulate_moments(arr, idx)  # 159
 
