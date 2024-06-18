@@ -4,9 +4,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-
 import pytask
+from sklearn.linear_model import LogisticRegression
 
 from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
