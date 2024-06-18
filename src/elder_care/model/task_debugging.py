@@ -281,7 +281,7 @@ def task_debugging(
     )
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_debug_simulate():
     """Debug simulate.
 
