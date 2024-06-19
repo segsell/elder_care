@@ -108,7 +108,7 @@ def get_options_dict(
             "exogenous_processes": exog_processes,
         },
         "model_params": specs
-        # | exog_params
+        | exog_params
         | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 
