@@ -78,14 +78,14 @@ def get_options_dict(
     choices = np.arange(len(ALL), dtype=np.uint8)
 
     exog_processes = {
-        "part_time_offer": {
-            "states": np.arange(2, dtype=np.uint8),
-            "transition": prob_part_time_offer,
-        },
-        "full_time_offer": {
-            "states": np.arange(2, dtype=np.uint8),
-            "transition": prob_full_time_offer,
-        },
+        # "part_time_offer": {
+        #     "states": np.arange(2, dtype=np.uint8),
+        #     "transition": prob_part_time_offer,
+        # },
+        # "full_time_offer": {
+        #     "states": np.arange(2, dtype=np.uint8),
+        #     "transition": prob_full_time_offer,
+        # },
         "mother_health": {
             "states": np.arange(3, dtype=np.uint8),
             "transition": exog_health_transition_mother_with_survival,
@@ -109,7 +109,7 @@ def get_options_dict(
             "exogenous_processes": exog_processes,
         },
         "model_params": specs
-        | exog_params
+        # | exog_params
         | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 

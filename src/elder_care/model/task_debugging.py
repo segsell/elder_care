@@ -66,14 +66,14 @@ PARAMS = {
     "disutility_full_time_informal_care_age": 0.3052996873888407,
     "disutility_full_time_informal_care_age_squared": 0.5032327025372947,
     #
-    "part_time_constant": -2.108705825398208,
-    "part_time_not_working_last_period": -1.9513432887146251,
-    "part_time_high_education": 3.0168909139283073,
-    "part_time_above_retirement_age": -1.4626306391231516,
-    "full_time_constant": -3.509669706331148,
-    "full_time_not_working_last_period": -2.754513647434816,
-    "full_time_high_education": 2.6489281603375474,
-    "full_time_above_retirement_age": -3.0922669492895896,
+    # "part_time_constant": -2.108705825398208,
+    # "part_time_not_working_last_period": -1.9513432887146251,
+    # "part_time_high_education": 3.0168909139283073,
+    # "part_time_above_retirement_age": -1.4626306391231516,
+    # "full_time_constant": -3.509669706331148,
+    # "full_time_not_working_last_period": -2.754513647434816,
+    # "full_time_high_education": 2.6489281603375474,
+    # "full_time_above_retirement_age": -3.0922669492895896,
     #
     "wage_constant": 2.036543017339472,
     "wage_experience": 1.2298196564297121,
@@ -296,7 +296,9 @@ def task_debug_simulate():
     data = create_simulation_df_from_dict(sim_dict)
 
     arr, idx = create_simulation_array_from_df(
-        data=data, options=options, params=PARAMS,
+        data=data,
+        options=options,
+        params=PARAMS,
     )
     out = simulate_moments(arr, idx)  # 159
 

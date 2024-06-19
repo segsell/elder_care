@@ -33,8 +33,8 @@ def create_state_space_functions():
 def get_state_specific_feasible_choice_set(
     period,
     lagged_choice,
-    part_time_offer,
-    full_time_offer,
+    # part_time_offer,
+    # full_time_offer,
     mother_health,
     options,
 ):
@@ -80,18 +80,20 @@ def get_state_specific_feasible_choice_set(
         feasible_choice_set = RETIREMENT
     elif is_retired(lagged_choice):
         feasible_choice_set = [i for i in feasible_choice_set if i in RETIREMENT]
-    elif (full_time_offer == 0) & (part_time_offer == 1):
-        feasible_choice_set = [
-            i for i in feasible_choice_set if i in PART_TIME_AND_NO_WORK
-        ]
-    elif (full_time_offer == 1) & (part_time_offer == 0):
-        feasible_choice_set = [
-            i for i in feasible_choice_set if i in FULL_TIME_AND_NO_WORK
-        ]
-    elif (full_time_offer == 1) & (part_time_offer == 1):
-        feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
+    # elif (full_time_offer == 0) & (part_time_offer == 1):
+    #     feasible_choice_set = [
+    #         i for i in feasible_choice_set if i in PART_TIME_AND_NO_WORK
+    #     ]
+    # elif (full_time_offer == 1) & (part_time_offer == 0):
+    #     feasible_choice_set = [
+    #         i for i in feasible_choice_set if i in FULL_TIME_AND_NO_WORK
+    #     ]
+    # elif (full_time_offer == 1) & (part_time_offer == 1):
+    #     feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
+    # else:
+    #     feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
     else:
-        feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
+        feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
 
     return np.array(feasible_choice_set)
 
