@@ -102,7 +102,7 @@ def update_endog_state(
     period,
     choice,
     experience,
-    high_educ,
+    # high_educ,
     options,
 ):
     """Update endogenous state variables.
@@ -123,7 +123,7 @@ def update_endog_state(
 
     next_state["period"] = period + 1
     next_state["lagged_choice"] = choice
-    next_state["high_educ"] = high_educ
+    # next_state["high_educ"] = high_educ
 
     below_exp_cap_part = experience + 1 < options["experience_cap"]
     below_exp_cap_full = experience + 2 < options["experience_cap"]

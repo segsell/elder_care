@@ -141,7 +141,7 @@ def simulate_moments(arr, idx):
             [
                 idx["age"],
                 idx["age_squared"],
-                idx["high_educ"],
+                # idx["high_educ"],
                 idx["choice_part_time"],
                 idx["choice_full_time"],
             ],
@@ -878,7 +878,7 @@ def create_simulation_array_from_df(data, options, params):
         params["wage_constant"]
         + params["wage_experience"] * data["experience"]
         + params["wage_experience_squared"] * data["experience_squared"]
-        + params["wage_high_education"] * data["high_educ"]
+        # + params["wage_high_education"] * data["high_educ"]
         + params["wage_part_time"] * data["lagged_part_time"]
     )
 
@@ -958,7 +958,7 @@ def create_simulation_array_from_df_counterfactual(data, options, params):
         params["wage_constant"]
         + params["wage_experience"] * data["experience"]
         + params["wage_experience_squared"] * data["experience_squared"]
-        + params["wage_high_education"] * data["high_educ"]
+        # + params["wage_high_education"] * data["high_educ"]
         + params["wage_part_time"] * data["lagged_part_time"]
     )
 
@@ -1037,7 +1037,7 @@ def create_simulation_array(sim_dict, options, params):
     consumption = sim_dict["consumption"].ravel()
     lagged_choice = sim_dict["lagged_choice"].ravel()
     choice = sim_dict["choice"].ravel()
-    high_educ = sim_dict["high_educ"].ravel()
+    # high_educ = sim_dict["high_educ"].ravel()
     experience = sim_dict["experience"].ravel()
     income_shock = sim_dict["income_shock"].ravel()
     mother_health = sim_dict["mother_health"].ravel()
@@ -1064,7 +1064,7 @@ def create_simulation_array(sim_dict, options, params):
         params["wage_constant"]
         + params["wage_experience"] * experience
         + params["wage_experience_squared"] * experience_squared
-        + params["wage_high_education"] * high_educ
+        # + params["wage_high_education"] * high_educ
         + params["wage_part_time"] * lagged_part_time
     )
 
@@ -1097,7 +1097,7 @@ def create_simulation_array(sim_dict, options, params):
             is_informal_care,
             experience,
             experience_squared,
-            high_educ,
+            # high_educ,
             mother_health,
             has_sibling,
         ),
@@ -1121,9 +1121,9 @@ def create_simulation_array(sim_dict, options, params):
         "choice_informal_care": 14,
         "experience": 15,
         "experience_squared": 16,
-        "high_educ": 17,
-        "mother_health": 18,
-        "has_sibling": 19,
+        # "high_educ": 17,
+        "mother_health": 17,
+        "has_sibling": 18,
     }
 
     return arr, idx

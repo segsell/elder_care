@@ -113,10 +113,16 @@ def task_create_spousal_income():
     Only available if the individual has a spouse or registered partner.
 
     """
+    # return {
+    #     "spousal_income_constant": 9.036516,
+    #     "spousal_income_age": 0.0385433771,
+    #     "spousal_income_age_squared": -0.0003486319,
+    #     "spousal_income_high_education": 0.2487519577,
+    #     "spousal_income_above_retirement_age": -0.0157620788,
+    # }
     return {
-        "spousal_income_constant": 9.036516,
-        "spousal_income_age": 0.0385433771,
-        "spousal_income_age_squared": -0.0003486319,
-        "spousal_income_high_education": 0.2487519577,
-        "spousal_income_above_retirement_age": -0.0157620788,
+        "spousal_income_constant": 9.021725,
+        "spousal_income_age": 0.0419639292,
+        "spousal_income_age_squared": -0.0003857385,
+        "spousal_income_above_retirement_age": -0.0174085484,
     }

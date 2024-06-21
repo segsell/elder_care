@@ -1969,14 +1969,24 @@ def get_coefficients_soep_savings_rate_regression():
     #     },
     # )
 
+    # return pd.Series(
+    #     {
+    #         "savings_rate_constant": -0.9054951203922390,
+    #         "savings_rate_age": 0.0397000841,
+    #         "savings_rate_age_squared": -0.0003955014,
+    #         "savings_rate_high_education": 0.0424789561,
+    #         "savings_rate_part_time": 0.0553201853,
+    #         "savings_rate_full_time": 0.0783182866,
+    #     },
+    # )
+
     return pd.Series(
         {
-            "savings_rate_constant": -0.9054951203922390,
-            "savings_rate_age": 0.0397000841,
-            "savings_rate_age_squared": -0.0003955014,
-            "savings_rate_high_education": 0.0424789561,
-            "savings_rate_part_time": 0.0553201853,
-            "savings_rate_full_time": 0.0783182866,
+            "savings_rate_constant": -0.8634837498204938,
+            "savings_rate_age": 0.0395651306,
+            "savings_rate_age_squared": -0.0004045064,
+            "savings_rate_part_time": 0.0574432350,
+            "savings_rate_full_time": 0.0860651100,
         },
     )
 

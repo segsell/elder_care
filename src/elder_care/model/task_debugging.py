@@ -55,7 +55,7 @@ PARAMS = {
     "disutility_part_time_constant": -1.1325945318518755,
     "disutility_part_time_age": 2.959047551749629,
     "disutility_part_time_age_squared": 0.08466169989356942,
-    "disutility_full_time_constant": 1.0114514159888124,
+    "disutility_full_time_constant": 2.0114514159888124,
     "disutility_full_time_age": 0.3052996873888407,
     "disutility_full_time_age_squared": 0.5032327025372947,
     #
@@ -99,15 +99,15 @@ START_PARAMS = {
     "disutility_part_time_constant": 2,
     "disutility_part_time_age": 0.1,
     "disutility_part_time_age_squared": -0.06,
-    "disutility_full_time_constant": -2,
-    "disutility_full_time_age": 0.0252,
-    "disutility_full_time_age_squared": -0.12,
+    "disutility_full_time_constant": -1,
+    "disutility_full_time_age": 0.152,
+    "disutility_full_time_age_squared": -0.012,
     #
     "disutility_part_time_informal_care_constant": -1,
-    "disutility_part_time_informal_care_age": -0.1,
+    "disutility_part_time_informal_care_age": 0.1,
     "disutility_part_time_informal_care_age_squared": -0.01,
-    "disutility_full_time_informal_care_constant": -2,
-    "disutility_full_time_informal_care_age": -0.1,
+    "disutility_full_time_informal_care_constant": -1.5,
+    "disutility_full_time_informal_care_age": 0.1,
     "disutility_full_time_informal_care_age_squared": -0.01,
     # caregiving
     "utility_no_care_parent_bad_health": 0,
@@ -128,12 +128,12 @@ START_PARAMS = {
     "wage_constant": 2,
     "wage_experience": 0.1,
     "wage_experience_squared": -0.01,
-    "wage_high_education": 0.5,
+    # "wage_high_education": 0.5,
     "wage_part_time": -0.1,
 }
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD

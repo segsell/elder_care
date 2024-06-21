@@ -28,6 +28,10 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 from elder_care.utils import load_dict_from_pickle
+
+from elder_care.exogenous_processes.task_create_exog_processes_soep import (
+    task_create_spousal_income,
+)
 import pytask
 
 
@@ -35,7 +39,7 @@ import pytask
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
-    path_to_save: Annotated[Path, Product] = BLD / "model" / "model_with_job_offer.pkl",
+    path_to_save: Annotated[Path, Product] = BLD / "model" / "model.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
 
@@ -62,6 +66,7 @@ def get_options_dict(
     specs, _wage_params = load_specs(path_to_specs)
 
     exog_params = load_dict_from_pickle(path_to_exog)
+    spousal_params = task_create_spousal_income()
 
     # exog_params = {
     #     "part_time_constant": -2.102635900186225,
@@ -98,7 +103,7 @@ def get_options_dict(
             "choices": choices,
             "income_shock_scale": specs["income_shock_scale"],
             "endogenous_states": {
-                "high_educ": np.arange(2, dtype=np.uint8),
+                # "high_educ": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
                     start=10,  # 5 * 2
                     stop=specs["experience_cap"] + 1,
@@ -110,6 +115,7 @@ def get_options_dict(
         },
         "model_params": specs
         | exog_params
+        | spousal_params
         | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 

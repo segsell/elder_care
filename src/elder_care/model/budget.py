@@ -44,7 +44,7 @@ def budget_constraint(
     period: int,
     lagged_choice: int,
     experience: int,
-    high_educ: int,
+    # high_educ: int,
     savings_end_of_previous_period: float,
     income_shock_previous_period: float,
     options: dict[str, Any],
@@ -99,7 +99,7 @@ def budget_constraint(
     wage_from_previous_period = get_exog_stochastic_wage(
         lagged_choice=lagged_choice,
         experience=experience,
-        high_educ=high_educ,
+        # high_educ=high_educ,
         wage_shock=income_shock_previous_period,
         params=params,
     )
@@ -122,12 +122,17 @@ def budget_constraint(
         * 12
     )
 
-    income = jnp.maximum(
+    personal_income = jnp.maximum(
         is_working(lagged_choice) * labor_income
         + is_retired(lagged_choice) * retirement_income,
         unemployment_benefits,
     )
-    income_and_cash_benefits = income + cash_benefits_informal_care
+    spousal_income = get_exog_spousal_income(period, options)
+
+    # Assume everyone is married
+    income_and_cash_benefits = (
+        personal_income + spousal_income + cash_benefits_informal_care
+    )
 
     return (
         1 + options["interest_rate"]
@@ -137,7 +142,7 @@ def budget_constraint(
 def get_exog_stochastic_wage(
     lagged_choice: int,
     experience: int,
-    high_educ: int,
+    # high_educ: int,
     wage_shock: float,
     params: dict[str, float],
 ) -> float:
@@ -207,14 +212,14 @@ def get_exog_stochastic_wage(
         params["wage_constant"]
         + params["wage_experience"] * (experience / 2)
         + params["wage_experience_squared"] * (experience / 2) ** 2
-        + params["wage_high_education"] * high_educ
+        # + params["wage_high_education"] * high_educ
         + params["wage_part_time"] * is_part_time(lagged_choice)
     )
 
     return jnp.exp(log_wage + wage_shock)
 
 
-def get_exog_spousal_income(period, high_educ, options):
+def get_exog_spousal_income(period, options):
     """Income from the spouse."""
     age = options["start_age"] + period
 
@@ -222,7 +227,7 @@ def get_exog_spousal_income(period, high_educ, options):
         options["spousal_income_constant"]
         + options["spousal_income_age"] * age
         + options["spousal_income_age_squared"] * age**2
-        + options["spousal_income_high_education"] * high_educ
+        # + options["spousal_income_high_education"] * high_educ
         + options["spousal_income_above_retirement_age"]
         * (age >= options["retirement_age"])
     )

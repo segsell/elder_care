@@ -121,6 +121,8 @@ def draw_initial_states(
     initial_states["part_time_offer"] = part_time_offer
     initial_states["full_time_offer"] = full_time_offer
 
+    initial_states.pop("high_educ")
+
     return initial_resources_out, initial_states
 
 
