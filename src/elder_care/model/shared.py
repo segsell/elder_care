@@ -108,7 +108,6 @@ PART_TIME_AND_NO_WORK = jnp.concatenate([PART_TIME, OUT_OF_LABOR])
 FULL_TIME_AND_NO_WORK = jnp.concatenate([FULL_TIME, OUT_OF_LABOR])
 
 NO_RETIREMENT = jnp.concatenate([NO_WORK, PART_TIME, FULL_TIME])
-WORK = jnp.concatenate([PART_TIME, FULL_TIME])
 
 # ==============================================================================
 # Caregiving Choices

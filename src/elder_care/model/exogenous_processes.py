@@ -17,7 +17,7 @@ from elder_care.model.shared import (
 # ==============================================================================
 
 
-def prob_part_time_offer(period, lagged_choice, high_educ, options, params):
+def prob_part_time_offer(period, lagged_choice, options, params):
     """Compute logit probability of part time offer."""
     age = options["start_age"] + period
 
@@ -37,7 +37,7 @@ def prob_part_time_offer(period, lagged_choice, high_educ, options, params):
     return jnp.array([1 - prob_part_time, prob_part_time])
 
 
-def prob_full_time_offer(period, lagged_choice, high_educ, options, params):
+def prob_full_time_offer(period, lagged_choice, options, params):
     """Compute logit probability of full time offer.
 
     _prob = jnp.exp(logit) / (1 + jnp.exp(logit))

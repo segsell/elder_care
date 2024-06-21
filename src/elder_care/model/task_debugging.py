@@ -66,12 +66,12 @@ PARAMS = {
     "disutility_full_time_informal_care_age": 0.3052996873888407,
     "disutility_full_time_informal_care_age_squared": 0.5032327025372947,
     #
-    # "part_time_constant": -2.108705825398208,
-    # "part_time_not_working_last_period": -1.9513432887146251,
+    "part_time_constant": -2.108705825398208,
+    "part_time_not_working_last_period": -1.9513432887146251,
     # "part_time_high_education": 3.0168909139283073,
     # "part_time_above_retirement_age": -1.4626306391231516,
-    # "full_time_constant": -3.509669706331148,
-    # "full_time_not_working_last_period": -2.754513647434816,
+    "full_time_constant": -3.509669706331148,
+    "full_time_not_working_last_period": -2.754513647434816,
     # "full_time_high_education": 2.6489281603375474,
     # "full_time_above_retirement_age": -3.0922669492895896,
     #
@@ -89,7 +89,51 @@ PARAMS = {
 }
 
 
-@pytask.mark.skip()
+START_PARAMS = {
+    "rho": 1.96,  # Adda et al (2017)
+    "beta": 0.959,  # Adda et al (2017)
+    "sigma": 0.5364562201,  # 0.5584583071,
+    "lambda": 1,
+    "interest_rate": 0.04,  # Adda et al (2017)
+    #
+    "disutility_part_time_constant": 2,
+    "disutility_part_time_age": 0.1,
+    "disutility_part_time_age_squared": -0.06,
+    "disutility_full_time_constant": -2,
+    "disutility_full_time_age": 0.0252,
+    "disutility_full_time_age_squared": -0.12,
+    #
+    "disutility_part_time_informal_care_constant": -1,
+    "disutility_part_time_informal_care_age": -0.1,
+    "disutility_part_time_informal_care_age_squared": -0.01,
+    "disutility_full_time_informal_care_constant": -2,
+    "disutility_full_time_informal_care_age": -0.1,
+    "disutility_full_time_informal_care_age_squared": -0.01,
+    # caregiving
+    "utility_no_care_parent_bad_health": 0,
+    "utility_informal_care_parent_bad_health": 0,
+    "utility_formal_care_parent_bad_health": 0,
+    "utility_combination_care_parent_bad_health": 0,
+    # part-time job offer
+    "part_time_constant": -2,
+    "part_time_not_working_last_period": -1,
+    # "part_time_high_education": 0.5,
+    # "part_time_above_retirement_age": -2,
+    # full-time job offer
+    "full_time_constant": -2,
+    "full_time_not_working_last_period": -2,
+    # "full_time_high_education": 1,
+    # "full_time_above_retirement_age": -3,
+    # wage equation
+    "wage_constant": 2,
+    "wage_experience": 0.1,
+    "wage_experience_squared": -0.01,
+    "wage_high_education": 0.5,
+    "wage_part_time": -0.1,
+}
+
+
+# @pytask.mark.skip()
 def task_debugging(
     path_to_save_result: Annotated[Path, Product] = BLD / "debugging" / "result.pkl",
     path_to_save_sim_dict: Annotated[Path, Product] = BLD
@@ -116,7 +160,7 @@ def task_debugging(
     path_to_model = BLD / "model" / "model.pkl"
     options = get_options_dict()
 
-    params = PARAMS
+    params = START_PARAMS
 
     model_loaded = load_and_setup_model(
         options=options,

@@ -592,11 +592,20 @@ def fit_logit(x, y):
         coef (list)): list of length (k + 1,) of coefficients.
 
     """
-    model = LogisticRegression()
-    model.fit(x, y)
+    # model = LogisticRegression()
+    # model.fit(x, y)
 
-    # return jnp.array([model.intercept_[0]] + list(model.coef_[0]))
-    return [model.intercept_[0]] + list(model.coef_[0])
+    # # return jnp.array([model.intercept_[0]] + list(model.coef_[0]))
+    # out = [model.intercept_[0]] + list(model.coef_[0])
+
+    model = LogisticRegression()
+    try:
+        model.fit(x, y)
+        out = [model.intercept_[0]] + list(model.coef_[0])
+    except ValueError as e:
+        out = [np.nan] * (x.shape[1] + 1)
+
+    return out
 
 
 def get_share_by_age(df_arr, ind, choice):
