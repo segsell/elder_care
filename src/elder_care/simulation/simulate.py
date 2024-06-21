@@ -602,7 +602,7 @@ def fit_logit(x, y):
     try:
         model.fit(x, y)
         out = [model.intercept_[0]] + list(model.coef_[0])
-    except ValueError as e:
+    except ValueError:
         out = [np.nan] * (x.shape[1] + 1)
 
     return out
