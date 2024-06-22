@@ -23,11 +23,17 @@ def task_create_exog_part_time_offer():
     part-time offer this period is assumed to be 1.
 
     """
+    # return {
+    #     "part_time_constant": -2.568584,
+    #     "part_time_not_working_last_period": 0.3201395,
+    #     "part_time_high_education": 0.1691369,
+    #     "part_time_above_retirement_age": -1.9976496,
+    # }
+
     return {
-        "part_time_constant": -2.568584,
-        "part_time_not_working_last_period": 0.3201395,
-        "part_time_high_education": 0.1691369,
-        "part_time_above_retirement_age": -1.9976496,
+        "part_time_constant": -2.5183517209,
+        "part_time_not_working_last_period": 0.2908819469,
+        "part_time_above_retirement_age": -1.9963829408,
     }
 
 
@@ -38,11 +44,16 @@ def task_create_exog_full_time_offer():
     full-time offer this period is assumed to be 1.
 
     """
+    # return {
+    #     "full_time_constant": -2.445238,
+    #     "full_time_not_working_last_period": -0.9964007,
+    #     "full_time_high_education": 0.3019138,
+    #     "full_time_above_retirement_age": -2.6571659,
+    # }
     return {
-        "full_time_constant": -2.445238,
-        "full_time_not_working_last_period": -0.9964007,
-        "full_time_high_education": 0.3019138,
-        "full_time_above_retirement_age": -2.6571659,
+        "full_time_constant": -2.3705285317,
+        "full_time_not_working_last_period": -1.0331988175,
+        "full_time_above_retirement_age": -2.6573652335,
     }
 
 
@@ -83,16 +94,27 @@ def task_create_exog_wage():
     }
 
     """
+    # return {
+    #     "wage_constant": 2.1189554639,
+    #     "wage_age": 0.0076462732,
+    #     "wage_age_squared": -0.0001357632,
+    #     "wage_experience": 0.0268874776,
+    #     "wage_experience_squared": -0.0003822625,
+    #     "wage_high_education": 0.4595438724,
+    #     "wage_part_time": -0.0570244287,
+    #     "wage_std_regression_residual": 0.5364562201,
+    # }
+
     return {
-        "wage_constant": 2.1189554639,
-        "wage_age": 0.0076462732,
-        "wage_age_squared": -0.0001357632,
-        "wage_experience": 0.0268874776,
-        "wage_experience_squared": -0.0003822625,
-        "wage_high_education": 0.4595438724,
-        "wage_part_time": -0.0570244287,
-        "wage_std_regression_residual": 0.5364562201,
+        "wage_constant": 2.4424732229,
+        "wage_experience": 0.0195435854,
+        "wage_experience_squared": -0.0003597042,
+        "wage_part_time": -0.1245776169,
+        "wage_std_regression_residual": 0.5722436158,
     }
+
+
+0.0195435854 - 0.0003597042 - 0.1245776169
 
 
 def task_create_non_labor_income():

@@ -13,6 +13,7 @@ from elder_care.model.shared import (
     is_no_informal_care,
     is_part_time,
     is_pure_informal_care,
+    is_bad_health,
 )
 
 
@@ -42,7 +43,7 @@ def utility_func(
     consumption: jnp.array,
     choice: int,
     period: int,
-    # mother_health: int,
+    mother_health: int,
     # has_sibling: int,
     # options: dict,
     params: dict,
@@ -106,18 +107,19 @@ def utility_func(
 
     """
     rho = params["rho"]
-    # age = options["start_age"] + period
 
     # no_care = is_no_care(choice)
-    # informal_care = is_informal_care(choice)
     # no_informal_care = is_no_informal_care(choice)
     # combination_care = is_combination_care(choice)
 
     # pure_informal_care = is_pure_informal_care(choice)
     # pure_formal_care = is_pure_formal_care(choice)
 
+    informal_care = is_informal_care(choice)
     part_time = is_part_time(choice)
     full_time = is_full_time(choice)
+
+    mother_bad_health = is_bad_health(mother_health)
 
     # working_hours_weekly = (
     #     part_time * WEEKLY_HOURS_PART_TIME + full_time * WEEKLY_HOURS_FULL_TIME
@@ -185,20 +187,16 @@ def utility_func(
         + params["disutility_full_time_age"] * period * full_time
         + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_age_squared"] * (period**2) * full_time
-    ) * is_no_informal_care(choice)
+    )
 
     disutility_working_informal_care = (
-        params["disutility_part_time_informal_care_constant"] * part_time
-        + params["disutility_full_time_informal_care_constant"] * full_time
-        + params["disutility_part_time_informal_care_age"] * period * part_time
-        + params["disutility_full_time_informal_care_age"] * period * full_time
-        + params["disutility_part_time_informal_care_age_squared"]
-        * (period**2)
+        params["disutility_part_time_informal_care_constant"]
         * part_time
-        + params["disutility_full_time_informal_care_age_squared"]
-        * (period**2)
+        * informal_care
+        + params["disutility_full_time_informal_care_constant"]
         * full_time
-    ) * is_informal_care(choice)
+        * informal_care
+    )
 
     # disutility_working_no_informal_care = (
     #     params["disutility_part_time_constant"] * part_time * no_informal_care
@@ -241,16 +239,18 @@ def utility_func(
     # )
 
     utility_caregiving = (
-        params["utility_informal_care_parent_bad_health"] * is_no_care(choice)
-        # * is_bad_health(mother_health)
+        params["utility_informal_care_parent_bad_health"]
+        * is_no_care(choice)
+        * mother_bad_health
         + params["utility_informal_care_parent_bad_health"]
         * is_pure_informal_care(choice)
-        # * is_bad_health(mother_health)
+        * mother_bad_health
         + params["utility_combination_care_parent_bad_health"]
         * is_combination_care(choice)
-        # * is_bad_health(mother_health)
-        + params["utility_formal_care_parent_bad_health"] * is_formal_care(choice)
-        # * is_bad_health(mother_health)
+        * mother_bad_health
+        + params["utility_formal_care_parent_bad_health"]
+        * is_formal_care(choice)
+        * mother_bad_health
     )
 
     return (

@@ -851,10 +851,10 @@ def create_simulation_array_from_df(data, options, params):
         jnp.array(data["choice"]),
         FULL_TIME,
     )
-    data.loc[:, "choice_informal_care"] = jnp.isin(
-        jnp.array(data["choice"]),
-        INFORMAL_CARE,
-    )
+    # data.loc[:, "choice_informal_care"] = jnp.isin(
+    #     jnp.array(data["choice"]),
+    #     INFORMAL_CARE,
+    # )
 
     data.loc[:, "choice_no_care"] = jnp.isin(
         jnp.array(data["choice"]),
@@ -872,6 +872,19 @@ def create_simulation_array_from_df(data, options, params):
         jnp.array(data["choice"]),
         FORMAL_CARE,
     )
+
+    # Logit regressison: Trim subsample
+    # Define the columns to be set to NaN
+    columns_to_nan = [
+        "choice_no_care",
+        "choice_pure_informal_care",
+        "choice_combination_care",
+        "choice_formal_care",
+    ]
+    columns_to_nan += [col for col in data.columns if col.startswith("mother_age_bin")]
+
+    # Set the specified columns to NaN where mother_health != 1
+    data.loc[data["mother_health"] != BAD_HEALTH, columns_to_nan] = np.nan
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
@@ -948,10 +961,10 @@ def create_simulation_array_from_df_counterfactual(data, options, params):
         jnp.array(data["choice"]),
         FULL_TIME,
     ).astype(np.uint8)
-    data.loc[:, "choice_informal_care"] = jnp.isin(
-        jnp.array(data["choice"]),
-        INFORMAL_CARE,
-    ).astype(np.uint8)
+    # data.loc[:, "choice_informal_care"] = jnp.isin(
+    #     jnp.array(data["choice"]),
+    #     INFORMAL_CARE,
+    # ).astype(np.uint8)
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
