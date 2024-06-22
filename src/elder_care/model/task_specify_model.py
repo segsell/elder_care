@@ -12,6 +12,7 @@ from pytask import Product
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
+    task_create_spousal_income,
 )
 from elder_care.model.budget import budget_constraint
 from elder_care.model.exogenous_processes import (
@@ -29,11 +30,6 @@ from elder_care.model.utility_functions import (
     create_utility_functions,
 )
 from elder_care.utils import load_dict_from_pickle
-
-from elder_care.exogenous_processes.task_create_exog_processes_soep import (
-    task_create_spousal_income,
-)
-import pytask
 
 
 @pytask.mark.skip(reason="Respecifying model.")
