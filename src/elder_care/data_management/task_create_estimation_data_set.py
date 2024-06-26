@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from pytask import Product
 
+import pytask
+
 from elder_care.config import BLD
 
 FEMALE = 2
@@ -101,6 +103,7 @@ def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
+@pytask.mark.skip()
 def task_create_estimation_data(
     path_to_raw_data: Path = BLD / "data" / "data_merged.csv",
     path_to_main: Annotated[Path, Product] = BLD / "data" / "estimation_data.csv",
@@ -244,7 +247,7 @@ def task_create_estimation_data(
 
     dat = create_working(dat)
 
-    dat = create_time_to_caregiving(dat)
+    # dat = create_time_to_caregiving(dat)
     dat = create_treatment_dummy_parent_in_bad_health(dat, parent="mother")
     plot_conditional_means_event_study(dat)
 
@@ -932,7 +935,7 @@ def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
     path_to_save = BLD / "event_study" / "caregiving_sandbox.csv"
     treatment_group.to_csv(path_to_save, index=False)
 
-    breakpoint()
+    # breakpoint()
 
     # return dat
 
@@ -1273,46 +1276,28 @@ def weighted_mean(data, values, weights):
 
 
 def bin_distance_to_treat(distance):
-    # if distance == 0:
-    #     return 0
-    # elif distance in [-1, -2]:
-    #     return -2
-    # elif distance in [-3, -4]:
-    #     return -4
-    # elif distance in [-5, -6]:
-    #     return -6
-    # elif distance <= -7:
-    #     return -7
-    # elif distance in [1, 2]:
-    #     return 2
-    # elif distance in [3, 4]:
-    #     return 4
-    # elif distance in [5, 6]:
-    #     return 6
-    # else:
-    #     return 7
     if distance == 0:
         return 0
     elif distance in [-1, -2]:
         return -2
     elif distance in [-3, -4]:
         return -4
-    elif distance in [-5, -6]:
+    elif distance in [-5, -6, -7, -8]:
         return -6
     # elif distance in [-7, -8]:
     #     return -8
-    elif distance <= -7:
-        return -8
+    elif distance <= -9:
+        return -9
     elif distance in [1, 2]:
         return 2
-    elif distance in [3, 4]:
+    elif distance in [3, 4, 5, 6]:
         return 4
-    # elif distance in [5, 6]:
+    # elif distance in [5, 6, 7, 8]:
     #     return 6
     # elif distance in [7, 8]:
     #     return 8
     else:
-        return 6
+        return 9
 
 
 def create_parental_health_status_good_medium_bad(dat, parent):

@@ -22,7 +22,7 @@ dat_male_raw <-subset(dat, gender == 1)
 
 # Step 2: Drop rows where distance_to_treat is -1, -3, -5, 1, 3, 5
 dat_female <- dat_female_raw %>%
-  filter(!distance_to_treat %in% c(-1, -3, -5, 1, 3, 5))
+  filter(!distance_to_treat %in% c(-1, -3, -5, -7, 1, 3, 5, 7))
 dat_male <- dat_male_raw %>%
   filter(!distance_to_treat %in% c(-1, -3, -5, 1, 3, 5))
 
@@ -68,6 +68,12 @@ y_min_value <- -0.2
 y_max_value <- 700
 
 
+# Step 2: Drop rows where distance_to_treat is -1, -3, -5, 1, 3, 5
+dat_female <- dat_female_raw %>%
+  filter(!binned_distance_to_treat %in% c(-1, -3, -5, -7, -9, 1, 3, 5, 7, 9))
+dat_male <- dat_male_raw %>%
+  filter(!binned_distance_to_treat %in% c(-1, -3, -5, -7, -9, 1, 3, 5, 7, 9))
+
 ######################
 # Outcome: #
 ######################
@@ -85,6 +91,9 @@ y_max_value <- 700
 
 # ep013_
 
+table(dat_female$full_time, dat_female$binned_distance_to_treat)
+table(dat_male$full_time, dat_male$binned_distance_to_treat)
+
 
 mod_twfe_ft_women = feols(full_time ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                           |
@@ -95,8 +104,9 @@ mod_twfe_ft_women = feols(full_time ~ i(binned_distance_to_treat, treat_ever, re
                           data = dat_female
 )
 iplot(mod_twfe_ft_women,
-      xlab = 'time to treatment',
-      main = 'Working Full Time: Women',
+      xlab = 'Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand',
+      ylab = 'Arbeit in Vollzeit',
+      main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_ft_women)
@@ -111,8 +121,9 @@ mod_twfe_ft_men = feols(full_time ~ i(binned_distance_to_treat, treat_ever, ref 
                         data = dat_male
 )
 iplot(mod_twfe_ft_men,
-      xlab = 'time to treatment',
-      main = 'Working Full Time: Men',
+      xlab = 'Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand',
+      ylab = 'Arbeit in Vollzeit',
+      main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_ft_men)

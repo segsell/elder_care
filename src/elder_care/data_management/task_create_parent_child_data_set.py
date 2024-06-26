@@ -66,7 +66,7 @@ def count(df_col):
     return df_col.count()
 
 
-@pytask.mark.skip()
+# @pytask.mark.skip()
 def task_create_parent_child_data(
     path_to_raw_data: Path = BLD / "data" / "data_parent_child_merged.csv",
     # parent - child
@@ -940,6 +940,31 @@ def _process_negative_values(dat):
     return dat
 
 
+# def bin_distance_to_treat(distance):
+#     if distance == 0:
+#         return 0
+#     elif distance in [-1, -2]:
+#         return -2
+#     elif distance in [-3, -4]:
+#         return -4
+#     elif distance in [-5, -6, -7, -8]:
+#         return -6
+#     # elif distance in [-7, -8]:
+#     #     return -8
+#     elif distance <= -9:
+#         return -9
+#     elif distance in [1, 2]:
+#         return 2
+#     elif distance in [3, 4]:
+#         return 4
+#     elif distance in [5, 6, 7, 8]:
+#         return 6
+#     # elif distance in [7, 8]:
+#     #     return 8
+#     else:
+#         return 9
+
+
 def bin_distance_to_treat(distance):
     if distance == 0:
         return 0
@@ -947,19 +972,19 @@ def bin_distance_to_treat(distance):
         return -2
     elif distance in [-3, -4]:
         return -4
-    elif distance in [-5, -6]:
+    elif distance in [-5, -6, -7, -8]:
         return -6
     # elif distance in [-7, -8]:
     #     return -8
-    elif distance <= -7:
-        return -8
+    elif distance <= -9:
+        return -9
     elif distance in [1, 2]:
         return 2
-    elif distance in [3, 4]:
+    elif distance in [3, 4, 5, 6]:
         return 4
-    # elif distance in [5, 6]:
+    # elif distance in [5, 6, 7, 8]:
     #     return 6
     # elif distance in [7, 8]:
     #     return 8
     else:
-        return 6
+        return 9

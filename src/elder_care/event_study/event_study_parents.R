@@ -9,6 +9,8 @@ library(AER)
 library(did)
 library(lfe)
 library(dplyr)
+library(coefplot)
+library(ggfixest)
 
 BAD <- 1
 FEMALE <- 2
@@ -37,7 +39,7 @@ table(dat_raw$distance_to_treat)
 
 # Step 2: Drop rows where distance_to_treat is -1, -3, -5, 1, 3, 5
 dat_raw <- dat_raw %>%
-  filter(!distance_to_treat %in% c(-1, -3, -5, 1, 3, 5))
+  filter(!binned_distance_to_treat %in% c(-1, -3, -5, -7, -9, 1, 3, 5, 7, 9))
 
 mergeids_to_drop <- dat_raw %>%
   filter(distance_to_treat == 0 & age < 75) %>%
@@ -105,6 +107,8 @@ dat_mother <- subset(dat, age >= 68 & gender == FEMALE)
 
 # ep013_
 
+
+
 # Control group: Parent never in bad health
 mod_twfe_all = feols(informal_care_child ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                      |
@@ -135,9 +139,17 @@ iplot(mod_twfe_mother,
       xlab = 'time to event (mother in bad health)',
       ylab = 'informal care by child (daughter)',
       main = '',
-      x.lim = c(x_min_value, x_max_value),
-      y.lim = c(-10000, 100000))
+      xaxt='n'
+      )
+axis(1,at=c(10,30,40))
 summary(mod_twfe_mother)
+
+
+############
+# Daughter #
+############
+table(dat_all$informal_care_daughter, dat_all$binned_distance_to_treat)
+table(dat_mother$informal_care_son, dat_mother$binned_distance_to_treat)
 
 
 
@@ -150,12 +162,14 @@ mod_twfe_all = feols(informal_care_daughter ~ i(binned_distance_to_treat, treat_
                           data = dat_all
 )
 iplot(mod_twfe_all,
-      xlab = 'time to event (mother or father in bad health)',
-      ylab = 'informal care by daughter',
+      xlab = 'Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand',
+      ylab = 'Informelle Pflege durch Tochter',
       main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_all)
+
+
 
 
 mod_twfe_mother = feols(informal_care_daughter ~ i(binned_distance_to_treat, treat_ever, ref = -2)
@@ -166,18 +180,59 @@ mod_twfe_mother = feols(informal_care_daughter ~ i(binned_distance_to_treat, tre
                         weights = ~design_weight,
                         data = dat_mother
 )
+pdf("SampleGraph.pdf",width=10,height=10)
 iplot(mod_twfe_mother,
-      xlab = 'time to event (mother in bad health)',
-      ylab = 'informal care by daughter',
+      xlab = 'Zeit zum Ereignis (in Jahren): Mutter in schlechtem Gesundheitszustand',
+      ylab = 'Informelle Pflege durch Tochter',
+      main = '',
+      x.lim = c(-100, 100),
+      y.lim = c(-100, 100))
+dev.off() # turn off plotting
+
+summary(mod_twfe_mother)
+
+
+# Define your x-axis limits
+x_min_value <- -5  # Set to your desired minimum x value
+x_max_value <- 5   # Set to your desired maximum x value
+
+# Generate the event study plot
+iplot(mod_twfe_mother,
+      xlab = 'Zeit zum Ereignis (in Jahren): Mutter in schlechtem Gesundheitszustand',
+      ylab = 'Informelle Pflege durch Tochter',
       main = '',
       x.lim = c(x_min_value, x_max_value),
-      y.lim = c(-10000, 100000))
-summary(mod_twfe_mother)
+      y.lim = c(-0.1, 0.1))
+
+
+tidy_mod <- broom::tidy(mod_twfe_mother, conf.int = TRUE)
+event_study_coeffs <- tidy_mod[grepl("binned_distance_to_treat", tidy_mod$term), ]
+event_study_coeffs$term <- as.numeric(gsub("binned_distance_to_treat::treat_ever::", "", event_study_coeffs$term))
+
+
+x_min_value <- -5  # Set to your desired minimum x value
+x_max_value <- 5   # Set to your desired maximum x value
+
+ggplot(event_study_coeffs, aes(x = term, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  theme_minimal() +
+  labs(title = '',
+       x = 'Zeit zum Ereignis (in Jahren): Mutter in schlechtem Gesundheitszustand',
+       y = 'Informelle Pflege durch Tochter') +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  xlim(x_min_value, x_max_value) +
+  ylim(-10000, 100000)
 
 
 #######
 # Son #
 #######
+table(dat_all$informal_care_son, dat_all$binned_distance_to_treat)
+
+
+dat_all_son <- dat_all %>%
+  filter(!binned_distance_to_treat %in% c(-8, 6))
 
 mod_twfe_all = feols(informal_care_son ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                      |
@@ -185,16 +240,20 @@ mod_twfe_all = feols(informal_care_son ~ i(binned_distance_to_treat, treat_ever,
                        mergeid + age,                         ## FEs
                      cluster = ~mergeid,   ## Clustered SEs
                      weights = ~hh_weight,
-                     data = dat_all
+                     data = dat_all_son
 )
 iplot(mod_twfe_all,
-      xlab = 'time to event (mother or father in bad health)',
-      ylab = 'informal care by son',
+      xlab = 'Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand',
+      ylab = 'Informelle Pflege durch Sohn',
       main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
 summary(mod_twfe_all)
 
+# too few obs
+table(dat_mother$informal_care_son, dat_mother$binned_distance_to_treat)
+dat_mother_son <- dat_mother %>%
+  filter(!binned_distance_to_treat %in% c(-8, 6))
 
 mod_twfe_mother = feols(informal_care_son ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                         |
@@ -202,11 +261,11 @@ mod_twfe_mother = feols(informal_care_son ~ i(binned_distance_to_treat, treat_ev
                           mergeid + age,                         ## FEs
                         cluster = ~mergeid,   ## Clustered SEs
                         weights = ~design_weight,
-                        data = dat_mother
+                        data = dat_mother_son
 )
 iplot(mod_twfe_mother,
-      xlab = 'time to event (mother in bad health)',
-      ylab = 'informal care by son',
+      xlab = 'Zeit zum Ereignis (in Jahren): Mutter in schlechtem Gesundheitszustand',
+      ylab = 'Informelle Pflege durch Sohn',
       main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
