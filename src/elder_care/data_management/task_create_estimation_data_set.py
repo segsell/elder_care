@@ -7,9 +7,8 @@ from typing import Annotated
 import linearmodels as lm
 import numpy as np
 import pandas as pd
-from pytask import Product
-
 import pytask
+from pytask import Product
 
 from elder_care.config import BLD
 
