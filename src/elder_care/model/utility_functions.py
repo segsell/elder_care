@@ -5,6 +5,7 @@ from typing import Any
 import jax.numpy as jnp
 
 from elder_care.model.shared import (
+    is_bad_health,
     is_combination_care,
     is_formal_care,
     is_full_time,
@@ -13,7 +14,6 @@ from elder_care.model.shared import (
     is_no_informal_care,
     is_part_time,
     is_pure_informal_care,
-    is_bad_health,
 )
 
 
