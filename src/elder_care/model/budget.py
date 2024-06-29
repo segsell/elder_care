@@ -127,7 +127,7 @@ def budget_constraint(
         + is_retired(lagged_choice) * retirement_income,
         unemployment_benefits,
     )
-    spousal_income = get_exog_spousal_income(period, options)
+    spousal_income = get_exog_spousal_income(period, options) * 0.25
 
     # Assume everyone is married
     income_and_cash_benefits = (
