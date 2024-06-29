@@ -17,9 +17,15 @@ def task_create_type_of_care_by_age_group(
     path_to_save: Annotated[Path, Product] = BLD
     / "descriptives"
     / "type_of_care_by_age_group.csv",
-    path_to_save_fig: Annotated[Path, Product] = BLD
+    path_to_save_all: Annotated[Path, Product] = BLD
     / "descriptives"
     / "all_care_by_age_group.png",
+    path_to_save_women: Annotated[Path, Product] = BLD
+    / "descriptives"
+    / "women_care_by_age_group.png",
+    path_to_save_men: Annotated[Path, Product] = BLD
+    / "descriptives"
+    / "men_care_by_age_group.png",
     path_to_save_fig_by_type_of_care: Annotated[Path, Product] = BLD
     / "descriptives"
     / "type_of_care_by_age_group.png",
@@ -123,7 +129,10 @@ def task_create_type_of_care_by_age_group(
     # save
     df.to_csv(path_to_save, index=False)
 
-    plot_numbers_by_age_group_all(df, 0, 2021, path_to_save_fig)
+    plot_numbers_by_age_group_all(df, 0, 2021, path_to_save_all)
+    plot_numbers_by_age_group_all(df, 1, 2021, path_to_save_men)
+    plot_numbers_by_age_group_all(df, 2, 2021, path_to_save_women)
+    breakpoint()
     plot_numbers_by_age_group(df, 0, 2021, path_to_save_fig_by_type_of_care)
 
 
@@ -521,6 +530,7 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
 
     # Filter the DataFrame based on the provided sex and year
     df = dat[(dat["sex"] == sex) & (dat["year"] == year)]
+    # df = dat[(dat["year"] == year)]
     df = df[
         ~df["type_of_care"].isin(["total", "care_degree_one_a", "care_degree_one_b"])
     ]
@@ -551,20 +561,20 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
     _informal_and_home_care = informal_and_home_care["number"].tolist()
     _nursing_home = nursing_home["number"].tolist()
 
-    _combination_care = 0.4 * np.array(_informal_and_home_care)
-    _only_home_care = 0.6 * np.array(_informal_and_home_care)
+    # _combination_care = 0.4 * np.array(_informal_and_home_care)
+    # _only_home_care = 0.6 * np.array(_informal_and_home_care)
 
-    for val in [14, 15, 16, 17, 18, 19]:
-        i = val - 14
-        _combination_care[val] = (
-            share_combination_care_in_home_care[i] * _informal_and_home_care[val]
-        )
-        _only_home_care[val] = (
-            1 - share_combination_care_in_home_care[i]
-        ) * _informal_and_home_care[val]
+    # for val in [14, 15, 16, 17, 18, 19]:
+    #     i = val - 14
+    #     _combination_care[val] = (
+    #         share_combination_care_in_home_care[i] * _informal_and_home_care[val]
+    #     )
+    #     _only_home_care[val] = (
+    #         1 - share_combination_care_in_home_care[i]
+    #     ) * _informal_and_home_care[val]
 
-    _only_home_care = _only_home_care.tolist()
-    _combination_care = _combination_care.tolist()
+    # _only_home_care = _only_home_care.tolist()
+    # _combination_care = _combination_care.tolist()
 
     color = "steelblue"
     # Plotting
@@ -572,45 +582,51 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
     plt.bar(
         age_bins,
         _only_informal,
-        label="Pure Informal Care",
-        # color="lightgreen",
-        color=color,
+        label="Reine informelle Pflege (zu Hause)",
+        # label="Pure Informal Care",
+        color="lightgreen",
+        # color=color,
     )
     plt.bar(
         age_bins,
-        _combination_care,
+        _informal_and_home_care,
         bottom=_only_informal,
-        label="Combination Care",
+        # label="Combination Care",
+        label="Kombinationspflege (zu Hause)",
         # color="green",
-        # color="moccasin",
-        color=color,
+        color="moccasin",
+        # color=color,
     )
-    plt.bar(
-        age_bins,
-        _only_home_care,
-        bottom=[i + j for i, j in zip(_only_informal, _combination_care, strict=False)],
-        label="Formal Home Care",
-        color=color,
-    )
+    # plt.bar(
+    #     age_bins,
+    #     _only_home_care,
+    #     bottom=[i + j for i, j in zip(_only_informal, _combination_care, strict=False)],
+    #     label="Formal Home Care",
+    #     color=color,
+    # )
     plt.bar(
         age_bins,
         _nursing_home,
         bottom=[
-            i + j + k
-            for i, j, k in zip(
+            i + j
+            for i, j in zip(
                 _only_informal,
-                _combination_care,
-                _only_home_care,
+                _informal_and_home_care,
+                # _only_home_care,
                 strict=False,
             )
         ],
-        label="Nursing Home",
+        label="Pflegeheim",
+        # label="Nursing Home",
         color=color,
     )
 
-    plt.xlabel("Age Bin")
-    plt.ylabel("Number of Care-Dependent People")
-    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+    # plt.xlabel("Age Bin", fontsize=14)
+    # plt.ylabel("Number of Care-Dependent People", fontsize=14)
+    plt.xlabel("Altersgruppe", fontsize=14)
+    plt.ylabel("Anzahl Pflegebedürftige", fontsize=14)
+    plt.xticks(rotation=45, fontsize=14)  # Rotate x-axis labels for better visibility
+    plt.yticks(rotation=0, fontsize=14)  # Rotate x-axis labels for better visibility
     plt.tight_layout()  # Adjust layout for better display
     # plt.ylim(0, 0.13)  # Set y-axis range from 0 to 15%
     plt.grid(axis="y")
@@ -622,10 +638,15 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
     handles, labels = plt.gca().get_legend_handles_labels()
 
     # specify order of items in legend
-    order = [3, 2, 1, 0]
+    order = [2, 1, 0]
 
     # add legend to plot
-    # plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+    plt.legend(
+        [handles[idx] for idx in order],
+        [labels[idx] for idx in order],
+        loc="upper left",
+        fontsize="large",
+    )
 
     # Save plot
     plt.savefig(save_path)
