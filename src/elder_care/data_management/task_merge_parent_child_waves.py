@@ -85,10 +85,10 @@ SOCIAL_SUPPORT = [
     "sp003_1",  # from whom, person 1: 10, 11, 20 ,21
     "sp003_2",  # from whom, person 2: 10, 11, 20 ,21
     "sp003_3",  # from whom, person 3: 10, 11, 20 ,21
-    # only from wave 7 on :9
-    # "sp027_1",  # from which child
-    # "sp027_2",  # from which child
-    # "sp027_3",  # from which child
+    # only wave 6, 7, 8
+    "sp027_1",  # from which child
+    "sp027_2",  # from which child
+    "sp027_3",  # from which child
     "sp004d1_1",  # help with personal care
     "sp004d1_2",  # help with personal care
     "sp004d1_3",  # help with personal care
@@ -327,6 +327,9 @@ def process_module(module, wave, args):
             "hc127d3",  # meals on wheels
             "hc127d4",  # helpt with other activities
             "hc127dno",
+            "sp027_1",  # from which child
+            "sp027_2",  # from which child
+            "sp027_3",  # from which child
         ]
 
         filtered_args = [arg for arg in args if arg not in not_included]
@@ -354,6 +357,9 @@ def process_module(module, wave, args):
             "hc127d3",  # meals on wheels
             "hc127d4",  # helpt with other activities
             "hc127dno",
+            "sp027_1",  # from which child
+            "sp027_2",  # from which child
+            "sp027_3",  # from which child
         ]
 
         filtered_args = [arg for arg in args if arg not in not_included]
@@ -370,6 +376,9 @@ def process_module(module, wave, args):
             "hc036_",  # How many hours per week did you receive such professional help?
             "hc037_",  # How many weeks did you receive meals-on-wheel
             "hc696_",  # Paid anything yourself stay in nursing home
+            "sp027_1",  # from which child
+            "sp027_2",  # from which child
+            "sp027_3",  # from which child
         ]
 
         filtered_args = [arg for arg in args if arg not in not_included]
