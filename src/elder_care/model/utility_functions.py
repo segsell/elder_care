@@ -16,6 +16,10 @@ from elder_care.model.shared import (
     is_pure_informal_care,
 )
 
+CONSUMPTION_EQUIVALENCE_SCALE = 0.5
+
+# =====================================================================================
+
 
 def create_utility_functions():
     """Create dict of utility functions."""
@@ -144,7 +148,9 @@ def utility_func(
     #     + params["utility_leisure_age_squared"] * (period**2)
     # ) * jnp.log(leisure_hours)
 
-    utility_consumption = (consumption ** (1 - rho) - 1) / (1 - rho)
+    utility_consumption = (
+        (consumption * CONSUMPTION_EQUIVALENCE_SCALE) ** (1 - rho) - 1
+    ) / (1 - rho)
 
     # disutility_working = (
     #     params["disutility_part_time_constant"] * part_time
