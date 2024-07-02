@@ -50,6 +50,13 @@ AGE_BINS_SIM = [
     (AGE_65, AGE_70),
 ]
 
+AGE_BINS_SIM_SHORT = [
+    (AGE_50, AGE_55),
+    (AGE_55, AGE_60),
+    (AGE_60, AGE_65),
+    (AGE_65, AGE_70),
+]
+
 PARENT_AGE_BINS_SIM = [
     (AGE_65, AGE_70),
     (AGE_70, AGE_75),

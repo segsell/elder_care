@@ -193,16 +193,20 @@ def utility_func(
         + params["disutility_full_time_age"] * period * full_time
         + params["disutility_part_time_age_squared"] * (period**2) * part_time
         + params["disutility_full_time_age_squared"] * (period**2) * full_time
-    )
+    ) * (1 - informal_care)
 
     disutility_working_informal_care = (
-        params["disutility_part_time_informal_care_constant"]
+        params["disutility_part_time_informal_care_constant"] * part_time
+        + params["disutility_full_time_informal_care_constant"] * full_time
+        + params["disutility_part_time_informal_care_age"] * period * part_time
+        + params["disutility_full_time_informal_care_age"] * period * full_time
+        + params["disutility_part_time_informal_care_age_squared"]
+        * (period**2)
         * part_time
-        * informal_care
-        + params["disutility_full_time_informal_care_constant"]
+        + params["disutility_full_time_informal_care_age_squared"]
+        * (period**2)
         * full_time
-        * informal_care
-    )
+    ) * informal_care
 
     # disutility_working_no_informal_care = (
     #     params["disutility_part_time_constant"] * part_time * no_informal_care

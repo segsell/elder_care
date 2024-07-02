@@ -7,7 +7,7 @@ import pytask
 
 from elder_care.config import BLD
 
-SIM_MOMENTS = np.array(
+_SIM_MOMENTS = np.array(
     [
         3.97190000e-01,
         3.43500000e-01,
@@ -339,9 +339,176 @@ _SIM_MOMENTS = np.array(
     ],
 )
 
+SIM_MOMENTS = np.array(
+    [
+        4.93122201e-01,
+        2.06861597e-01,
+        2.47225603e-01,
+        2.02029146e-01,
+        3.16645980e-01,
+        2.48225944e-01,
+        3.06562583e-01,
+        2.60713786e-01,
+        3.05740455e-01,
+        2.76307116e-01,
+        3.08866357e-01,
+        2.83253773e-01,
+        3.24646034e-01,
+        3.05298175e-01,
+        3.22556623e-01,
+        3.07493449e-01,
+        4.44866182e-01,
+        4.29993191e-01,
+        4.12649298e-01,
+        4.12198513e-01,
+        4.50120144e-01,
+        4.46497540e-01,
+        4.97120527e-01,
+        8.50251879e-01,
+        9.53222696e-01,
+        9.37370579e-01,
+        9.20353333e-01,
+        9.27828881e-01,
+        9.71225518e-01,
+        9.70740158e-01,
+        3.09500960e-01,
+        6.85461344e-01,
+        5.67623684e-01,
+        6.44327615e-01,
+        5.28794058e-01,
+        6.11588135e-01,
+        5.48765735e-01,
+        6.01457634e-01,
+        5.52317040e-01,
+        5.89789404e-01,
+        5.49401359e-01,
+        5.81248142e-01,
+        5.35647162e-01,
+        5.59774279e-01,
+        4.93379588e-01,
+        5.08322119e-01,
+        3.90650378e-01,
+        4.08359960e-01,
+        4.21767024e-01,
+        4.28439018e-01,
+        3.84020825e-01,
+        3.07435866e-01,
+        2.62196627e-01,
+        7.98816568e-02,
+        4.67773044e-02,
+        6.26294215e-02,
+        7.95314039e-02,
+        7.07325269e-02,
+        2.15940033e-02,
+        1.25067340e-02,
+        1.97376839e-01,
+        1.07677059e-01,
+        1.85150712e-01,
+        1.53643239e-01,
+        1.54559962e-01,
+        1.40185921e-01,
+        1.44671682e-01,
+        1.37828579e-01,
+        1.41942505e-01,
+        1.33903480e-01,
+        1.41732283e-01,
+        1.35498085e-01,
+        1.39706804e-01,
+        1.34927546e-01,
+        1.84063788e-01,
+        1.84184432e-01,
+        1.64483440e-01,
+        1.61646849e-01,
+        1.65583679e-01,
+        1.59362470e-01,
+        1.65859031e-01,
+        2.46066593e-01,
+        2.40682847e-01,
+        6.98664641e-02,
+        0.00000000e00,
+        0.00000000e00,
+        1.15262904e-04,
+        1.43859207e-03,
+        7.18047919e-03,
+        1.67531082e-02,
+        6.36252415e-01,
+        -1.03551596e-02,
+        1.80273538e-05,
+        -6.01982892e-02,
+        -5.46664959e-02,
+        1.79804889e-01,
+        5.87315766e-03,
+        -3.47254916e-02,
+        -1.23618014e-01,
+        -2.72595461e-01,
+        -6.00834693e-01,
+        -1.36451750e-02,
+        3.19705066e-02,
+        1.36538369e-01,
+        3.15525529e-01,
+        -4.16641009e00,
+        -2.11025991e-02,
+        -6.53086403e-03,
+        4.87762383e-02,
+        1.74577161e-01,
+        -2.36671772e00,
+        2.48857087e-02,
+        1.74447389e-02,
+        -2.29053502e-02,
+        -1.32714953e-01,
+        3.07489892e-01,
+        3.40791688e-01,
+        3.68110441e-01,
+        4.48839105e-01,
+        6.56702966e-01,
+        9.63148673e-01,
+        4.27478928e-01,
+        4.12055336e-01,
+        3.77760781e-01,
+        2.79726500e-01,
+        1.27350777e-01,
+        2.83052136e-02,
+        2.65031179e-01,
+        2.47152976e-01,
+        2.54128778e-01,
+        2.71434395e-01,
+        2.15946257e-01,
+        8.54611375e-03,
+        6.65714568e-01,
+        2.76517459e-01,
+        5.77679733e-02,
+        3.87989029e-01,
+        4.51704969e-01,
+        1.60306001e-01,
+        3.82157066e-01,
+        4.28884264e-01,
+        1.88958670e-01,
+        6.02863994e-01,
+        3.97136006e-01,
+        5.63797859e-01,
+        4.36202141e-01,
+        9.83946809e-01,
+        1.60531913e-02,
+        9.82212481e-01,
+        1.77875187e-02,
+        5.92627093e-01,
+        4.07372907e-01,
+        5.65979222e-01,
+        4.34020778e-01,
+        9.83497339e-01,
+        1.65026611e-02,
+        9.81857652e-01,
+        1.81423477e-02,
+    ],
+)
+
 
 @pytask.mark.skip()
-def task_model_fit(path_to_empirical_moments=BLD / "moments" / "empirical_moments.csv"):
+def task_model_fit(
+    path_to_empirical_moments=BLD
+    / "moments"
+    / "empirical_moments_unconstrained_caregiving_option.csv",
+):
     """Evaluate the fit of the simulated moments to the data moments."""
     empirical_moments = pd.read_csv(path_to_empirical_moments, index_col=0).iloc[:, 0]
 
@@ -353,9 +520,13 @@ def task_model_fit(path_to_empirical_moments=BLD / "moments" / "empirical_moment
     comparison = pd.concat([empirical_moments, simulated_moments], axis=1)
     comparison.columns = ["empirical", "simulated"]
 
+    plot_labor_shares_informal_care(comparison, "not_working")
+    plot_labor_shares_informal_care(comparison, "part_time")
+    plot_labor_shares_informal_care(comparison, "full_time")
+
+    plot_labor_shares(comparison, "not_working")
     plot_labor_shares(comparison, "part_time")
     plot_labor_shares(comparison, "full_time")
-    plot_labor_shares(comparison, "not_working")
 
 
 def add_index_to_simulated_moments(
@@ -446,6 +617,127 @@ def plot_labor_shares(df, working_status):
         ages,
         rotation=45,
     )  # Set x-ticks to be the ages, rotate for better visibility
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+
+# def plot_labor_shares_informal_care(df, working_status):
+#     """Plots the labor shares of empirical and simulated moments.
+
+#     Args:
+#         df (pandas.DataFrame): DataFrame with the index as "working_status_age_x
+#             and two columns 'empirical' and 'simulated'.
+#         working_status (str): Working status to filter the DataFrame on.
+
+#     # ages = filtered_df.index.str.replace(pattern, "").astype(
+#     #     int
+#     # )
+
+#     """
+#     # Prepare the data: filter rows for the specified working status and extract age
+#     pattern = f"{working_status}_age_"
+#     filtered_df = df[df.index.str.startswith(pattern)]
+#     ages = np.array(
+#         [
+#             40,
+#             41,
+#             42,
+#             43,
+#             44,
+#             45,
+#             46,
+#             47,
+#             48,
+#             49,
+#             50,
+#             51,
+#             52,
+#             53,
+#             54,
+#             55,
+#             56,
+#             57,
+#             58,
+#             59,
+#             60,
+#             61,
+#             62,
+#             63,
+#             64,
+#             65,
+#             66,
+#             67,
+#             68,
+#             69,
+#         ],
+#     )
+
+#     # Plotting
+#     plt.figure(figsize=(12, 6))
+#     plt.plot(ages, filtered_df["empirical"][:30], label="Empirical Moments", marker="o")
+#     plt.plot(
+#         ages,
+#         filtered_df["simulated"][:30],
+#         label="Simulated Moments",
+#         linestyle="--",
+#         marker="x",
+#     )
+
+#     plt.title(f"Labor Shares - {working_status.capitalize()}")
+#     plt.xlabel("Age")
+#     plt.ylabel("Labor Shares")
+#     plt.xticks(
+#         ages,
+#         rotation=45,
+#     )  # Set x-ticks to be the ages, rotate for better visibility
+#     plt.legend()
+#     plt.grid()
+#     plt.tight_layout()
+#     plt.show()
+
+
+def plot_labor_shares_informal_care(df, working_status):
+    """Plots the labor shares of empirical and simulated moments.
+
+    Args:
+        df (pandas.DataFrame): DataFrame with the index as "working_status_age_lower_upper"
+            and two columns 'empirical' and 'simulated'.
+        working_status (str): Working status to filter the DataFrame on.
+    """
+    # Define the age intervals
+    age_intervals = [(40, 45), (45, 50), (50, 55), (55, 60), (60, 65), (65, 70)]
+
+    # Initialize lists to store the data
+    ages = []
+    empirical_values = []
+    simulated_values = []
+
+    # Iterate through each interval and extract the data
+    for lower, upper in age_intervals:
+        pattern = f"{working_status}_age_{lower}_{upper}"
+        if pattern in df.index:
+            ages.append(f"{lower}-{upper}")
+            empirical_values.append(df.loc[pattern, "empirical"])
+            simulated_values.append(df.loc[pattern, "simulated"])
+
+    # Convert ages to a numpy array for plotting
+    ages = np.array(ages)
+
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    plt.plot(ages, empirical_values, label="Empirisch", marker="o")
+    plt.plot(ages, simulated_values, label="Simuliert", linestyle="--", marker="x")
+
+    # plt.title(f"Labor Shares - {working_status.capitalize()}")
+    # plt.xlabel("Age Interval")
+    # plt.ylabel("Labor Shares")
+    # plt.title("")
+    plt.ylim(0, 1)  # Adjust the limits as needed
+    plt.xlabel("Altersgruppe", fontsize=14)
+    plt.ylabel("Anteil", fontsize=14)
+    plt.xticks(rotation=45, fontsize=14)  # Rotate for better visibility
     plt.legend()
     plt.grid()
     plt.tight_layout()

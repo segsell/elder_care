@@ -12,6 +12,10 @@ from elder_care.model.shared import (
     PURE_INFORMAL_CARE,
     RETIREMENT,
     WORK_AND_NO_WORK,
+    FORMAL_CARE,
+    CARE_AND_NO_CARE,
+    INFORMAL_CARE,
+    is_formal_care,
     is_retired,
 )
 from elder_care.model.state_space import update_endog_state
@@ -67,6 +71,10 @@ def get_choice_set_no_informal_care(
         feasible_choice_set = [
             i for i in _feasible_choice_set_all if i in FORMAL_CARE_AND_NO_CARE
         ]
+
+        # Absorbing nursing home
+        if is_formal_care(lagged_choice):
+            feasible_choice_set = [i for i in feasible_choice_set if i in FORMAL_CARE]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
@@ -120,10 +128,12 @@ def get_choice_set_only_informal_care(
 
     _feasible_choice_set_all = np.arange(options["n_choices"])
 
-    if mother_health == BAD_HEALTH:
+    # Can only provide care if mother is alive and in bad health
+    if (mother_health == BAD_HEALTH) & (age >= AGE_50):
         feasible_choice_set = [
-            i for i in _feasible_choice_set_all if i in PURE_INFORMAL_CARE
+            i for i in _feasible_choice_set_all if i in INFORMAL_CARE
         ]
+
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
@@ -146,5 +156,7 @@ def get_choice_set_only_informal_care(
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
+    # else:
+    #     feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
 
     return np.array(feasible_choice_set)

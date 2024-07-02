@@ -2305,22 +2305,22 @@ def get_employment_by_age_bin_informal_parental_caregivers_soep():
     """
     return pd.Series(
         {
-            "not_working_age_40_45": 0.4167665,
-            "not_working_age_45_50": 0.3173242,
+            # "not_working_age_40_45": 0.4167665,
+            # "not_working_age_45_50": 0.3173242,
             "not_working_age_50_55": 0.3320868,
             "not_working_age_55_60": 0.4177419,
             "not_working_age_60_65": 0.6845550,
             "not_working_age_65_70": 0.9522184,
             #
-            "part_time_age_40_45": 0.37125749,
-            "part_time_age_45_50": 0.37135506,
+            # "part_time_age_40_45": 0.37125749,
+            # "part_time_age_45_50": 0.37135506,
             "part_time_age_50_55": 0.38070307,
             "part_time_age_55_60": 0.31532258,
             "part_time_age_60_65": 0.14921466,
             "part_time_age_65_70": 0.03071672,
             #
-            "full_time_age_40_45": 0.21197605,
-            "full_time_age_45_50": 0.31132075,
+            # "full_time_age_40_45": 0.21197605,
+            # "full_time_age_45_50": 0.31132075,
             "full_time_age_50_55": 0.28721017,
             "full_time_age_55_60": 0.26693548,
             "full_time_age_60_65": 0.16623037,

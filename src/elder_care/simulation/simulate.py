@@ -10,6 +10,7 @@ from sklearn.linear_model import LogisticRegression
 from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
     AGE_BINS_SIM,
+    AGE_BINS_SIM_SHORT,
     BAD_HEALTH,
     BETA,
     COMBINATION_CARE,

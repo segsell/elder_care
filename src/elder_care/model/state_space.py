@@ -1,6 +1,7 @@
 import numpy as np
 
 from elder_care.model.shared import (
+    FORMAL_CARE,
     BAD_HEALTH,
     CARE_AND_NO_CARE,
     FORMAL_CARE_AND_NO_CARE,
@@ -11,6 +12,7 @@ from elder_care.model.shared import (
     PART_TIME_AND_NO_WORK,
     RETIREMENT,
     WORK_AND_NO_WORK,
+    AGE_50,
     is_formal_care,
     is_full_time,
     is_part_time,
@@ -60,16 +62,14 @@ def get_state_specific_feasible_choice_set(
     _feasible_choice_set_all = list(np.arange(options["n_choices"]))
 
     # Can only provide care if mother is alive and in bad health
-    if mother_health == BAD_HEALTH:
+    if (mother_health == BAD_HEALTH) & (age >= AGE_50):
         feasible_choice_set = [
             i for i in _feasible_choice_set_all if i in CARE_AND_NO_CARE
         ]
 
         # Absorbing nursing home
         if is_formal_care(lagged_choice):
-            feasible_choice_set = [
-                i for i in feasible_choice_set if i in FORMAL_CARE_AND_NO_CARE
-            ]
+            feasible_choice_set = [i for i in feasible_choice_set if i in FORMAL_CARE]
     else:
         feasible_choice_set = [i for i in _feasible_choice_set_all if i in NO_CARE]
 
