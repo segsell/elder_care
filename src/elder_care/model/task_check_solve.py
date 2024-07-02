@@ -105,7 +105,6 @@ def task_solve_trial_run(
     params = {
         "beta": 0.95,
         "rho": 2,
-        #
         "disutility_part_time": -2,
         "disutility_full_time": -4,
         "utility_informal_care_parent_good_health": 1,

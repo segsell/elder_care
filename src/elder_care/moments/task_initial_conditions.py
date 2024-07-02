@@ -166,7 +166,6 @@ def task_create_initial_conditions(
             "mother_age_std": initial_mother_age_std,
             "father_age_mean": initial_father_age_mean,
             "father_age_std": initial_father_age_std,
-            #
             "share_mother_alive": share_mother_alive,
             "share_father_alive": share_father_alive,
             "mother_good_health": mother_good_health,

@@ -559,7 +559,7 @@ def task_merge_waves_and_modules(
     rp_vars_wave3 = [
         f"sl_rp011_{i}" for i in (1, 2, 3, 11, 12, 13, 14, 15)
     ]  # 16 year death of partner
-    rp_vars_wave7 = [f"sl_rp011_{i}" for i in (1, 2, 3, 4, 11, 12, 13, 14, 15)]  #
+    rp_vars_wave7 = [f"sl_rp011_{i}" for i in (1, 2, 3, 4, 11, 12, 13, 14, 15)]
 
     # Data modules for wave 3
     variables_wave3 = {
