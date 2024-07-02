@@ -69,7 +69,10 @@ lint.extend-ignore = [
     "TRY003",
 
     # Comparison to True should be cond is True
-    "E712"
+    "E712",
+
+    # Checks for unused imports
+    "F401"
 ]
 
 [tool.ruff.lint.per-file-ignores]

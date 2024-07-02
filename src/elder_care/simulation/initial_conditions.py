@@ -40,17 +40,17 @@ def draw_initial_states(
 
     high_educ = get_initial_share_two(initial_conditions, "share_high_educ")
 
-    # mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
+    mother_alive = get_initial_share_two(initial_conditions, "share_mother_alive")
 
-    # _mother_health_probs = initial_conditions.loc[
-    #     ["mother_good_health", "mother_bad_health"]
-    # ].to_numpy()
-    # mother_health_probs = jnp.concatenate(
-    #     [
-    #         _mother_health_probs.ravel() * mother_alive[1],
-    #         jnp.atleast_1d(mother_alive[0]),
-    #     ],
-    # )
+    _mother_health_probs = initial_conditions.loc[
+        ["mother_good_health", "mother_bad_health"]
+    ].to_numpy()
+    mother_health_probs = jnp.concatenate(
+        [
+            _mother_health_probs.ravel() * mother_alive[1],
+            jnp.atleast_1d(mother_alive[0]),
+        ],
+    )
 
     _experience = draw_from_discrete_normal(
         seed=seed - 4,
@@ -70,32 +70,32 @@ def draw_initial_states(
     )
 
     initial_states = {
-        "period": jnp.zeros(n_agents, dtype=np.int16),
+        "period": jnp.zeros(n_agents, dtype=np.uint8),
         "lagged_choice": draw_random_array(
             seed=seed - 1,
             n_agents=n_agents,
             values=WORK_NO_CARE,
             probabilities=lagged_choice_probs,
-        ).astype(np.int16),
+        ).astype(np.uint8),
         "high_educ": draw_random_array(
             seed=seed - 2,
             n_agents=n_agents,
             values=jnp.array([0, 1]),
             probabilities=high_educ,
-        ).astype(np.int16),
+        ).astype(np.uint8),
         # "has_sibling": draw_random_array(
         #     seed=seed - 3,
         #     n_agents=n_agents,
         #     values=jnp.array([0, 1]),
         #     probabilities=has_sibling,
-        # ).astype(np.int16),
+        # ).astype(np.uint8),
         "experience": experience,
-        # "mother_health": draw_random_array(
-        #     seed=seed - 5,
-        #     n_agents=n_agents,
-        #     values=jnp.array([0, 1, 2]),
-        #     probabilities=mother_health_probs,
-        # ).astype(np.int16),
+        "mother_health": draw_random_array(
+            seed=seed - 5,
+            n_agents=n_agents,
+            values=jnp.array([0, 1, 2]),
+            probabilities=mother_health_probs,
+        ).astype(np.uint8),
     }
 
     initial_resources = draw_random_sequence_from_array(
@@ -120,6 +120,8 @@ def draw_initial_states(
 
     initial_states["part_time_offer"] = part_time_offer
     initial_states["full_time_offer"] = full_time_offer
+
+    initial_states.pop("high_educ")
 
     return initial_resources_out, initial_states
 
