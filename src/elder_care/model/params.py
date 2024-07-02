@@ -4,10 +4,8 @@ params = {
     "lambda": 1,
     "sigma": 1,
     "interest_rate": 0.04,
-    #
     "utility_leisure_constant": 2,
     "utility_leisure_age": 1,
-    #
     "disutility_part_time": -2,
     "disutility_full_time": -4,
     # caregiving
