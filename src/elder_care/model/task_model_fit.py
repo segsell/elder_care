@@ -705,6 +705,7 @@ def plot_labor_shares_informal_care(df, working_status):
         df (pandas.DataFrame): DataFrame with the index as "working_status_age_lower_upper"
             and two columns 'empirical' and 'simulated'.
         working_status (str): Working status to filter the DataFrame on.
+
     """
     # Define the age intervals
     age_intervals = [(40, 45), (45, 50), (50, 55), (55, 60), (60, 65), (65, 70)]
