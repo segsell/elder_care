@@ -98,18 +98,18 @@ calculate_conf_intervals <- function(reg_summary) {
   # Extract coefficients and standard errors
   coefficients <- coef(reg_summary)
   std_errors <- reg_summary$se  # Cluster-robust standard errors (HC1)
-  
+
   # Calculate lower and upper bounds for 95% confidence intervals
   lower_bound <- coefficients - 1.96 * std_errors
   upper_bound <- coefficients + 1.96 * std_errors
-  
+
   # Create a data frame to store results
   results <- data.frame(
     Coefficient = coefficients,
     `95 CI Lower` = lower_bound,
     `95 CI Upper` = upper_bound
   )
-  
+
   return(results)
 }
 
@@ -125,50 +125,50 @@ extract_integer <- function(string) {
 plot_event_study <- function(reg_summary, xlim, ylim, xlab, ylab, file_path = NULL) {
   # Calculate confidence intervals
   intervals <- calculate_conf_intervals(reg_summary)
-  
+
   # Extract coefficient names (variable names)
   variable_names <- rownames(intervals)
-  
+
   # Extract the integer part of the variable names
   x_ticks <- as.numeric(sapply(variable_names, extract_integer))
-  
+
   # Open a graphics device if file_path is provided
   if (!is.null(file_path)) {
     png(file_path, width = 800, height = 600)
   }
-  
+
   # Create a plot
-  plot(x_ticks, intervals$Coefficient, 
+  plot(x_ticks, intervals$Coefficient,
        type = 'p', pch = 20, col = 'black', cex = 1.0, # Smaller points
        xlab = xlab, ylab = ylab,
        xlim = xlim, ylim = ylim,
        yaxt = "n")  # Suppress y-axis to customize it later
-  
+
   # Add error bars for 95% confidence intervals
-  arrows(x_ticks, intervals$X95.CI.Lower, 
-         x_ticks, intervals$X95.CI.Upper, 
+  arrows(x_ticks, intervals$X95.CI.Lower,
+         x_ticks, intervals$X95.CI.Upper,
          code = 3, angle = 90, length = 0.02, col = 'black')
-  
+
   # Add y-axis with labels rotated by 90 degrees
   axis(2, las = 2)
-  
+
   # Add a point at -2 with value 0 and add a vertical dashed line
   points(-2, 0, pch = 20, cex = 1.0, col = 'black')
   abline(v = -2, lty = 2, col = 'black')
-  
+
   # Add a horizontal line at y = 0 for reference
   abline(h = 0, lty = 1)
-  
+
   # Retrieve current y-axis ticks
   y_ticks <- axTicks(2)
-  
+
   # Add fine dashed horizontal lines exactly at y-axis ticks
   abline(h = y_ticks, col = "gray", lty = 3, lwd = 0.5)
   abline(v = x_ticks, col = "gray", lty = 3, lwd = 0.5)
-  
+
   # Title
   title(main = "")
-  
+
   # Close the graphics device if file_path is provided
   if (!is.null(file_path)) {
     dev.off()
@@ -282,9 +282,9 @@ iplot(mod_twfe_mother,
       y.lim = c(-100, 100))
 summary(mod_twfe_mother)
 
-plot_event_study(mod_twfe_mother, 
-                 xlim = c(-6, 4), 
-                 ylim = c(-0.5, 0.7), 
+plot_event_study(mod_twfe_mother,
+                 xlim = c(-6, 4),
+                 ylim = c(-0.5, 0.7),
                  xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
                  ylab = "Veränderung der Informellen Pflege (in %)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
