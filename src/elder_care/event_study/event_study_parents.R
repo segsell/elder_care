@@ -238,8 +238,8 @@ table(dat_all$informal_care_daughter, dat_all$binned_distance_to_treat)
 table(dat_mother$informal_care_son, dat_mother$binned_distance_to_treat)
 
 
-
-mod_twfe_all = feols(informal_care_daughter ~ i(binned_distance_to_treat, treat_ever, ref = -2)
+dat_all$informal_care_daughter_100 = dat_all$informal_care_daughter * 100
+mod_twfe_all = feols(informal_care_daughter_100 ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                           |
                             #age ,                             ## FEs
                            mergeid + age,                         ## FEs
@@ -257,7 +257,7 @@ summary(mod_twfe_all)
 
 plot_event_study(mod_twfe_all, 
                  xlim = c(-6, 4), 
-                 ylim = c(-0.35, 0.5), 
+                 ylim = c(-0.35 * 100, 0.5 * 100), 
                  xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
                  ylab = "Veränderung der Informellen Pflege (in %)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
@@ -300,7 +300,8 @@ table(dat_all$informal_care_son, dat_all$binned_distance_to_treat)
 dat_all_son <- dat_all %>%
   filter(!binned_distance_to_treat %in% c(-8, 6))
 
-mod_twfe_all = feols(informal_care_son ~ i(binned_distance_to_treat, treat_ever, ref = -2)
+dat_all_son$informal_care_son_100 = dat_all_son$informal_care_son * 100
+mod_twfe_all = feols(informal_care_son_100 ~ i(binned_distance_to_treat, treat_ever, ref = -2)
                      |
                        #age ,                             ## FEs
                        mergeid + age,                         ## FEs
@@ -318,7 +319,8 @@ summary(mod_twfe_all)
 
 plot_event_study(mod_twfe_all, 
                  xlim = c(-6, 4), 
-                 ylim = c(-0.35, 0.5), 
+                 #ylim = c(-0.35, 0.5), 
+                 ylim = c(-0.35 * 100, 0.5 * 100), 
                  xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
                  ylab = "Veränderung der Informellen Pflege (in %)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
