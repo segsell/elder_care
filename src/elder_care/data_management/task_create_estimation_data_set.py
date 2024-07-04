@@ -10,6 +10,9 @@ import pandas as pd
 import pytask
 from pytask import Product
 
+
+from matplotlib import pyplot as plt
+
 from elder_care.config import BLD
 
 FEMALE = 2
@@ -247,8 +250,9 @@ def task_create_estimation_data(
     dat = create_working(dat)
 
     # dat = create_time_to_caregiving(dat)
-    dat = create_treatment_dummy_parent_in_bad_health(dat, parent="mother")
-    plot_conditional_means_event_study(dat)
+
+    # dat = create_treatment_dummy_parent_in_bad_health(dat, parent="mother")
+    # plot_conditional_means_event_study(dat)
 
     dat = create_most_recent_job_started(dat)
     dat = create_most_recent_job_ended(dat)
@@ -275,8 +279,6 @@ def task_create_estimation_data(
 
     dat = dat[dat["gender"] == FEMALE]
     dat = dat.reset_index(drop=True)
-
-    breakpoint()
 
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
     dat_hh_weight = multiply_rows_with_weight(dat, weight="hh_weight")
@@ -934,10 +936,6 @@ def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
     path_to_save = BLD / "event_study" / "caregiving_sandbox.csv"
     treatment_group.to_csv(path_to_save, index=False)
 
-    # breakpoint()
-
-    # return dat
-
 
 def create_treatment_dummy_parent_in_bad_health(dat, parent):
     dat = dat.sort_values(by=["mergeid", "int_year"])
@@ -1051,8 +1049,6 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
     path_to_save = BLD / "event_study" / "sandbox.csv"
     treatment_group.to_csv(path_to_save, index=False)
 
-    breakpoint()
-
     return dat
 
 
@@ -1126,12 +1122,10 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
     # def plot_conditional_means_event_study(dat, outcome="working"):
     # def plot_conditional_means_event_study(dat, outcome="working_part_or_full_time"):
 
-    from matplotlib import pyplot as plt
-
     # outcome = "ep013_"
     # Condition on working (full-time) before
     # Calculate conditional means for FEMALE
-    conditional_means_female = calculate_conditional_means(dat, FEMALE, outcome)
+    conditional_means_female = _calculate_conditional_means(dat, FEMALE, outcome)
     # data = conditional_means_female.copy()
     data = dat.copy()
 
@@ -1152,7 +1146,6 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
     scalars = ["age", "int_year"]
     factors = data.columns[data.columns.str.contains("mother")]
     exog = factors.union(scalars)
-    breakpoint()
 
     mod = lm.PanelOLS(
         data[outcome],
@@ -1164,7 +1157,7 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
     fit.summary()
 
     # Calculate conditional means for MALE
-    conditional_means_male = calculate_conditional_means(dat, MALE, outcome)
+    conditional_means_male = _calculate_conditional_means(dat, MALE, outcome)
 
     # Plot the conditional means for FEMALE and MALE
     plt.figure(figsize=(10, 6))
@@ -1198,10 +1191,9 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
     # Show the plot
     plt.grid(True)
     plt.show()
-    breakpoint()
 
 
-def calculate_conditional_means(dat, gender, outcome):
+def _calculate_conditional_means(dat, gender, outcome):
 
     # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (dat[outcome] > 0)]
     pre_treatment_age = dat[(dat["distance_to_treat"] == 0) & (dat["age"] < 65)]
