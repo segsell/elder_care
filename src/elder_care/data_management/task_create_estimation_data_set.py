@@ -8,10 +8,8 @@ import linearmodels as lm
 import numpy as np
 import pandas as pd
 import pytask
-from pytask import Product
-
-
 from matplotlib import pyplot as plt
+from pytask import Product
 
 from elder_care.config import BLD
 
