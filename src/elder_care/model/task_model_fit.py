@@ -503,7 +503,7 @@ SIM_MOMENTS = np.array(
 )
 
 
-@pytask.mark.skip()
+# @pytask.mark.skip()
 def task_model_fit(
     path_to_empirical_moments=BLD
     / "moments"
@@ -520,9 +520,21 @@ def task_model_fit(
     comparison = pd.concat([empirical_moments, simulated_moments], axis=1)
     comparison.columns = ["empirical", "simulated"]
 
-    plot_labor_shares_informal_care(comparison, "not_working")
-    plot_labor_shares_informal_care(comparison, "part_time")
-    plot_labor_shares_informal_care(comparison, "full_time")
+    plot_labor_shares_informal_care(
+        comparison,
+        "not_working",
+        path_to_save=BLD / "descriptives/model_fit/model_fit_caregivers_no_work.png",
+    )
+    plot_labor_shares_informal_care(
+        comparison,
+        "part_time",
+        path_to_save=BLD / "descriptives/model_fit/model_fit_caregivers_part_time.png",
+    )
+    plot_labor_shares_informal_care(
+        comparison,
+        "full_time",
+        path_to_save=BLD / "descriptives/model_fit/model_fit_caregivers_full_time.png",
+    )
 
     plot_labor_shares(comparison, "not_working")
     plot_labor_shares(comparison, "part_time")
@@ -620,7 +632,6 @@ def plot_labor_shares(df, working_status):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.show()
 
 
 # def plot_labor_shares_informal_care(df, working_status):
@@ -698,7 +709,7 @@ def plot_labor_shares(df, working_status):
 #     plt.show()
 
 
-def plot_labor_shares_informal_care(df, working_status):
+def plot_labor_shares_informal_care(df, working_status, path_to_save):
     """Plots the labor shares of empirical and simulated moments.
 
     Args:
@@ -728,21 +739,24 @@ def plot_labor_shares_informal_care(df, working_status):
 
     # Plotting
     plt.figure(figsize=(12, 6))
-    plt.plot(ages, empirical_values, label="Empirisch", marker="o")
-    plt.plot(ages, simulated_values, label="Simuliert", linestyle="--", marker="x")
+    plt.plot(ages, empirical_values, label="Empirical", marker="o")
+    plt.plot(ages, simulated_values, label="Simulated", linestyle="--", marker="x")
 
     # plt.title(f"Labor Shares - {working_status.capitalize()}")
     # plt.xlabel("Age Interval")
     # plt.ylabel("Labor Shares")
     # plt.title("")
     plt.ylim(0, 1)  # Adjust the limits as needed
-    plt.xlabel("Altersgruppe", fontsize=14)
-    plt.ylabel("Anteil", fontsize=14)
-    plt.xticks(rotation=45, fontsize=14)  # Rotate for better visibility
-    plt.legend()
+    plt.xlabel("Age Bin", fontsize=16)
+    plt.ylabel("Share", fontsize=16)
+    plt.xticks(rotation=45, fontsize=16)  # Rotate for better visibility
+    plt.yticks(fontsize=16)
+    plt.legend(prop={"size": 16})
     plt.grid()
     plt.tight_layout()
-    plt.show()
+
+    if path_to_save is not None:
+        plt.savefig(path_to_save)
 
 
 # ====================================================================================
