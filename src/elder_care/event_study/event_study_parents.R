@@ -258,8 +258,10 @@ summary(mod_twfe_all)
 plot_event_study(mod_twfe_all,
                  xlim = c(-6, 4),
                  ylim = c(-0.35 * 100, 0.5 * 100),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Informellen Pflege (in %)",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Informellen Pflege (in %)",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Probability of providing informal care (in %)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
 )
 
@@ -285,8 +287,10 @@ summary(mod_twfe_mother)
 plot_event_study(mod_twfe_mother,
                  xlim = c(-6, 4),
                  ylim = c(-0.5, 0.7),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Informellen Pflege (in %)",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Informellen Pflege (in %)",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Probability of providing informal care (in %)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
 )
 
@@ -321,8 +325,10 @@ plot_event_study(mod_twfe_all,
                  xlim = c(-6, 4),
                  #ylim = c(-0.35, 0.5),
                  ylim = c(-0.35 * 100, 0.5 * 100),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Informellen Pflege (in %)",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Probability of providing informal care (in %)",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Informellen Pflege (in %)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
 )
 

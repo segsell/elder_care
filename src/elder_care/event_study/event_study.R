@@ -189,8 +189,10 @@ mod_twfe_ft_women = feols(full_time ~ i(binned_distance_to_treat, treat_ever, re
                           data = dat_female
 )
 iplot(mod_twfe_ft_women,
-      xlab = 'Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand',
-      ylab = 'Arbeit in Vollzeit',
+      #xlab = 'Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand',
+      #ylab = 'Arbeit in Vollzeit',
+      xlab="Time to event (in years): Parent in bad health",
+      ylab="Probability of working full-time",
       main = '',
       x.lim = c(x_min_value, x_max_value),
       y.lim = c(-10000, 100000))
@@ -199,8 +201,10 @@ summary(mod_twfe_ft_women)
 plot_event_study(mod_twfe_ft_women,
                  xlim = c(-6, 4),
                  ylim = c(-0.35, 0.25),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Vollzeitarbeit (in %)",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Vollzeitarbeit (in %)",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Probability of working full-time",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
                  )
 
@@ -225,8 +229,10 @@ summary(mod_twfe_ft_men)
 plot_event_study(mod_twfe_ft_men,
                  xlim = c(-6, 4),
                  ylim = c(-0.35, 0.25),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Vollzeitarbeit (in %)",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Vollzeitarbeit (in %)",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Probability of working full-time",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
 )
 
@@ -252,8 +258,10 @@ summary(mod_twfe_hours_women)
 plot_event_study(mod_twfe_hours_women,
                  xlim = c(-6, 4),
                  ylim = c(-10, 6),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Arbeitsstunden",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Arbeitsstunden",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Working hours (weekly)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
 )
 
@@ -278,7 +286,9 @@ summary(mod_twfe_hours_men)
 plot_event_study(mod_twfe_hours_men,
                  xlim = c(-6, 4),
                  ylim = c(-10, 6),
-                 xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
-                 ylab = "Veränderung der Arbeitsstunden",
+                 #xlab = "Zeit zum Ereignis (in Jahren): Eltern in schlechtem Gesundheitszustand",
+                 #ylab = "Veränderung der Arbeitsstunden",
+                 xlab="Time to event (in years): Parent in bad health",
+                 ylab="Working hours (weekly)",
                  #file_path="/home/sebastian/Projects/elder_care/bld/event_study/Plots/ffull_time_women.png"
 )
