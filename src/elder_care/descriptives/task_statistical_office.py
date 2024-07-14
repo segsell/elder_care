@@ -582,10 +582,13 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
     plt.bar(
         age_bins,
         _only_informal,
-        label="Reine informelle Pflege (zu Hause)",
-        # label="Pure Informal Care",
-        color="lightgreen",
-        # color=color,
+        # label="Reine informelle Pflege (zu Hause)",
+        label="Pure informal care (at home)",
+        # color="khaki",
+        # color = "#F9E69A",
+        # color="#8ECE86",
+        color="#99D891",
+        # color="#82BC7A",
     )
     plt.bar(
         age_bins,
@@ -593,7 +596,8 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
         bottom=_only_informal,
         # label="Combination Care",
         # label="Kombinationspflege (zu Hause)",
-        label="Pflege mit/durch Pflegedienst (zu Hause)",
+        # label="Pflege mit/durch Pflegedienst (zu Hause)",
+        label="Care in combination with/by mobile nursing service (at home)",  # home care nursing service
         # color="green",
         # color="moccasin",
         color=color,
@@ -618,15 +622,16 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
                 strict=False,
             )
         ],
-        label="Pflegeheim",
+        # label="Pflegeheim",
+        label="Nursing home",
         color="lightcoral",
-        # label="Nursing Home",
+        # color="palevioletred",
     )
 
-    # plt.xlabel("Age Bin", fontsize=14)
-    # plt.ylabel("Number of Care-Dependent People", fontsize=14)
-    plt.xlabel("Altersgruppe", fontsize=14)
-    plt.ylabel("Anzahl Pflegebedürftige", fontsize=14)
+    plt.xlabel("Age Bin", fontsize=14)
+    plt.ylabel("# People in need of LTC", fontsize=14)
+    # plt.xlabel("Altersgruppe", fontsize=14)
+    # plt.ylabel("Anzahl Pflegebedürftige", fontsize=14)
     plt.xticks(rotation=45, fontsize=14)  # Rotate x-axis labels for better visibility
     plt.yticks(rotation=0, fontsize=14)  # Rotate x-axis labels for better visibility
     plt.tight_layout()  # Adjust layout for better display
@@ -641,7 +646,7 @@ def plot_numbers_by_age_group_all(dat, sex, year, save_path):
 
     # specify order of items in legend
     order = [2, 1, 0]
-    order = [0, 1, 2]
+    # order = [0, 1, 2]
 
     # add legend to plot
     plt.legend(
