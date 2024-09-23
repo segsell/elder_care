@@ -241,7 +241,6 @@ def get_care_transitions_from_parent_child_data(parent):
             previous_choice="formal_care",
             current_choice="informal_care_child",
         ),
-        #
         "no_formal_to_no_formal": get_care_transition_unweighted(
             parent,
             previous_choice="no_formal_care",
@@ -308,12 +307,10 @@ def get_care_transitions_from_parent_child_data(parent):
             "no_informal_to_formal": var_no_informal_to_formal,
             "informal_to_no_formal": var_informal_to_no_formal,
             "informal_to_formal": var_informal_to_formal,
-            #
             "no_formal_to_no_informal": var_no_formal_to_no_informal,
             "no_formal_to_informal": var_no_formal_to_informal,
             "formal_to_no_informal": var_formal_to_no_informal,
             "formal_to_informal": var_formal_to_informal,
-            #
             "no_formal_to_no_formal": var_no_formal_to_no_formal,
             "no_formal_to_formal": var_no_formal_to_formal,
             "formal_to_no_formal": var_formal_to_no_formal,
@@ -672,14 +669,12 @@ def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
             "not_working_age_55_60": 0.24387144,
             "not_working_age_60_65": 0.19318271,
             "not_working_age_65_70": 0.04345898,
-            #
             "part_time_age_40_45": 0.23340033,
             "part_time_age_45_50": 0.23210090,
             "part_time_age_50_55": 0.23742719,
             "part_time_age_55_60": 0.21778835,
             "part_time_age_60_65": 0.11591068,
             "part_time_age_65_70": 0.02687942,
-            #
             "full_time_age_40_45": 0.17430175,
             "full_time_age_45_50": 0.21535956,
             "full_time_age_50_55": 0.20284277,
@@ -700,14 +695,12 @@ def get_var_employment_by_age_bin_non_informal_caregivers_soep():
             "not_working_age_55_60": 0.23444000,
             "not_working_age_60_65": 0.21893375,
             "not_working_age_65_70": 0.04955567,
-            #
             "part_time_age_40_45": 0.23638008,
             "part_time_age_45_50": 0.23230882,
             "part_time_age_50_55": 0.21822528,
             "part_time_age_55_60": 0.20502764,
             "part_time_age_60_65": 0.12856359,
             "part_time_age_65_70": 0.03196961,
-            #
             "full_time_age_40_45": 0.208697726,
             "full_time_age_45_50": 0.227366151,
             "full_time_age_50_55": 0.236358320,
@@ -739,11 +732,9 @@ def get_var_employment_transitions_soep():
             "not_working_to_not_working": 0.0000014030153746,
             "not_working_to_part_time": 0.0000011223523576,
             "not_working_to_full_time": 0.0000003261830112,
-            #
             "part_time_to_not_working": 0.0000026726781986,
             "part_time_to_part_time": 0.0000041901074618,
             "part_time_to_full_time": 0.0000019742078027,
-            #
             "full_time_to_not_working": 0.0000015082989226,
             "full_time_to_part_time": 0.0000019227102296,
             "full_time_to_full_time": 0.0000032040667450,

@@ -47,7 +47,6 @@ PARAMS_OLD = {
     "sigma": 0.5364562201,
     "lambda": 0.9864699097918321,
     "interest_rate": 0.04,
-    #
     "disutility_part_time_constant": 0.33354121247199703,
     "disutility_part_time_age": -0.12100801003524632,
     "disutility_part_time_age_squared": 0.0007139083714654349,
@@ -60,7 +59,6 @@ PARAMS_OLD = {
     "disutility_full_time_informal_care_constant": 0.08529730099536248,
     "disutility_full_time_informal_care_age": -0.054504780075805004,
     "disutility_full_time_informal_care_age_squared": -0.0022061388612220744,
-    #
     "part_time_constant": -2.102635900186225,
     "part_time_not_working_last_period": -1.0115255914421664,
     "part_time_high_education": 0.48013160890989515,
@@ -69,7 +67,6 @@ PARAMS_OLD = {
     "full_time_not_working_last_period": -2.097935912953995,
     "full_time_high_education": 0.8921957457184644,
     "full_time_above_retirement_age": -3.1212459549307496,
-    #
     "utility_no_care_parent_bad_health": -1,
     "utility_informal_care_parent_bad_health": 0.5,
     "utility_formal_care_parent_bad_health": 0.2,
@@ -82,7 +79,6 @@ PARAMS = {
     "sigma": 0.5364562201,
     "lambda": 0.9864699097918321,
     "interest_rate": 0.04,
-    #
     "disutility_part_time_constant": 0.33354121247199703,
     "disutility_full_time_constant": 0.08529730099536248,
     "disutility_part_time_age_40_50": -0.12100801003524632,
@@ -91,7 +87,6 @@ PARAMS = {
     "disutility_full_time_age_50_plus": -0.0022061388612220744,
     "disutility_part_time_age_squared_50_plus": 0.0007139083714654349,
     "disutility_full_time_age_squared_50_plus": -0.0022061388612220744,
-    #
     "part_time_constant": -2.102635900186225,
     "part_time_not_working_last_period": -1.0115255914421664,
     "part_time_high_education": 0.48013160890989515,
@@ -100,7 +95,6 @@ PARAMS = {
     "full_time_not_working_last_period": -2.097935912953995,
     "full_time_high_education": 0.8921957457184644,
     "full_time_above_retirement_age": -3.1212459549307496,
-    #
 }
 
 
@@ -191,7 +185,6 @@ def task_debugging(
     df_raw = create_simulation_df(sim_dict)
     data = df_raw.notna()
 
-    #
 
     n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
 

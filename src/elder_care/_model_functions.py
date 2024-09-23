@@ -125,7 +125,6 @@ def prob_part_time_offer(period, lagged_choice, options, params):
         * is_full_time(lagged_choice)
         + params["part_time_above_retirement_age"]
         * (period + options["min_age"] >= RETIREMENT_AGE)
-        #
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))
 
@@ -151,7 +150,6 @@ def prob_full_time_offer(period, lagged_choice, options, params):
         * is_part_time(lagged_choice)
         + params["full_time_above_retirement_age"]
         * (period + options["min_age"] >= RETIREMENT_AGE)
-        #
     )
 
     prob_logit = 1 / (1 + jnp.exp(-logit))
@@ -541,11 +539,9 @@ def prob_exog_care_demand(
             prob_care_mother_good_father_good,
             prob_care_mother_good_father_medium,
             prob_care_mother_good_father_bad,
-            #
             prob_care_mother_medium_father_good,
             prob_care_mother_medium_father_medium,
             prob_care_mother_medium_father_bad,
-            #
             prob_care_mother_bad_father_good,
             prob_care_mother_bad_father_medium,
             prob_care_mother_bad_father_bad,
@@ -578,7 +574,6 @@ def prob_exog_care_demand(
     return jnp.array([1 - prob_care_demand, prob_care_demand])
 
 
-#
 
 
 def _exog_care_demand_mother(period, mother_health, options):

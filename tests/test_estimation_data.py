@@ -8,7 +8,7 @@ def is_weakly_increasing(series):
     return (series.diff().dropna() >= 0).all()
 
 
-@pytest.fixture()
+@pytest.fixture
 def data():
     return pd.read_csv(BLD / "data" / "estimation_data.csv")
 
