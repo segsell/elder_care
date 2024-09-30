@@ -7,7 +7,7 @@ import estimagic as em
 import jax.numpy as jnp
 import pandas as pd
 from dcegm.pre_processing.setup_model import load_and_setup_model
-from dcegm.simulation.simulate import simulate_all_periods_for_model
+from dcegm.simulation.simulate import simulate_all_periods
 from dcegm.solve import get_solve_func_for_model
 
 from elder_care.config import BLD
@@ -32,10 +32,8 @@ START_PARAMS = {
     "sigma": 0.55,
     "lambda": 1,
     "interest_rate": 0.04,  # Adda et al (2017)
-    #
     "utility_leisure_constant": 2,
     "utility_leisure_age": 1,
-    #
     "disutility_part_time": -3,
     "disutility_full_time": -5,
     # caregiving
@@ -58,7 +56,6 @@ FIXED_PARAMS = ["rho", "beta", "lambda", "sigma", "interest_rate"]
 
 
 def estimate_msm():
-
     path_to_save_params = BLD / "estimation" / "result_params.pkl"
     path_to_save_criterion_value = BLD / "estimation" / "result_criterion.pkl"
     path_to_save_convergence_report = BLD / "estimation" / "result_convergence.pkl"
@@ -184,9 +181,9 @@ def get_moment_error_vec(
 
     params_all = params | params_fixed
 
-    value, policy_left, policy_right, endog_grid = solve_func(params_all)
+    value, policy, endog_grid = solve_func(params_all)
 
-    sim_dict = simulate_all_periods_for_model(
+    sim_dict = simulate_all_periods(
         states_initial=initial_states,
         resources_initial=initial_resources,
         n_periods=options["model_params"]["n_periods"],
@@ -194,9 +191,7 @@ def get_moment_error_vec(
         seed=seed,
         endog_grid_solved=endog_grid,
         value_solved=value,
-        policy_left_solved=policy_left,
-        policy_right_solved=policy_right,
-        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
+        policy_solved=policy,
         model=model_loaded,
     )
 
@@ -237,9 +232,9 @@ def criterion_solve_and_simulate(
     # ! random seed !
     seed = int(time.time())
 
-    value, policy_left, policy_right, endog_grid = solve_func(params)
+    value, policy, endog_grid = solve_func(params)
 
-    sim_dict = simulate_all_periods_for_model(
+    sim_dict = simulate_all_periods(
         states_initial=initial_states,
         resources_initial=initial_resources,
         n_periods=options["model_params"]["n_periods"],
@@ -247,9 +242,7 @@ def criterion_solve_and_simulate(
         seed=seed,
         endog_grid_solved=endog_grid,
         value_solved=value,
-        policy_left_solved=policy_left,
-        policy_right_solved=policy_right,
-        choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
+        policy_solved=policy,
         model=model_loaded,
     )
 
@@ -283,10 +276,8 @@ lower_bounds = {
     "lambda": 1e-17,
     "sigma": 1.0 - 0.1,
     "interest_rate": 0.04 - 0.003,
-    #
     "utility_leisure_constant": -5,
     "utility_leisure_age": -5,
-    #
     "disutility_part_time": -10,
     "disutility_full_time": -10,
     # caregiving
@@ -312,10 +303,8 @@ upper_bounds = {
     "lambda": 1e-16,
     "sigma": 1.0,
     "interest_rate": 0.05,
-    #
     "utility_leisure_constant": 5,
     "utility_leisure_age": 5,
-    #
     "disutility_part_time": 0,
     "disutility_full_time": 0,
     # caregiving

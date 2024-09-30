@@ -50,6 +50,13 @@ AGE_BINS_SIM = [
     (AGE_65, AGE_70),
 ]
 
+AGE_BINS_SIM_SHORT = [
+    (AGE_50, AGE_55),
+    (AGE_55, AGE_60),
+    (AGE_60, AGE_65),
+    (AGE_65, AGE_70),
+]
+
 PARENT_AGE_BINS_SIM = [
     (AGE_65, AGE_70),
     (AGE_70, AGE_75),
@@ -86,30 +93,21 @@ MAX_LEISURE_HOURS = TOTAL_WEEKLY_HOURS * N_WEEKS * N_MONTHS
 # Labor Choices
 # ==============================================================================
 
-# ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7])
-# NO_WORK = jnp.array([0, 1])
-# PART_TIME = jnp.array([2, 3])
-# FULL_TIME = jnp.array([4, 5])
-# RETIREMENT = jnp.array([6, 7])
-# WORK_NO_CARE = jnp.array([0, 2, 4])
-# WORK_AND_NO_WORK = ALL
+ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+NO_WORK = jnp.array([0, 1, 2, 3])
+PART_TIME = jnp.array([4, 5, 6, 7])
+FULL_TIME = jnp.array([8, 9, 10, 11])
+RETIREMENT = jnp.array([12, 13, 14, 15])
+WORK_NO_CARE = jnp.array([0, 4, 8])
+WORK_AND_NO_WORK = ALL
 
-
-# ALL = jnp.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
-# NO_WORK = jnp.array([0, 1, 2, 3])
-# PART_TIME = jnp.array([4, 5, 6, 7])
-# FULL_TIME = jnp.array([8, 9, 10, 11])
-# RETIREMENT = jnp.array([12, 13, 14, 15])
-# WORK_NO_CARE = jnp.array([0, 4, 8])
-# WORK_AND_NO_WORK = ALL
-
-ALL = jnp.array([0, 1, 2, 3])
-NO_WORK = jnp.array([0])
-PART_TIME = jnp.array([1])
-FULL_TIME = jnp.array([2])
-RETIREMENT = jnp.array([3])
-WORK_AND_NO_WORK = jnp.array([0, 1, 2, 3])
-WORK_NO_CARE = jnp.array([0, 1, 2])
+# ALL = jnp.array([0, 1, 2, 3])
+# NO_WORK = jnp.array([0])
+# PART_TIME = jnp.array([1])
+# FULL_TIME = jnp.array([2])
+# RETIREMENT = jnp.array([3])
+# WORK_NO_CARE = jnp.array([0, 1, 2])
+# WORK_AND_NO_WORK = jnp.array([0, 1, 2, 3])
 
 OUT_OF_LABOR = jnp.concatenate([NO_WORK, RETIREMENT])
 WORK = jnp.concatenate([PART_TIME, FULL_TIME])
@@ -117,34 +115,26 @@ PART_TIME_AND_NO_WORK = jnp.concatenate([PART_TIME, OUT_OF_LABOR])
 FULL_TIME_AND_NO_WORK = jnp.concatenate([FULL_TIME, OUT_OF_LABOR])
 
 NO_RETIREMENT = jnp.concatenate([NO_WORK, PART_TIME, FULL_TIME])
-WORK = jnp.concatenate([PART_TIME, FULL_TIME])
 
 # ==============================================================================
 # Caregiving Choices
 # ==============================================================================
 
-NO_CARE = jnp.array([0, 2, 4, 6])
-PURE_INFORMAL_CARE = jnp.array([1, 3, 5, 7])
-PURE_FORMAL_CARE = jnp.array([])
-COMBINATION_CARE = jnp.array([])
+NO_CARE = jnp.array([0, 4, 8, 12])
+FORMAL_CARE = jnp.array([1, 5, 9, 13])  # Only nursing home!
+PURE_INFORMAL_CARE = jnp.array([2, 6, 10, 14])
+COMBINATION_CARE = jnp.array([3, 7, 11, 15])
 
-# NO_CARE = jnp.array([0, 4, 8, 12])
-# PURE_FORMAL_CARE = jnp.array([1, 5, 9, 13])
-# PURE_INFORMAL_CARE = jnp.array([2, 6, 10, 14])
-# COMBINATION_CARE = jnp.array([3, 7, 11, 15])
-
-# FORMAL_CARE = jnp.array([1, 3, 5, 7, 9, 11, 13, 15])
-# INFORMAL_CARE = jnp.array([2, 3, 6, 7, 10, 11, 14, 15])
+# INFORMAL_CARE = jnp.array([2, 3, 6, 7, 10, 11, 14, 15])  # pure and combination
 INFORMAL_CARE = jnp.array(
     list(set(PURE_INFORMAL_CARE.tolist() + COMBINATION_CARE.tolist())),
 )
-FORMAL_CARE = jnp.array(
-    list(set(PURE_FORMAL_CARE.tolist() + COMBINATION_CARE.tolist())),
-)
-CARE = jnp.concatenate([FORMAL_CARE, INFORMAL_CARE])
-CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, FORMAL_CARE, INFORMAL_CARE])
 
-PURE_FORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, PURE_FORMAL_CARE])
+CARE = jnp.concatenate([INFORMAL_CARE, COMBINATION_CARE, FORMAL_CARE])
+CARE_AND_NO_CARE = jnp.concatenate(
+    [NO_CARE, FORMAL_CARE, INFORMAL_CARE, COMBINATION_CARE],
+)
+FORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, FORMAL_CARE])
 PURE_INFORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, PURE_INFORMAL_CARE])
 
 # For NO_INFORMAL_CARE and NO_FORMAL_CARE, we need to perform set operations before
@@ -152,6 +142,9 @@ PURE_INFORMAL_CARE_AND_NO_CARE = jnp.concatenate([NO_CARE, PURE_INFORMAL_CARE])
 # This is because JAX doesn't support direct set operations.
 # Convert the results of set operations to lists, then to JAX arrays.
 NO_INFORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(INFORMAL_CARE.tolist())))
+NO_COMBINATION_CARE = jnp.array(
+    list(set(ALL.tolist()) - set(COMBINATION_CARE.tolist())),
+)
 NO_FORMAL_CARE = jnp.array(list(set(ALL.tolist()) - set(FORMAL_CARE.tolist())))
 
 # ==============================================================================
@@ -200,10 +193,6 @@ def is_no_informal_care(lagged_choice):
 
 def is_formal_care(lagged_choice):
     return jnp.any(lagged_choice == FORMAL_CARE)
-
-
-def is_pure_formal_care(lagged_choice):
-    return jnp.any(lagged_choice == PURE_FORMAL_CARE)
 
 
 def is_no_formal_care(lagged_choice):

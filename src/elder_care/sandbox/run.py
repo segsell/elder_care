@@ -161,7 +161,6 @@ model_params = {
     "exog_care_single_mother_age_squared": 0.005773,
     "exog_care_single_mother_medium_health": 0.652438,
     "exog_care_single_mother_bad_health": 0.924265,
-    #
     "exog_care_single_father_constant": 17.833432,
     "exog_care_single_father_age": -0.580729,
     "exog_care_single_father_age_squared": 0.004380,
@@ -176,7 +175,6 @@ model_params = {
     "exog_care_couple_mother_bad_health": 0.719621,
     "exog_care_couple_father_medium_health": 0.360010,
     "exog_care_couple_father_bad_health": 0.800824,
-    #
 }
 
 options = {

@@ -1667,7 +1667,6 @@ def create_working(dat):
         0,
     )
 
-    #
     dat["ep013_"] = np.where(dat["ep013_"] < 0, np.nan, dat["ep013_"])
     _cond = [
         dat["ep013_"] >= WORKING_FULL_TIME_THRESH,
@@ -1685,7 +1684,6 @@ def create_working(dat):
     _val = [1, 0, 0]
     dat["part_time"] = np.select(_cond, _val, default=np.nan)
 
-    #
     dat.loc[
         (dat["part_time"].isin([0, 1])) & (dat["full_time"].isna()),
         "full_time",
