@@ -59,7 +59,6 @@ def get_options_dict(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
 ):
-
     specs, _wage_params = load_specs(path_to_specs)
 
     exog_params = load_dict_from_pickle(path_to_exog)

@@ -256,10 +256,8 @@ def create_moments_dictionary(
     ]
     out = {}
 
-    for i, (start_age, end_age) in enumerate(age_bins, start=start_index):
-        age_key = (
-            f"{start_age}_to_{end_age}" if isinstance(end_age, int) else f"{start_age}+"
-        )
+    for i, (start, end) in enumerate(age_bins, start=start_index):
+        age_key = f"{start}_to_{end}" if isinstance(end, int) else f"{start}+"
 
         out[f"share_informal_{sex}_age_{age_key}"] = (
             only_informal[i] if i < len(only_informal) else []
@@ -319,10 +317,8 @@ def create_moments_dictionary_all(
     ]
     out = {}
 
-    for i, (start_age, end_age) in enumerate(age_bins, start=start_index):
-        age_key = (
-            f"{start_age}_to_{end_age}" if isinstance(end_age, int) else f"{start_age}+"
-        )
+    for i, (start, end) in enumerate(age_bins, start=start_index):
+        age_key = f"{start}_to_{end}" if isinstance(end, int) else f"{start}+"
 
         out[f"share_nursing_home_{sex}_age_{age_key}"] = (
             nursing_home[i] if i < len(nursing_home) else []

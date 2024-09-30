@@ -32,10 +32,8 @@ START_PARAMS = {
     "sigma": 0.55,
     "lambda": 1,
     "interest_rate": 0.04,  # Adda et al (2017)
-    #
     "utility_leisure_constant": 2,
     "utility_leisure_age": 1,
-    #
     "disutility_part_time": -3,
     "disutility_full_time": -5,
     # caregiving
@@ -58,7 +56,6 @@ FIXED_PARAMS = ["rho", "beta", "lambda", "sigma", "interest_rate"]
 
 
 def estimate_msm():
-
     path_to_save_params = BLD / "estimation" / "result_params.pkl"
     path_to_save_criterion_value = BLD / "estimation" / "result_criterion.pkl"
     path_to_save_convergence_report = BLD / "estimation" / "result_convergence.pkl"
@@ -279,10 +276,8 @@ lower_bounds = {
     "lambda": 1e-17,
     "sigma": 1.0 - 0.1,
     "interest_rate": 0.04 - 0.003,
-    #
     "utility_leisure_constant": -5,
     "utility_leisure_age": -5,
-    #
     "disutility_part_time": -10,
     "disutility_full_time": -10,
     # caregiving
@@ -308,10 +303,8 @@ upper_bounds = {
     "lambda": 1e-16,
     "sigma": 1.0,
     "interest_rate": 0.05,
-    #
     "utility_leisure_constant": 5,
     "utility_leisure_age": 5,
-    #
     "disutility_part_time": 0,
     "disutility_full_time": 0,
     # caregiving

@@ -62,7 +62,6 @@ def test_exog_health_transition():
 @pytest.mark.skip(reason="Outdated")
 @pytest.mark.parametrize("health_state", [GOOD_HEALTH, MEDIUM_HEALTH, BAD_HEALTH])
 def test_exog_health_transition_with_alive(health_state):
-
     path_to_specs = SRC / "model" / "specs.yaml"
     path_to_exog = BLD / "model" / "exog_processes.pkl"
 
@@ -108,7 +107,6 @@ def test_exog_health_transition_with_alive(health_state):
 
 @pytest.mark.parametrize("health_state", [GOOD_HEALTH, BAD_HEALTH])
 def test_exog_health_transition_with_alive_binary(health_state):
-
     path_to_specs = SRC / "model" / "specs.yaml"
     path_to_exog = BLD / "model" / "exog_processes.pkl"
 

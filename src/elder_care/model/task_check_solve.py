@@ -35,7 +35,6 @@ def task_solve_trial_run(
     path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
     path_to_model: Path = BLD / "model" / "model_exp_without_father_correct_util.pkl",
 ):
-
     specs, wage_params = load_specs(path_to_specs)
 
     exog_params = load_dict_from_pickle(path_to_exog)
@@ -105,7 +104,6 @@ def task_solve_trial_run(
     params = {
         "beta": 0.95,
         "rho": 2,
-        #
         "disutility_part_time": -2,
         "disutility_full_time": -4,
         "utility_informal_care_parent_good_health": 1,

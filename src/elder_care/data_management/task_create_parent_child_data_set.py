@@ -519,7 +519,6 @@ def create_care_variables(dat):
 
 
 def create_care_combinations(dat, informal_care_var):
-
     # 25.03.2024
     _cond = [
         (dat["formal_care"] == 0) & (dat[informal_care_var] == 1),
@@ -536,8 +535,6 @@ def create_care_combinations(dat, informal_care_var):
     _val = [1, np.nan]
     dat["formal_care_no_comb"] = np.select(_cond, _val, default=0)
     dat["only_formal"] = dat["formal_care_no_comb"].copy()
-
-    #
 
     _cond = [
         (dat["home_care"] == 1) & (dat[informal_care_var] == 0),

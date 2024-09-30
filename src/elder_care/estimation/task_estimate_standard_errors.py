@@ -23,10 +23,8 @@ PARAMS = {
     "lambda": 1,
     "sigma": 0.5364562201,
     "interest_rate": 0.04,
-    #
     "utility_leisure_constant": 1,
     "utility_leisure_age": 1,
-    #
     "disutility_part_time": -5,
     "disutility_full_time": -6,
     # caregiving

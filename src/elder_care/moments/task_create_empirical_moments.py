@@ -362,12 +362,10 @@ def task_create_moments(  # noqa: PLR0915
         [
             employment_by_age_soep,
             ols_coeffs_savings_rate,
-            #
             logit_coeffs_no_care,
             logit_coeffs_pure_informal_care,
             logit_coeffs_combination_care,
             logit_coeffs_nursing_home,
-            #
             employment_by_age_bin_caregivers_soep,
             # #
             # share_informal_care_age_bin,
@@ -645,12 +643,10 @@ def get_care_transitions_from_parent_child_data_weighted_only(parent, weight):
             no_informal_to_formal_weighted,
             informal_to_no_formal_weighted,
             informal_to_formal_weighted,
-            #
             no_formal_to_no_informal_weighted,
             no_formal_to_informal_weighted,
             formal_to_no_informal_weighted,
             formal_to_informal_weighted,
-            #
             no_formal_to_no_formal_weighted,
             no_formal_to_formal_weighted,
             formal_to_no_formal_weighted,
@@ -764,12 +760,10 @@ def get_care_transitions_from_parent_child_data_weighted_home_care(parent, weigh
             no_informal_to_formal_weighted,
             informal_to_no_formal_weighted,
             informal_to_formal_weighted,
-            #
             no_formal_to_no_informal_weighted,
             no_formal_to_informal_weighted,
             formal_to_no_informal_weighted,
             formal_to_informal_weighted,
-            #
             no_formal_to_no_formal_weighted,
             no_formal_to_formal_weighted,
             formal_to_no_formal_weighted,
@@ -831,7 +825,6 @@ def get_care_transitions_from_parent_child_data_unweighted(parent):
             no_formal_to_formal,
             formal_to_no_formal,
             formal_to_formal,
-            #
             no_formal_to_no_informal,
             no_formal_to_informal,
             formal_to_no_informal,
@@ -1371,7 +1364,6 @@ def get_employment_by_caregiving_status_by_age_bin(
             share_not_working_informal_care_by_age_bin,
             share_working_part_time_informal_care_by_age_bin,
             share_working_full_time_informal_care_by_age_bin,
-            #
             1 - share_working_no_informal_care_by_age_bin,
             share_not_working_no_informal_care_by_age_bin,
             share_working_part_time_no_informal_care_by_age_bin,
@@ -1995,11 +1987,9 @@ def get_employment_transitions_soep():
             "not_working_to_not_working": 0.9081446,
             "not_working_to_part_time": 0.07185538,
             "not_working_to_full_time": 0.02,
-            #
             "part_time_to_not_working": 0.1070033,
             "part_time_to_part_time": 0.8167875,
             "part_time_to_full_time": 0.07620923,
-            #
             "full_time_to_not_working": 0.0558282,
             "full_time_to_part_time": 0.07111375,
             "full_time_to_full_time": 0.873058,
@@ -2014,11 +2004,9 @@ def get_var_employment_transitions_soep():
             "not_working_to_not_working": 0.0000014030153746,
             "not_working_to_part_time": 0.0000011223523576,
             "not_working_to_full_time": 0.0000003261830112,
-            #
             "part_time_to_not_working": 0.0000026726781986,
             "part_time_to_part_time": 0.0000041901074618,
             "part_time_to_full_time": 0.0000019742078027,
-            #
             "full_time_to_not_working": 0.0000015082989226,
             "full_time_to_part_time": 0.0000019227102296,
             "full_time_to_full_time": 0.0000032040667450,
@@ -2033,11 +2021,9 @@ def get_employment_transitions_soep_51_to_65():
             "not_working_to_not_working": 0.93383000,
             "not_working_to_part_time": 0.05226726,
             "not_working_to_full_time": 0.01390274,
-            #
             "part_time_to_not_working": 0.1275953,
             "part_time_to_part_time": 0.80193001,
             "part_time_to_full_time": 0.07047471,
-            #
             "full_time_to_not_working": 0.06666667,
             "full_time_to_part_time": 0.06812715,
             "full_time_to_full_time": 0.86520619,
@@ -2052,7 +2038,6 @@ def get_employment_by_caregiving_status_soep():
             "not_working_no_informal_care": 0.4313806,
             "part_time_no_informal_care": 0.2589699,
             "full_time_no_informal_care": 0.3096495,
-            #
             "not_working_informal_care": 0.4925068,
             "part_time_informal_care": 0.2897366,
             "full_time_informal_care": 0.2177566,
@@ -2363,14 +2348,12 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
             "not_working_age_55_60": 0.3547595,
             "not_working_age_60_65": 0.5851641,
             "not_working_age_65_70": 0.9099719,
-            #
             "part_time_age_40_45": 0.38604479,
             "part_time_age_45_50": 0.36865951,
             "part_time_age_50_55": 0.31827999,
             "part_time_age_55_60": 0.28984453,
             "part_time_age_60_65": 0.18830243,
             "part_time_age_65_70": 0.05075236,
-            #
             "full_time_age_40_45": 0.30605114,
             "full_time_age_45_50": 0.35459848,
             "full_time_age_50_55": 0.39564108,
@@ -2382,7 +2365,6 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
 
 
 def get_share_informal_maternal_care_by_age_bin_soep():
-
     return pd.Series(
         {
             "share_informal_care_40_45": 0.02980982,
