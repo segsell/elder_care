@@ -17,14 +17,14 @@ from elder_care.model.shared import (
 # ==============================================================================
 
 
-def prob_part_time_offer(period, lagged_choice, high_educ, options, params):
+def prob_part_time_offer(period, lagged_choice, options, params):
     """Compute logit probability of part time offer."""
     age = options["start_age"] + period
 
     logit = (
         params["part_time_constant"]
         + params["part_time_not_working_last_period"] * is_not_working(lagged_choice)
-        + params["part_time_high_education"] * high_educ
+        # + params["part_time_high_education"] * high_educ # noqa: ERA001
         + params["part_time_above_retirement_age"] * (age >= options["retirement_age"])
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))
@@ -37,7 +37,7 @@ def prob_part_time_offer(period, lagged_choice, high_educ, options, params):
     return jnp.array([1 - prob_part_time, prob_part_time])
 
 
-def prob_full_time_offer(period, lagged_choice, high_educ, options, params):
+def prob_full_time_offer(period, lagged_choice, options, params):
     """Compute logit probability of full time offer.
 
     _prob = jnp.exp(logit) / (1 + jnp.exp(logit))
@@ -48,7 +48,7 @@ def prob_full_time_offer(period, lagged_choice, high_educ, options, params):
     logit = (
         params["full_time_constant"]
         + params["full_time_not_working_last_period"] * is_not_working(lagged_choice)
-        + params["full_time_high_education"] * high_educ
+        # + params["full_time_high_education"] * high_educ # noqa: ERA001
         + params["full_time_above_retirement_age"] * (age >= options["retirement_age"])
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))

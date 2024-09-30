@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import numpy as np
+import pytask
 import yaml
 from dcegm.pre_processing.setup_model import setup_and_save_model
 from pytask import Product
@@ -11,9 +12,11 @@ from pytask import Product
 from elder_care.config import BLD, SRC
 from elder_care.exogenous_processes.task_create_exog_processes_soep import (
     task_create_exog_wage,
+    task_create_spousal_income,
 )
 from elder_care.model.budget import budget_constraint
 from elder_care.model.exogenous_processes import (
+    exog_health_transition_mother_with_survival,
     prob_full_time_offer,
     prob_part_time_offer,
 )
@@ -26,12 +29,13 @@ from elder_care.model.utility_functions import (
     create_final_period_utility_functions,
     create_utility_functions,
 )
+from elder_care.utils import load_dict_from_pickle
 
 
 # @pytask.mark.skip(reason="Respecifying model.")
 def task_specify_and_setup_model(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
-    # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
     path_to_save: Annotated[Path, Product] = BLD / "model" / "model.pkl",
 ) -> dict[str, Any]:
     """Generate options and setup model.
@@ -39,7 +43,7 @@ def task_specify_and_setup_model(
     start_params["sigma"] = specs["income_shock_scale"]
 
     """
-    options = get_options_dict(path_to_specs)
+    options = get_options_dict(path_to_specs, path_to_exog)
 
     return setup_and_save_model(
         options=options,
@@ -53,12 +57,13 @@ def task_specify_and_setup_model(
 
 def get_options_dict(
     path_to_specs: Path = SRC / "model" / "specs.yaml",
-    # path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
+    path_to_exog: Path = BLD / "model" / "exog_processes.pkl",
 ):
 
-    specs, wage_params = load_specs(path_to_specs)
+    specs, _wage_params = load_specs(path_to_specs)
 
-    # exog_params = load_dict_from_pickle(path_to_exog)
+    exog_params = load_dict_from_pickle(path_to_exog)
+    spousal_params = task_create_spousal_income()
 
     # exog_params = {
     #     "part_time_constant": -2.102635900186225,
@@ -83,10 +88,10 @@ def get_options_dict(
             "states": np.arange(2, dtype=np.uint8),
             "transition": prob_full_time_offer,
         },
-        # "mother_health": {
-        #     "states": np.arange(3, dtype=np.int8),
-        #     "transition": exog_health_transition_mother_with_survival,
-        # },
+        "mother_health": {
+            "states": np.arange(3, dtype=np.uint8),
+            "transition": exog_health_transition_mother_with_survival,
+        },
     }
 
     return {
@@ -95,7 +100,7 @@ def get_options_dict(
             "choices": choices,
             "income_shock_scale": specs["income_shock_scale"],
             "endogenous_states": {
-                "high_educ": np.arange(2, dtype=np.uint8),
+                # "high_educ": np.arange(2, dtype=np.uint8),
                 "experience": np.arange(
                     start=10,  # 5 * 2
                     stop=specs["experience_cap"] + 1,
@@ -105,7 +110,10 @@ def get_options_dict(
             },
             "exogenous_processes": exog_processes,
         },
-        "model_params": specs | {"interest_rate": 0.04, "bequest_scale": 1.3},
+        "model_params": specs
+        | exog_params
+        | spousal_params
+        | {"interest_rate": 0.04, "bequest_scale": 1.3},
     }
 
 

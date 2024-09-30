@@ -11,8 +11,10 @@ are used.
 from pathlib import Path
 from typing import Annotated
 
+import numpy as np
 import pandas as pd
 from pytask import Product
+from sklearn.linear_model import LogisticRegression
 
 from elder_care.config import BLD
 from elder_care.model.shared import (
@@ -24,17 +26,20 @@ from elder_care.model.shared import (
     MIN_AGE,
 )
 
+FEMALE = 2
+AGE_65 = 65
+
 
 def table(df_col):
     return pd.crosstab(df_col, columns="Count")["Count"]
 
 
 # @pytask.mark.skip(reason="Respecifying moments.")
-def task_create_moments(
+def task_create_moments(  # noqa: PLR0915
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
-    # path_to_parent_child_hh_weight: Path = BLD
-    # / "data"
-    # / "parent_child_data_hh_weight.csv",
+    path_to_parent_child_hh_weight: Path = BLD
+    / "data"
+    / "parent_child_data_hh_weight.csv",
     path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
     path_to_save: Annotated[Path, Product] = BLD / "moments" / "empirical_moments.csv",
 ) -> None:
@@ -206,9 +211,9 @@ def task_create_moments(
     dat = dat_hh_weight.copy()
     dat = deflate_income_and_wealth(dat, cpi_data)
 
-    # parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
-    # weight = "hh_weight"
-    # intensive_care_var = "intensive_care_no_other"
+    parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
+    weight = "hh_weight"
+    intensive_care_var = "intensive_care_no_other"
 
     dat = dat.copy()
     dat = dat.loc[(dat["age"] >= MIN_AGE) & (dat["age"] < MAX_AGE)]
@@ -219,66 +224,107 @@ def task_create_moments(
     # Parent child data (mother)
     # ================================================================================
 
-    # parent = parent_hh_weight.copy()
+    parent = parent_hh_weight.copy()
 
-    # parent["informal_care_child_weighted"] = (
-    #     parent["informal_care_child"] * parent[weight]
-    # )
-    # parent["home_care_weighted"] = parent["home_care"] * parent[weight]
-    # parent["formal_care_weighted"] = parent["formal_care"] * parent[weight]
-    # parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
-    # parent["no_combination_care_weighted"] = (
-    #     parent["no_combination_care"] * parent[weight]
-    # )
+    parent["informal_care_child_weighted"] = (
+        parent["informal_care_child"] * parent[weight]
+    )
+    parent["home_care_weighted"] = parent["home_care"] * parent[weight]
+    parent["formal_care_weighted"] = parent["formal_care"] * parent[weight]
+    parent["combination_care_weighted"] = parent["combination_care"] * parent[weight]
+    parent["no_combination_care_weighted"] = (
+        parent["no_combination_care"] * parent[weight]
+    )
 
-    # parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
-    # parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
+    parent["only_informal_weighted"] = parent["only_informal"] * parent[weight]
+    parent["only_home_care_weighted"] = parent["only_home_care"] * parent[weight]
 
-    # dat["no_intensive_informal_weighted"] = dat["no_intensive_informal"] * dat[weight]
-    # dat["intensive_care_no_other_weighted"] = (
-    #     dat["intensive_care_no_other"] * dat[weight]
-    # )
-    # intensive_care_var_weighted = "intensive_care_no_other_weighted"
+    dat["no_intensive_informal_weighted"] = dat["no_intensive_informal"] * dat[weight]
+    dat["intensive_care_no_other_weighted"] = (
+        dat["intensive_care_no_other"] * dat[weight]
+    )
+    intensive_care_var_weighted = "intensive_care_no_other_weighted"
 
-    # parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
-    # parent["no_informal_care_child_weighted"] = (
-    #     parent["no_informal_care_child"] * parent[weight]
-    # )
-    # parent["only_formal_weighted"] = parent["only_formal"] * parent[weight]
-    # parent["no_only_formal_weighted"] = parent["no_only_formal"] * parent[weight]
-    # parent["no_only_informal_weighted"] = parent["no_only_informal"] * parent[weight]
+    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
+    parent["only_formal_weighted"] = parent["only_formal"] * parent[weight]
+    parent["no_only_formal_weighted"] = parent["no_only_formal"] * parent[weight]
+    parent["no_only_informal_weighted"] = parent["no_only_informal"] * parent[weight]
 
-    # mother = parent[(parent["gender"] == FEMALE)]
+    mother = parent[(parent["gender"] == FEMALE)]
 
-    # parent["only_informal_care_child_weighted"] = (
-    #     parent["informal_care_child"] * parent[weight]
-    # )
-    # parent["no_only_informal_care_child_weighted"] = (
-    #     parent["no_informal_care_child"] * parent[weight]
-    # )
-    # parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
-    # parent["no_formal_care_weighted"] = parent["no_formal_care"] * parent[weight]
-    # parent["no_informal_care_child_weighted"] = (
-    #     parent["no_informal_care_child"] * parent[weight]
-    # )
+    parent["only_informal_care_child_weighted"] = (
+        parent["informal_care_child"] * parent[weight]
+    )
+    parent["no_only_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
+    parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
+    parent["no_formal_care_weighted"] = parent["no_formal_care"] * parent[weight]
+    parent["no_informal_care_child_weighted"] = (
+        parent["no_informal_care_child"] * parent[weight]
+    )
 
-    # caregiving_by_mother_health_and_presence_of_sibling = (
-    #     get_caregiving_status_by_mother_health_and_presence_of_sibling(
-    #         mother,
-    #         sibling_var="has_two_daughters",
-    #         weight=weight,
-    #     )
-    # )
+    # Parent-child sample
+    mother = mother[mother["health"] == BAD_HEALTH]
+    mother = mother[mother["age"] >= AGE_65]
+    mother = mother[mother["has_daughter"] == 1]
 
-    # first_half = caregiving_by_mother_health_and_presence_of_sibling[:4]
-    # second_half = caregiving_by_mother_health_and_presence_of_sibling[4:]
+    age_labels = ["65-69", "70-74", "75-79", "80-84", "85+"]
 
-    # normalized_first_half = first_half / first_half.sum()
-    # normalized_second_half = second_half / second_half.sum()
+    mother["age_bin"] = pd.cut(
+        mother["age"],
+        bins=[65, 70, 75, 80, 85, np.inf],
+        right=False,
+        labels=age_labels,
+        include_lowest=True,
+    )
+    age_dummies = pd.get_dummies(mother["age_bin"], drop_first=True)
+    mother = pd.concat([mother, age_dummies], axis=1)
 
-    # caregiving_by_mother_health_and_presence_of_sibling_normalized = pd.concat(
-    #     [normalized_first_half, normalized_second_half],
-    # )
+    logit_coeffs_no_care = weighted_logistic_regression(
+        mother,
+        age_dummies,
+        outcome="no_care",
+        weight=weight,
+    )
+    logit_coeffs_pure_informal_care = weighted_logistic_regression(
+        mother,
+        age_dummies,
+        outcome="informal_care_child_no_comb",
+        weight=weight,
+    )
+    logit_coeffs_combination_care = weighted_logistic_regression(
+        mother,
+        age_dummies,
+        outcome="combination_care",
+        weight=weight,
+    )
+
+    # # ===============================================================================
+    parent_ill = parent.loc[(parent["health"] == 1) | (parent["nursing_home"] == 1)]
+    parent_ill = parent_ill[parent_ill["age"] >= AGE_65]
+
+    age_labels = ["65-69", "70-74", "75-79", "80-84", "85+"]
+
+    parent_ill["age_bin"] = pd.cut(
+        parent_ill["age"],
+        bins=[65, 70, 75, 80, 85, np.inf],
+        right=False,
+        labels=age_labels,
+        include_lowest=True,
+    )
+    age_dummies = pd.get_dummies(parent_ill["age_bin"], drop_first=True)
+    parent_ill = pd.concat([parent_ill, age_dummies], axis=1)
+
+    logit_coeffs_nursing_home = weighted_logistic_regression(
+        parent_ill,
+        age_dummies,
+        outcome="nursing_home",
+        weight=weight,
+    )
 
     # ================================================================================
     # Labor and caregiving transitions
@@ -286,45 +332,50 @@ def task_create_moments(
 
     employment_transitions_soep = get_employment_transitions_soep()
 
-    # care_transitions_estimation_data = (
-    #     get_care_transitions_from_estimation_data_weighted(
-    #         dat,
-    #         intensive_care_var=intensive_care_var,
-    #         intensive_care_var_weighted=intensive_care_var_weighted,
-    #         weight=weight,
-    #     )
-    # )
+    care_transitions_estimation_data = (
+        get_care_transitions_from_estimation_data_weighted(
+            dat,
+            intensive_care_var=intensive_care_var,
+            intensive_care_var_weighted=intensive_care_var_weighted,
+            weight=weight,
+        )
+    )
 
-    # care_transitions_parent_child_data = (
-    #     get_care_transitions_from_parent_child_data_weighted(
-    #         parent,
-    #         weight=weight,
-    #     )
-    # )
+    care_transitions_parent_child_data = (
+        get_care_transitions_from_parent_child_data_weighted(
+            parent,
+            weight=weight,
+        )
+    )
 
     employment_by_age_soep = get_employment_by_age_soep()
-    # employment_by_age_bin_caregivers_soep = (
-    #     get_employment_by_age_bin_informal_parental_caregivers_soep()
-    # )
+    employment_by_age_bin_caregivers_soep = (
+        get_employment_by_age_bin_informal_parental_caregivers_soep()
+    )
     # employment_by_age_bin_non_caregivers_soep = (
     #     get_employment_by_age_bin_non_informal_caregivers_soep()
     # )
 
-    # ols_coeffs_savings_rate = get_coefficients_savings_rate_regression()
+    ols_coeffs_savings_rate = get_coefficients_soep_savings_rate_regression()
 
     all_moments = pd.concat(
         [
             employment_by_age_soep,
-            # ols_coeffs_savings_rate,
-            # employment_by_age_bin_non_caregivers_soep,
-            # employment_by_age_bin_caregivers_soep,
+            ols_coeffs_savings_rate,
+            #
+            logit_coeffs_no_care,
+            logit_coeffs_pure_informal_care,
+            logit_coeffs_combination_care,
+            logit_coeffs_nursing_home,
+            #
+            employment_by_age_bin_caregivers_soep,
             # #
             # share_informal_care_age_bin,
             # caregiving_by_mother_health_and_presence_of_sibling,
             # #
             employment_transitions_soep,
-            # care_transitions_estimation_data,
-            # care_transitions_parent_child_data,
+            care_transitions_estimation_data,
+            care_transitions_parent_child_data,
         ],
         ignore_index=False,
         axis=0,
@@ -1889,7 +1940,7 @@ def get_caregiving_status_by_parental_health(
 # ================================================================================
 
 
-def get_coefficients_savings_rate_regression():
+def get_coefficients_soep_savings_rate_regression():
     """Get coefficients of savings rate regression.
 
     The coefficients are estimated using the SOEP data. The wealth variables used in the
@@ -1909,14 +1960,24 @@ def get_coefficients_savings_rate_regression():
     #     },
     # )
 
+    # return pd.Series(
+    #     {
+    #         "savings_rate_constant": -0.9054951203922390,
+    #         "savings_rate_age": 0.0397000841,
+    #         "savings_rate_age_squared": -0.0003955014,
+    #         "savings_rate_high_education": 0.0424789561,
+    #         "savings_rate_part_time": 0.0553201853,
+    #         "savings_rate_full_time": 0.0783182866,
+    #     },
+    # )
+
     return pd.Series(
         {
-            "savings_rate_constant": -0.9054951203922390,
-            "savings_rate_age": 0.0397000841,
-            "savings_rate_age_squared": -0.0003955014,
-            "savings_rate_high_education": 0.0424789561,
-            "savings_rate_part_time": 0.0553201853,
-            "savings_rate_full_time": 0.0783182866,
+            "savings_rate_constant": -0.8634837498204938,
+            "savings_rate_age": 0.0395651306,
+            "savings_rate_age_squared": -0.0004045064,
+            "savings_rate_part_time": 0.0574432350,
+            "savings_rate_full_time": 0.0860651100,
         },
     )
 
@@ -2228,20 +2289,22 @@ def get_employment_by_age_bin_informal_parental_caregivers_soep():
     """
     return pd.Series(
         {
-            "not_working_age_40_45": 0.4167665,
-            "not_working_age_45_50": 0.3173242,
+            # "not_working_age_40_45": 0.4167665,
+            # "not_working_age_45_50": 0.3173242,
             "not_working_age_50_55": 0.3320868,
             "not_working_age_55_60": 0.4177419,
             "not_working_age_60_65": 0.6845550,
             "not_working_age_65_70": 0.9522184,
-            "part_time_age_40_45": 0.37125749,
-            "part_time_age_45_50": 0.37135506,
+            #
+            # "part_time_age_40_45": 0.37125749,
+            # "part_time_age_45_50": 0.37135506,
             "part_time_age_50_55": 0.38070307,
             "part_time_age_55_60": 0.31532258,
             "part_time_age_60_65": 0.14921466,
             "part_time_age_65_70": 0.03071672,
-            "full_time_age_40_45": 0.21197605,
-            "full_time_age_45_50": 0.31132075,
+            #
+            # "full_time_age_40_45": 0.21197605,
+            # "full_time_age_45_50": 0.31132075,
             "full_time_age_50_55": 0.28721017,
             "full_time_age_55_60": 0.26693548,
             "full_time_age_60_65": 0.16623037,
@@ -2317,6 +2380,72 @@ def get_share_informal_maternal_care_by_age_bin_soep():
     )
 
 
+# ================================================================================
+# Care mix coefficients
+# ================================================================================
+
+
+def weighted_logistic_regression(mother, age_dummies, outcome, weight):
+    # Filter the dataset where "health" == 'BAD_HEALTH'
+    # mother_filtered = mother[mother["health"] == "BAD_HEALTH"]
+
+    # # Keep people aged 65 and older
+    # mother_filtered = mother_filtered[mother_filtered["age"] >= 65]
+
+    # # Create 5-year age bins from [65, 70), [70, 75) etc. up to [80, 85).
+    # # The final age bin is 80+
+    # age_bins = [65, 70, 75, 80, np.inf]
+    # age_labels = ["65-69", "70-74", "75-79", "80+"]
+    # mother_filtered["age_bin"] = pd.cut(
+    #     mother_filtered["age"],
+    #     bins=age_bins,
+    #     right=False,
+    #     labels=age_labels,
+    #     include_lowest=True,
+    # )
+
+    # # Create dummy variables for age bins
+    # age_dummies = pd.get_dummies(mother_filtered["age_bin"], drop_first=True)
+
+    # # Concatenate the dummies with the original DataFrame
+    # mother_filtered = pd.concat([mother_filtered, age_dummies], axis=1)
+
+    # Define the features (age dummies) and the target (y_variable)
+    features = age_dummies.columns.tolist()
+    X = mother[features]  # noqa: N806
+    y = mother[outcome]
+
+    # Combine X, y, and weights into a single DataFrame to drop rows with NaNs
+    data = pd.concat([X, y, mother[weight]], axis=1)
+
+    data = data.dropna()
+
+    X = data[features]  # noqa: N806
+    y = data[outcome]
+    weights = data[weight]
+
+    model = LogisticRegression(class_weight="balanced")
+    model.fit(X, y, sample_weight=weights)
+
+    # df = pd.DataFrame(
+    #     {
+    #         "Feature": ["Intercept"] + features,
+    #         "Coefficient": [model.intercept_[0]] + list(model.coef_[0]),
+    #     },
+    # )
+    # _series = pd.Series(df["Coefficient"].values, index=df["Feature"])
+    # _series.index.name = None
+
+    coefficients_list = [model.intercept_[0], *model.coef_[0]]
+    features = ["intercept", *features]
+    coeffs = pd.Series(coefficients_list, index=features)
+    coeffs.index.name = None
+
+    return coeffs
+
+
+# ================================================================================
+# Auxiliary
 # ================================================================================
 
 

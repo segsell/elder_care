@@ -105,11 +105,11 @@ def task_create_parent_child_data(
     dat = dat[(dat["age"] > MIN_AGE) & (dat["age"] <= MAX_AGE)]
 
     dat = create_children_information(dat)
-
     dat = create_married_or_partner_alive(dat)
+
+    dat = create_health_variables(dat)
     dat = create_care_variables(dat)
     dat = create_care_combinations(dat, informal_care_var="informal_care_child")
-    dat = create_health_variables(dat)
 
     dat = dat.reset_index(drop=True)
     dat_design_weight = multiply_rows_with_weight(dat, weight="design_weight")
@@ -175,7 +175,7 @@ def create_couple_data(data):
     return dat_female.merge(dat_partner_male, on=["mergeid", "int_year"], how="inner")
 
 
-def multiply_rows_with_weight(dat, weight):
+def multiply_rows_with_weight(dat, weight):  # noqa: PLR0915
     # Create a DataFrame of weights with the same shape as dat
     weights = dat[weight].to_numpy().reshape(-1, 1)
 
@@ -191,6 +191,7 @@ def multiply_rows_with_weight(dat, weight):
         "only_formal",
         "only_home_care",
         "combination_care",
+        "nursing_home",
         "informal_care_child",
         "informal_care_general",
         "home_care",
@@ -221,6 +222,7 @@ def multiply_rows_with_weight(dat, weight):
         "married",
         "has_two_daughters",
         "has_two_children",
+        "has_daughter",
         "wave",
         weight,
     ]
@@ -299,6 +301,8 @@ def multiply_rows_with_weight(dat, weight):
         "informal_care_child_no_comb",
         dat["informal_care_child_no_comb"],
     )
+    dat_weighted.insert(41, "has_daughter", dat["has_daughter"])
+    dat_weighted.insert(42, "nursing_home", dat["nursing_home"])
 
     dat_weighted[f"{weight}_avg"] = dat_weighted.groupby("mergeid")[weight].transform(
         "mean",
@@ -340,6 +344,31 @@ def create_care_variables(dat):
     _val = [1, 0]
     dat["nursing_home"] = np.select(_cond, _val, default=np.nan)
 
+    # # ===============================================================================
+    # df = dat.loc[(dat["health"] == 1) | (dat["nursing_home"] == 1)]
+    # df = df[df["age"] >= 65]
+
+    # age_labels = ["65-69", "70-74", "75-79", "80-84", "85+"]
+
+    # df["age_bin"] = pd.cut(
+    #     df["age"],
+    #     bins=[65, 70, 75, 80, 85, np.inf],
+    #     right=False,
+    #     labels=age_labels,
+    #     include_lowest=True,
+    # )
+    # age_dummies = pd.get_dummies(df["age_bin"], drop_first=True)
+    # df = pd.concat([df, age_dummies], axis=1)
+
+    # coeff_nursing_home = weighted_logistic_regression(
+    #     df,
+    #     age_dummies,
+    #     outcome="nursing_home",
+    #     weight=weight,
+    # )
+
+    # breakpoint()
+    # # ===============================================================================
     # RENAME WAVES 1, 2 (3, 4 missing): hc127d1
 
     # formal home care by professional nursing service
@@ -596,6 +625,7 @@ def create_children_information(dat):
     ["has_two_daughters", "has_two_children"]] = np.nan
 
     """
+    dat["has_daughter"] = 0
     dat["has_two_daughters"] = 0  # Assuming less than two daughters by default
     dat["has_two_children"] = 0  # Assuming less than two children by default
 
@@ -611,6 +641,9 @@ def create_children_information(dat):
 
         if non_nan_count >= AT_LEAST_TWO:
             dat.loc[index, "has_two_children"] = DUMMY_TRUE
+
+        if female_count >= 1:
+            dat.loc[index, "has_daughter"] = DUMMY_TRUE
 
         # Update 'has_two_daughters_loop' based on female count
         if female_count >= AT_LEAST_TWO:

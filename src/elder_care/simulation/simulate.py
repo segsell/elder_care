@@ -4,18 +4,28 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+import pytask
+from sklearn.linear_model import LogisticRegression
 
 from elder_care.model.budget import calc_net_income_pensions
 from elder_care.model.shared import (
     AGE_BINS_SIM,
+    AGE_BINS_SIM_SHORT,
     BAD_HEALTH,
     BETA,
+    COMBINATION_CARE,
+    DEAD,
+    FORMAL_CARE,
     FULL_TIME,
     INFORMAL_CARE,
     MAX_AGE_SIM,
     MIN_AGE_SIM,
+    NO_CARE,
+    NO_COMBINATION_CARE,
+    NO_INFORMAL_CARE,
     OUT_OF_LABOR,
     PART_TIME,
+    PURE_INFORMAL_CARE,
     RETIREMENT,
     RETIREMENT_AGE,
 )
@@ -126,19 +136,72 @@ def simulate_moments(arr, idx):
     # Savings rate
     # ================================================================================
 
-    # savings_rate_coeffs = fit_ols(
-    #     x=arr[
-    #         :,
-    #         [
-    #             idx["age"],
-    #             idx["age_squared"],
-    #             idx["high_educ"],
-    #             idx["choice_part_time"],
-    #             idx["choice_full_time"],
-    #         ],
-    #     ],
-    #     y=arr[:, idx["savings_rate"]],
-    # )
+    savings_rate_coeffs = fit_ols(
+        x=arr[
+            :,
+            [
+                idx["age"],
+                idx["age_squared"],
+                # idx["high_educ"],
+                idx["choice_part_time"],
+                idx["choice_full_time"],
+            ],
+        ],
+        y=arr[:, idx["savings_rate"]],
+    )
+
+    # ================================================================================
+    # Care mix
+    # ================================================================================
+
+    no_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_85_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_no_care"]],
+    )
+    pure_informal_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_85_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_pure_informal_care"]],
+    )
+    combination_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_85_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_combination_care"]],
+    )
+    formal_care_coeffs = fit_logit(
+        x=arr[
+            :,
+            [
+                idx["mother_age_bin_70_75"],
+                idx["mother_age_bin_75_80"],
+                idx["mother_age_bin_80_85"],
+                idx["mother_age_bin_85_plus"],
+            ],
+        ],
+        y=arr[:, idx["choice_formal_care"]],
+    )
 
     # ================================================================================
     # Labor shares by informal caregiving status
@@ -166,27 +229,27 @@ def simulate_moments(arr, idx):
     #     age_bins=AGE_BINS_SIM,
     # )
 
-    # share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=NO_WORK,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
-    # share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=PART_TIME,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
-    # share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-    #     arr,
-    #     ind=idx,
-    #     choice=FULL_TIME,
-    #     care_type=INFORMAL_CARE,
-    #     age_bins=AGE_BINS_SIM,
-    # )
+    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=OUT_OF_LABOR,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=PART_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
+    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+        arr,
+        ind=idx,
+        choice=FULL_TIME,
+        care_type=INFORMAL_CARE,
+        age_bins=AGE_BINS_SIM,
+    )
 
     # ================================================================================
     # Share caregiving by age bin
@@ -331,109 +394,109 @@ def simulate_moments(arr, idx):
     # Caregiving transitions
     # ================================================================================
 
-    # no_informal_care_to_no_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_INFORMAL_CARE,
-    #     current_choice=NO_INFORMAL_CARE,
-    # )
-    # no_informal_care_to_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_INFORMAL_CARE,
-    #     current_choice=INFORMAL_CARE,
-    # )
+    no_informal_care_to_no_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_INFORMAL_CARE,
+        current_choice=NO_INFORMAL_CARE,
+    )
+    no_informal_care_to_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_INFORMAL_CARE,
+        current_choice=INFORMAL_CARE,
+    )
 
-    # informal_care_to_no_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=INFORMAL_CARE,
-    #     current_choice=NO_INFORMAL_CARE,
-    # )
-    # informal_care_to_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=INFORMAL_CARE,
-    #     current_choice=INFORMAL_CARE,
-    # )
+    informal_care_to_no_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=INFORMAL_CARE,
+        current_choice=NO_INFORMAL_CARE,
+    )
+    informal_care_to_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=INFORMAL_CARE,
+        current_choice=INFORMAL_CARE,
+    )
 
-    # no_informal_care_to_no_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_INFORMAL_CARE,
-    #     current_choice=NO_FORMAL_CARE,
-    # )
-    # no_informal_care_to_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_INFORMAL_CARE,
-    #     current_choice=FORMAL_CARE,
-    # )
+    no_informal_care_to_no_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_INFORMAL_CARE,
+        current_choice=NO_COMBINATION_CARE,
+    )
+    no_informal_care_to_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_INFORMAL_CARE,
+        current_choice=COMBINATION_CARE,
+    )
 
-    # informal_care_to_no_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=INFORMAL_CARE,
-    #     current_choice=NO_FORMAL_CARE,
-    # )
-    # informal_care_to_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=INFORMAL_CARE,
-    #     current_choice=FORMAL_CARE,
-    # )
+    informal_care_to_no_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=INFORMAL_CARE,
+        current_choice=NO_COMBINATION_CARE,
+    )
+    informal_care_to_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=INFORMAL_CARE,
+        current_choice=COMBINATION_CARE,
+    )
 
-    # no_formal_care_to_no_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_FORMAL_CARE,
-    #     current_choice=NO_INFORMAL_CARE,
-    # )
-    # no_formal_care_to_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_FORMAL_CARE,
-    #     current_choice=INFORMAL_CARE,
-    # )
+    no_formal_care_to_no_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_COMBINATION_CARE,
+        current_choice=NO_INFORMAL_CARE,
+    )
+    no_formal_care_to_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_COMBINATION_CARE,
+        current_choice=INFORMAL_CARE,
+    )
 
-    # formal_care_to_no_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=FORMAL_CARE,
-    #     current_choice=NO_INFORMAL_CARE,
-    # )
-    # formal_care_to_informal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=FORMAL_CARE,
-    #     current_choice=INFORMAL_CARE,
-    # )
+    formal_care_to_no_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=COMBINATION_CARE,
+        current_choice=NO_INFORMAL_CARE,
+    )
+    formal_care_to_informal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=COMBINATION_CARE,
+        current_choice=INFORMAL_CARE,
+    )
 
-    # no_formal_care_to_no_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_FORMAL_CARE,
-    #     current_choice=NO_FORMAL_CARE,
-    # )
-    # no_formal_care_to_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=NO_FORMAL_CARE,
-    #     current_choice=FORMAL_CARE,
-    # )
+    no_formal_care_to_no_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_COMBINATION_CARE,
+        current_choice=NO_COMBINATION_CARE,
+    )
+    no_formal_care_to_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=NO_COMBINATION_CARE,
+        current_choice=COMBINATION_CARE,
+    )
 
-    # formal_care_to_no_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=FORMAL_CARE,
-    #     current_choice=NO_FORMAL_CARE,
-    # )
-    # formal_care_to_formal_care = get_transition(
-    #     arr,
-    #     ind=idx,
-    #     lagged_choice=FORMAL_CARE,
-    #     current_choice=FORMAL_CARE,
-    # )
+    formal_care_to_no_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=COMBINATION_CARE,
+        current_choice=NO_COMBINATION_CARE,
+    )
+    formal_care_to_formal_care = get_transition(
+        arr,
+        ind=idx,
+        lagged_choice=COMBINATION_CARE,
+        current_choice=COMBINATION_CARE,
+    )
 
     # ================================================================================
     # Moments matrix
@@ -444,26 +507,26 @@ def simulate_moments(arr, idx):
         share_out_of_labor_by_age
         + share_working_part_time_by_age
         + share_working_full_time_by_age
-        # assets and savings
-        # + savings_rate_coeffs.tolist()
+        # regressions
+        + savings_rate_coeffs.tolist()
+        + no_care_coeffs
+        + pure_informal_care_coeffs
+        + combination_care_coeffs
+        + formal_care_coeffs
+        #
         # employment shares by caregiving status
         # no informal care
         # + share_not_working_no_informal_care_by_age_bin
         # + share_part_time_no_informal_care_by_age_bin
         # + share_full_time_no_informal_care_by_age_bin
         # # informal care
-        # + share_not_working_informal_care_by_age_bin
-        # + share_part_time_informal_care_by_age_bin
-        # + share_full_time_informal_care_by_age_bin
-        #
-        # share of informal care in total population by age bin
-        # + share_informal_care_by_age_bin
-        # Care by mother's health by presence of sister
-        # + no_care_mother_health
-        # + informal_care_mother_health
-        # + formal_care_mother_health
-        # + combination_care_mother_health
-        #
+        + share_not_working_informal_care_by_age_bin
+        + share_part_time_informal_care_by_age_bin
+        + share_full_time_informal_care_by_age_bin
+        # #
+        # # share of informal care in total population by age bin
+        # # + share_informal_care_by_age_bin
+        # #
         # Employment transitions
         + no_work_to_no_work
         + no_work_to_part_time
@@ -473,27 +536,27 @@ def simulate_moments(arr, idx):
         + part_time_to_full_time
         + full_time_to_no_work
         + full_time_to_part_time
-        + full_time_to_full_time,
-        # +
+        + full_time_to_full_time
+        +
         # # Caregiving transitions
-        # no_informal_care_to_no_informal_care
-        # + no_informal_care_to_informal_care
-        # + informal_care_to_no_informal_care
-        # + informal_care_to_informal_care
-        # + no_informal_care_to_no_formal_care
-        # + no_informal_care_to_formal_care
-        # + informal_care_to_no_formal_care
-        # + informal_care_to_formal_care
-        # +
-        # #
-        # no_formal_care_to_no_informal_care
-        # + no_formal_care_to_informal_care
-        # + formal_care_to_no_informal_care
-        # + formal_care_to_informal_care
-        # + no_formal_care_to_no_formal_care
-        # + no_formal_care_to_formal_care
-        # + formal_care_to_no_formal_care
-        # + formal_care_to_formal_care,
+        no_informal_care_to_no_informal_care
+        + no_informal_care_to_informal_care
+        + informal_care_to_no_informal_care
+        + informal_care_to_informal_care
+        + no_informal_care_to_no_formal_care
+        + no_informal_care_to_formal_care
+        + informal_care_to_no_formal_care
+        + informal_care_to_formal_care
+        +
+        #
+        no_formal_care_to_no_informal_care
+        + no_formal_care_to_informal_care
+        + formal_care_to_no_informal_care
+        + formal_care_to_informal_care
+        + no_formal_care_to_no_formal_care
+        + no_formal_care_to_formal_care
+        + formal_care_to_no_formal_care
+        + formal_care_to_formal_care,
     )
 
 
@@ -517,6 +580,40 @@ def fit_ols(x, y):
     coef, *_ = jnp.linalg.lstsq(features, y, rcond=None)
 
     return coef
+
+
+def fit_logit(x, y):
+    """Fit a logistic regression model.
+
+    Args:
+        x (jnp.ndarray): Array of shape (n, p) of x-values.
+        y (jnp.ndarray): Array of shape (n, k) of y-values.
+
+    Returns:
+        coef (list)): list of length (k + 1,) of coefficients.
+
+    """
+    # model = LogisticRegression()
+    # model.fit(x, y)
+
+    # # return jnp.array([model.intercept_[0]] + list(model.coef_[0]))
+    # out = [model.intercept_[0]] + list(model.coef_[0])
+
+    # model = LogisticRegression()
+    # try:
+    #     model.fit(x, y)
+    #     out = [model.intercept_[0]] + list(model.coef_[0])
+    # except ValueError:
+    #     out = [np.nan] * (x.shape[1] + 1)
+
+    model = LogisticRegression()
+    try:
+        model.fit(x, y)
+        out = [model.intercept_[0], *model.coef_[0]]
+    except ValueError:
+        out = [np.nan] * (x.shape[1] + 1)
+
+    return out
 
 
 def get_share_by_age(df_arr, ind, choice):
@@ -710,7 +807,27 @@ def create_simulation_array_from_df(data, options, params):
 
     data.loc[:, "age"] = options["start_age"] + period_indices
     data.loc[:, "age_squared"] = data["age"] ** 2
+
+    # Mother age bins
+    data.loc[:, "mother_alive"] = data["mother_health"] < DEAD
+
     data.loc[:, "mother_age"] = options["mother_start_age"] + period_indices
+    data.loc[data["mother_alive"] == False, "mother_age"] = np.nan
+
+    # Define age bins
+    bins = [65, 70, 75, 80, 85, np.inf]
+    labels = ["65_70", "70_75", "75_80", "80_85", "85_plus"]
+
+    data["mother_age_bin"] = pd.cut(
+        data["mother_age"],
+        bins=bins,
+        labels=labels,
+        right=False,
+    )
+
+    dummies = pd.get_dummies(data["mother_age_bin"], prefix="mother_age_bin")
+    data = pd.concat([data, dummies], axis=1)
+    data = data.drop(columns=["mother_age_bin"])
 
     # Financial calculations
     data.loc[:, "wealth"] = data["savings"] + data["consumption"]
@@ -728,31 +845,61 @@ def create_simulation_array_from_df(data, options, params):
     data.loc[:, "lagged_part_time"] = jnp.isin(
         jnp.array(data["lagged_choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    )
 
     data.loc[:, "choice_retired"] = jnp.isin(
         jnp.array(data["choice"]),
         RETIREMENT,
-    ).astype(np.int8)
+    )
     data.loc[:, "choice_part_time"] = jnp.isin(
         jnp.array(data["choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    )
     data.loc[:, "choice_full_time"] = jnp.isin(
         jnp.array(data["choice"]),
         FULL_TIME,
-    ).astype(np.int8)
-    data.loc[:, "choice_informal_care"] = jnp.isin(
+    )
+    # data.loc[:, "choice_informal_care"] = jnp.isin(
+    #     jnp.array(data["choice"]),
+    #     INFORMAL_CARE,
+    # )
+
+    data.loc[:, "choice_no_care"] = jnp.isin(
         jnp.array(data["choice"]),
-        INFORMAL_CARE,
-    ).astype(np.int8)
+        NO_CARE,
+    )
+    data.loc[:, "choice_pure_informal_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        PURE_INFORMAL_CARE,
+    )
+    data.loc[:, "choice_combination_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        COMBINATION_CARE,
+    )
+    data.loc[:, "choice_formal_care"] = jnp.isin(
+        jnp.array(data["choice"]),
+        FORMAL_CARE,
+    )
+
+    # Logit regressison: Trim subsample
+    # Define the columns to be set to NaN
+    columns_to_nan = [
+        "choice_no_care",
+        "choice_pure_informal_care",
+        "choice_combination_care",
+        "choice_formal_care",
+    ]
+    columns_to_nan += [col for col in data.columns if col.startswith("mother_age_bin")]
+
+    # Set the specified columns to NaN where mother_health != 1
+    data.loc[data["mother_health"] != BAD_HEALTH, columns_to_nan] = np.nan
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
         params["wage_constant"]
         + params["wage_experience"] * data["experience"]
         + params["wage_experience_squared"] * data["experience_squared"]
-        + params["wage_high_education"] * data["high_educ"]
+        # + params["wage_high_education"] * data["high_educ"]
         + params["wage_part_time"] * data["lagged_part_time"]
     )
 
@@ -772,9 +919,11 @@ def create_simulation_array_from_df(data, options, params):
 
     data = data.dropna()
 
-    return jnp.array(data), column_indices
+    # return np.asarray(data).astype(float), column_indices
+    return jnp.array(data, dtype=float), column_indices
 
 
+@pytask.mark.skip()
 def create_simulation_array_from_df_counterfactual(data, options, params):
     """Create simulation array from dict."""
     data = data.copy()  # Make a copy to avoid modifying a slice
@@ -806,31 +955,31 @@ def create_simulation_array_from_df_counterfactual(data, options, params):
     data.loc[:, "lagged_part_time"] = jnp.isin(
         jnp.array(data["lagged_choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
 
     data.loc[:, "choice_retired"] = jnp.isin(
         jnp.array(data["choice"]),
         RETIREMENT,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_part_time"] = jnp.isin(
         jnp.array(data["choice"]),
         PART_TIME,
-    ).astype(np.int8)
+    ).astype(np.uint8)
     data.loc[:, "choice_full_time"] = jnp.isin(
         jnp.array(data["choice"]),
         FULL_TIME,
-    ).astype(np.int8)
-    data.loc[:, "choice_informal_care"] = jnp.isin(
-        jnp.array(data["choice"]),
-        INFORMAL_CARE,
-    ).astype(np.int8)
+    ).astype(np.uint8)
+    # data.loc[:, "choice_informal_care"] = jnp.isin(
+    #     jnp.array(data["choice"]),
+    #     INFORMAL_CARE,
+    # ).astype(np.uint8)
 
     # Wage calculations
     data.loc[:, "log_wage"] = (
         params["wage_constant"]
         + params["wage_experience"] * data["experience"]
         + params["wage_experience_squared"] * data["experience_squared"]
-        + params["wage_high_education"] * data["high_educ"]
+        # + params["wage_high_education"] * data["high_educ"]
         + params["wage_part_time"] * data["lagged_part_time"]
     )
 
@@ -909,7 +1058,7 @@ def create_simulation_array(sim_dict, options, params):
     consumption = sim_dict["consumption"].ravel()
     lagged_choice = sim_dict["lagged_choice"].ravel()
     choice = sim_dict["choice"].ravel()
-    high_educ = sim_dict["high_educ"].ravel()
+    # high_educ = sim_dict["high_educ"].ravel()
     experience = sim_dict["experience"].ravel()
     income_shock = sim_dict["income_shock"].ravel()
     mother_health = sim_dict["mother_health"].ravel()
@@ -936,7 +1085,7 @@ def create_simulation_array(sim_dict, options, params):
         params["wage_constant"]
         + params["wage_experience"] * experience
         + params["wage_experience_squared"] * experience_squared
-        + params["wage_high_education"] * high_educ
+        # + params["wage_high_education"] * high_educ
         + params["wage_part_time"] * lagged_part_time
     )
 
@@ -969,7 +1118,7 @@ def create_simulation_array(sim_dict, options, params):
             is_informal_care,
             experience,
             experience_squared,
-            high_educ,
+            # high_educ,
             mother_health,
             has_sibling,
         ),
@@ -993,9 +1142,9 @@ def create_simulation_array(sim_dict, options, params):
         "choice_informal_care": 14,
         "experience": 15,
         "experience_squared": 16,
-        "high_educ": 17,
-        "mother_health": 18,
-        "has_sibling": 19,
+        # "high_educ": 17,
+        "mother_health": 17,
+        "has_sibling": 18,
     }
 
     return arr, idx
@@ -1004,7 +1153,7 @@ def create_simulation_array(sim_dict, options, params):
 def create_simulation_df_from_dict(sim_dict):
     n_periods, n_agents, n_choices = sim_dict["taste_shocks"].shape
 
-    keys_to_drop = ["taste_shocks"]
+    keys_to_drop = ["taste_shocks", "value_choice"]
     dict_to_df = {key: sim_dict[key] for key in sim_dict if key not in keys_to_drop}
 
     return pd.DataFrame(
