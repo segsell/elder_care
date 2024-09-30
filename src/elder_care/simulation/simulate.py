@@ -547,8 +547,7 @@ def simulate_moments(arr, idx):
         + no_informal_care_to_formal_care
         + informal_care_to_no_formal_care
         + informal_care_to_formal_care
-        +
-        no_formal_care_to_no_informal_care
+        + no_formal_care_to_no_informal_care
         + no_formal_care_to_informal_care
         + formal_care_to_no_informal_care
         + formal_care_to_informal_care
