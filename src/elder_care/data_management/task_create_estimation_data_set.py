@@ -74,6 +74,12 @@ CHANGED_MULTIPLE_TIMES = 5.0
 
 HIGH_WAGE_THRESHOLD = 100
 
+
+AGE_THRESHOLD_PARENT = 65
+AGE_SIXTEEN = 16
+MAX_DISTANCE_EVENT_STUDY = 999
+YEAR_NINE = 9
+
 FURTHER_EDUC = [
     "dn012d1",
     "dn012d2",
@@ -910,19 +916,20 @@ def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
         0,
     )
 
-    # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (dat[outcome] > 0)]
-    pre_treatment_age = dat[(dat["distance_to_care"] == 0) & (dat["age"] < 65)]
+    pre_treatment_age = dat[
+        (dat["distance_to_care"] == 0) & (dat["age"] < AGE_THRESHOLD_PARENT)
+    ]
     valid_ids = pre_treatment_age["mergeid"].unique()
 
-    pre_treatment_working = dat[
-        (dat["distance_to_care"].isin([-2, -1])) & (dat["working"] == True)
-    ]
-    valid_ids_working = pre_treatment_working["mergeid"].unique()
+    # pre_treatment_working = dat[
+    #     (dat["distance_to_care"].isin([-2, -1])) & (dat["working"] == True)
+    # ]
+    # valid_ids_working = pre_treatment_working["mergeid"].unique()
 
     treatment_group = dat[
         (dat["mergeid"].isin(valid_ids))
         # & (dat["mergeid"].isin(valid_ids_working))
-        & (dat["distance_to_care"] > -999)
+        & (dat["distance_to_care"] > -MAX_DISTANCE_EVENT_STUDY)
         # & (dat["working"] == True)
         # & (dat["gender"] == gender)
     ]
@@ -935,12 +942,8 @@ def create_time_to_caregiving(dat, parental_care="intensive_care_no_other"):
     treatment_group.to_csv(path_to_save, index=False)
 
 
-def create_treatment_dummy_parent_in_bad_health(dat, parent):
+def create_treatment_dummy_parent_in_bad_health(dat):
     dat = dat.sort_values(by=["mergeid", "int_year"])
-
-    # dat["first_treatment_year"] = (
-    #     (dat[f"{parent}_lagged_health"] == 0) & (dat[f"{parent}_health"] == 1)
-    # ).astype(int)
 
     # Identify the first treatment year where mother_health switches from 0 to 1
     treatment_condition_mother = (dat["mother_lagged_health"] == 0) & (
@@ -985,7 +988,8 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
     # Calculate the distance to the treatment year
     dat["distance_to_treat"] = dat["int_year"] - dat["treatment_year"]
 
-    # For individuals who never receive the treatment, set distance_to_treat to NaN or some other value
+    # For individuals who never receive the treatment, set distance_to_treat to NaN
+    # or some other value
     dat["distance_to_treat"] = dat["distance_to_treat"].where(
         dat["treatment_year"].notna(),
         0,
@@ -993,19 +997,22 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
 
     # gender = FEMALE
 
-    # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (dat[outcome] > 0)]
-    pre_treatment_age = dat[(dat["distance_to_treat"] == 0) & (dat["age"] < 65)]
+    # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (
+    # dat[outcome] > 0)]
+    pre_treatment_age = dat[
+        (dat["distance_to_treat"] == 0) & (dat["age"] < AGE_THRESHOLD_PARENT)
+    ]
     valid_ids = pre_treatment_age["mergeid"].unique()
 
-    pre_treatment_working = dat[
-        (dat["distance_to_treat"].isin([-2, -1])) & (dat["working"] == True)
-    ]
-    valid_ids_working = pre_treatment_working["mergeid"].unique()
+    # pre_treatment_working = dat[
+    #     (dat["distance_to_treat"].isin([-2, -1])) & (dat["working"] == True)
+    # ]
+    # valid_ids_working = pre_treatment_working["mergeid"].unique()
 
     treatment_group = dat[
         (dat["mergeid"].isin(valid_ids))
         # & (dat["mergeid"].isin(valid_ids_working))
-        & (dat["distance_to_treat"] > -999)
+        & (dat["distance_to_treat"] > -MAX_DISTANCE_EVENT_STUDY)
         # & (dat["working"] == True)
         # & (dat["gender"] == gender)
     ]
@@ -1015,12 +1022,12 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
     #     "distance_to_treat"
     # ].apply(bin_distance_to_treat)
 
-    # treatment_group = dat[(dat["distance_to_treat"] > -999) & (dat["gender"] == gender)]
+    # treatment_group = dat[(dat["distance_to_treat"] > -999) & (
+    # dat["gender"] == gender)]
 
-    #
     # _conditional_means = (
-    #     treatment_group.groupby("distance_to_treat")[outcome].mean().reset_index()
-    # )
+    #     treatment_group.groupby("distance_to_treat")[
+    # outcome].mean().reset_index())
 
     treatment_group["binned_distance_to_treat"] = treatment_group[
         "distance_to_treat"
@@ -1050,72 +1057,6 @@ def create_treatment_dummy_parent_in_bad_health(dat, parent):
     return dat
 
 
-# def plot_conditional_means_event_study(dat, outcome="working_part_or_full_time"):
-#     import matplotlib.pyplot as plt
-
-#     outcome = "ep013_"
-
-#     treatment_group = dat[(dat["distance_to_treat"] > -999) & (dat["gender"] == FEMALE)]
-
-#     # Group by distance_to_treat and calculate the mean of the outcome variable
-#     _conditional_means = (
-#         treatment_group.groupby("distance_to_treat")[outcome].mean().reset_index()
-#     )
-
-#     treatment_group["binned_distance_to_treat"] = treatment_group[
-#         "distance_to_treat"
-#     ].apply(bin_distance_to_treat)
-
-#     # Group by binned_distance_to_treat and calculate the mean of the outcome variable
-#     conditional_means = (
-#         treatment_group.groupby("binned_distance_to_treat")[outcome]
-#         .mean()
-#         .reset_index()
-#     )
-
-#     # Ensure the bins are in the correct order
-#     bin_order = [
-#         "<= -7",
-#         "-6 to -5",
-#         "-4 to -3",
-#         "-2 to -1",
-#         "0",
-#         "1 to 2",
-#         "3 to 4",
-#         "5 to 6",
-#         ">= 7",
-#     ]
-#     conditional_means["binned_distance_to_treat"] = pd.Categorical(
-#         conditional_means["binned_distance_to_treat"],
-#         categories=bin_order,
-#         ordered=True,
-#     )
-#     conditional_means = conditional_means.sort_values("binned_distance_to_treat")
-
-#     # Plot the conditional means
-#     plt.figure(figsize=(10, 6))
-#     plt.plot(
-#         conditional_means["binned_distance_to_treat"],
-#         conditional_means[outcome],
-#         marker="o",
-#         linestyle="-",
-#         color="b",
-#         label="Treatment Group (FEMALE)",
-#     )
-
-#     # Adding titles and labels
-#     plt.title(
-#         f"Event Study: Conditional Means of {outcome} by Distance to Treatment (Binned)"
-#     )
-#     plt.xlabel("Binned Distance to Treatment (years)")
-#     plt.ylabel(f"Mean {outcome}")
-#     plt.legend()
-
-#     # Show the plot
-#     plt.grid(True)
-#     plt.show()
-
-
 def plot_conditional_means_event_study(dat, outcome="full_time"):
     # def plot_conditional_means_event_study(dat, outcome="working"):
     # def plot_conditional_means_event_study(dat, outcome="working_part_or_full_time"):
@@ -1141,9 +1082,9 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
         .set_index(["mergeid", "int_year"])
     )
 
-    scalars = ["age", "int_year"]
-    factors = data.columns[data.columns.str.contains("mother")]
-    exog = factors.union(scalars)
+    # scalars = ["age", "int_year"]
+    # factors = data.columns[data.columns.str.contains("mother")]
+    # exog = factors.union(scalars)
 
     mod = lm.PanelOLS(
         data[outcome],
@@ -1180,32 +1121,35 @@ def plot_conditional_means_event_study(dat, outcome="full_time"):
 
     # Adding titles and labels
     plt.title(
-        f"Event Study: Conditional Means of {outcome} by Distance to Treatment (Binned)",
+        f"Event Study: Conditional Means of {outcome} by Binned Distance to Treatment",
     )
     plt.xlabel("Binned Distance to Treatment (years)")
     plt.ylabel(f"Mean {outcome}")
     plt.legend()
 
     # Show the plot
-    plt.grid(True)
+    plt.grid()
     plt.show()
 
 
 def _calculate_conditional_means(dat, gender, outcome):
 
-    # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (dat[outcome] > 0)]
-    pre_treatment_age = dat[(dat["distance_to_treat"] == 0) & (dat["age"] < 65)]
+    # pre_treatment_condition = dat[(dat["distance_to_treat"] == -2) & (
+    # dat[outcome] > 0)]
+    pre_treatment_age = dat[
+        (dat["distance_to_treat"] == 0) & (dat["age"] < AGE_THRESHOLD_PARENT)
+    ]
     valid_ids = pre_treatment_age["mergeid"].unique()
 
-    pre_treatment_working = dat[
-        (dat["distance_to_treat"].isin([-2, -1])) & (dat["working"] == True)
-    ]
-    valid_ids_working = pre_treatment_working["mergeid"].unique()
+    # pre_treatment_working = dat[
+    #     (dat["distance_to_treat"].isin([-2, -1])) & (dat["working"] == True)
+    # ]
+    # valid_ids_working = pre_treatment_working["mergeid"].unique()
 
     treatment_group = dat[
         (dat["mergeid"].isin(valid_ids))
         # & (dat["mergeid"].isin(valid_ids_working))
-        & (dat["distance_to_treat"] > -999)
+        & (dat["distance_to_treat"] > -MAX_DISTANCE_EVENT_STUDY)
         # & (dat["working"] == True)
         & (dat["gender"] == gender)
     ]
@@ -1215,12 +1159,12 @@ def _calculate_conditional_means(dat, gender, outcome):
     #     "distance_to_treat"
     # ].apply(bin_distance_to_treat)
 
-    # treatment_group = dat[(dat["distance_to_treat"] > -999) & (dat["gender"] == gender)]
+    # treatment_group = dat[(dat["distance_to_treat"] > -999) & (
+    # dat["gender"] == gender)]
 
-    #
-    _conditional_means = (
-        treatment_group.groupby("distance_to_treat")[outcome].mean().reset_index()
-    )
+    # _conditional_means = (
+    #     treatment_group.groupby("distance_to_treat")[outcome].mean().reset_index()
+    # )
 
     treatment_group["binned_distance_to_treat"] = treatment_group[
         "distance_to_treat"
@@ -1255,34 +1199,29 @@ def _calculate_conditional_means(dat, gender, outcome):
         categories=bin_order,
         ordered=True,
     )
-    conditional_means = conditional_means.sort_values("binned_distance_to_treat")
 
-    return conditional_means
+    return conditional_means.sort_values("binned_distance_to_treat")
 
 
 def weighted_mean(data, values, weights):
     return (data[values] * data[weights]).sum() / data[weights].sum()
 
 
-def bin_distance_to_treat(distance):
-    if distance == 0:
-        return 0
-    elif distance in [-1, -2]:
+def bin_distance_to_treat(distance):  # noqa: PLR0911
+    if distance in (-1, -2):
         return -2
-    elif distance in [-3, -4]:
+    elif distance in (-3, -4):  # noqa: RET505
         return -4
-    elif distance in [-5, -6, -7, -8]:
+    elif distance in (-5, -6, -7, -8):
         return -6
-    # elif distance in [-7, -8]:
-    #     return -8
-    elif distance <= -9:
+    elif distance <= -YEAR_NINE:
         return -9
-    elif distance in [1, 2]:
+    elif distance == 0:
+        return 0
+    elif distance in (1, 2):
         return 2
-    elif distance in [3, 4, 5, 6]:
+    elif distance in (3, 4, 5, 6):
         return 4
-    # elif distance in [5, 6, 7, 8]:
-    #     return 6
     # elif distance in [7, 8]:
     #     return 8
     else:
@@ -1331,7 +1270,7 @@ def create_age_parent_and_parent_alive(dat, parent):
     # ==============================================================================
 
     dat[f"{parent}_age"] = np.where(
-        dat[f"{parent}_age"] < MIN_AGE + 16,
+        dat[f"{parent}_age"] < MIN_AGE + AGE_SIXTEEN,
         np.nan,
         dat[f"{parent}_age"],
     )

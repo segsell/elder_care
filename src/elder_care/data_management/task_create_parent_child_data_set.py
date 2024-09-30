@@ -49,6 +49,8 @@ AT_LEAST_TWO = 2
 
 DEFAULT = 0
 
+YEAR_NINE = 9
+
 
 def table(df_col):
     """Return frequency table."""
@@ -933,7 +935,8 @@ def prepare_event_study_data(dat, path_to_save):
     # Calculate the distance to the treatment year
     dat["distance_to_treat"] = dat["int_year"] - dat["treatment_year"]
 
-    # For individuals who never receive the treatment, set distance_to_treat to NaN or some other value
+    # For individuals who never receive the treatment, set distance_to_treat to NaN
+    # or some other value
     dat["distance_to_treat"] = dat["distance_to_treat"].where(
         dat["treatment_year"].notna(),
         0,
@@ -948,50 +951,21 @@ def prepare_event_study_data(dat, path_to_save):
     treatment_group.to_csv(path_to_save, index=False)
 
 
-# def bin_distance_to_treat(distance):
-#     if distance == 0:
-#         return 0
-#     elif distance in [-1, -2]:
-#         return -2
-#     elif distance in [-3, -4]:
-#         return -4
-#     elif distance in [-5, -6, -7, -8]:
-#         return -6
-#     # elif distance in [-7, -8]:
-#     #     return -8
-#     elif distance <= -9:
-#         return -9
-#     elif distance in [1, 2]:
-#         return 2
-#     elif distance in [3, 4]:
-#         return 4
-#     elif distance in [5, 6, 7, 8]:
-#         return 6
-#     # elif distance in [7, 8]:
-#     #     return 8
-#     else:
-#         return 9
-
-
-def bin_distance_to_treat(distance):
+def bin_distance_to_treat(distance):  # noqa: PLR0911
     if distance == 0:
         return 0
-    elif distance in [-1, -2]:
+    elif distance in (-1, -2):  # noqa: RET505
         return -2
-    elif distance in [-3, -4]:
+    elif distance in (-3, -4):
         return -4
-    elif distance in [-5, -6, -7, -8]:
+    elif distance in (-5, -6, -7, -8):
         return -6
-    # elif distance in [-7, -8]:
-    #     return -8
-    elif distance <= -9:
+    elif distance <= -YEAR_NINE:
         return -9
-    elif distance in [1, 2]:
+    elif distance in (1, 2):
         return 2
-    elif distance in [3, 4, 5, 6]:
+    elif distance in (3, 4, 5, 6):
         return 4
-    # elif distance in [5, 6, 7, 8]:
-    #     return 6
     # elif distance in [7, 8]:
     #     return 8
     else:

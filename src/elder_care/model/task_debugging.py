@@ -8,12 +8,12 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pytask
+from pytask import Product
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods
 from dcegm.solve import get_solve_func_for_model
-from pytask import Product
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
@@ -182,7 +182,6 @@ def task_debugging(
         endog_grid_solved=results[2],
         value_solved=results[0],
         policy_solved=results[1],
-        # choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
         model=model_loaded,
     )
     save_dict_to_pickle(sim_dict, path_to_save_sim_dict)
@@ -307,7 +306,5 @@ def task_debug_simulate():
 
     arr, idx = create_simulation_array_from_df(data=data, options=options)
     out = simulate_moments(arr, idx)
-
-    # breakpoint()
 
     return out, arr
