@@ -88,6 +88,11 @@ lint.extend-ignore = [
 "src/elder_care/model/task_specify_model.py" = ["ERA001"]
 "src/elder_care/model/utility_functions.py" = ["ERA001"]
 "src/elder_care/simulation/simulate.py" = ["ERA001"]
+"src/elder_care/data_management/task_create_estimation_data_set.py" = ["ERA001"]
+"src/elder_care/data_management/task_create_parent_child_data_set.py" = ["ERA001"]
+"src/elder_care/counterfactual/task_simulate_counterfactual.py" = ["ERA001"]
+"src/elder_care/exogenous_processes/task_create_exog_processes_soep.py" = ["ERA001"]
+"src/elder_care/moments/task_create_care_mix_coefficients.py" = ["ERA001"]
 
 
 

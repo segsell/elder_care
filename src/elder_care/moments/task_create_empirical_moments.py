@@ -16,8 +16,6 @@ import pandas as pd
 from pytask import Product
 from sklearn.linear_model import LogisticRegression
 
-FEMALE = 2
-
 from elder_care.config import BLD
 from elder_care.model.shared import (
     BAD_HEALTH,
@@ -28,6 +26,7 @@ from elder_care.model.shared import (
     MIN_AGE,
 )
 
+FEMALE = 2
 AGE_65 = 65
 
 
@@ -36,7 +35,7 @@ def table(df_col):
 
 
 # @pytask.mark.skip(reason="Respecifying moments.")
-def task_create_moments(
+def task_create_moments(  # noqa: PLR0915
     path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
     path_to_parent_child_hh_weight: Path = BLD
     / "data"
@@ -305,29 +304,27 @@ def task_create_moments(
     )
 
     # # ===============================================================================
-    df = parent.loc[(parent["health"] == 1) | (parent["nursing_home"] == 1)]
-    df = df[df["age"] >= 65]
+    parent_ill = parent.loc[(parent["health"] == 1) | (parent["nursing_home"] == 1)]
+    parent_ill = parent_ill[parent_ill["age"] >= AGE_65]
 
     age_labels = ["65-69", "70-74", "75-79", "80-84", "85+"]
 
-    df["age_bin"] = pd.cut(
-        df["age"],
+    parent_ill["age_bin"] = pd.cut(
+        parent_ill["age"],
         bins=[65, 70, 75, 80, 85, np.inf],
         right=False,
         labels=age_labels,
         include_lowest=True,
     )
-    age_dummies = pd.get_dummies(df["age_bin"], drop_first=True)
-    df = pd.concat([df, age_dummies], axis=1)
+    age_dummies = pd.get_dummies(parent_ill["age_bin"], drop_first=True)
+    parent_ill = pd.concat([parent_ill, age_dummies], axis=1)
 
     logit_coeffs_nursing_home = weighted_logistic_regression(
-        df,
+        parent_ill,
         age_dummies,
         outcome="nursing_home",
         weight=weight,
     )
-
-    # # =============================================================================
 
     # ================================================================================
     # Labor and caregiving transitions
@@ -2410,7 +2407,8 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
     # # Keep people aged 65 and older
     # mother_filtered = mother_filtered[mother_filtered["age"] >= 65]
 
-    # # Create 5-year age bins from [65, 70), [70, 75) etc. up to [80, 85). The final age bin is 80+
+    # # Create 5-year age bins from [65, 70), [70, 75) etc. up to [80, 85).
+    # # The final age bin is 80+
     # age_bins = [65, 70, 75, 80, np.inf]
     # age_labels = ["65-69", "70-74", "75-79", "80+"]
     # mother_filtered["age_bin"] = pd.cut(
@@ -2429,7 +2427,7 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
 
     # Define the features (age dummies) and the target (y_variable)
     features = age_dummies.columns.tolist()
-    X = mother[features]
+    X = mother[features]  # noqa: N806
     y = mother[outcome]
 
     # Combine X, y, and weights into a single DataFrame to drop rows with NaNs
@@ -2437,7 +2435,7 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
 
     data = data.dropna()
 
-    X = data[features]
+    X = data[features]  # noqa: N806
     y = data[outcome]
     weights = data[weight]
 
@@ -2453,8 +2451,8 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
     # _series = pd.Series(df["Coefficient"].values, index=df["Feature"])
     # _series.index.name = None
 
-    coefficients_list = [model.intercept_[0]] + list(model.coef_[0])
-    features = ["intercept"] + list(features)
+    coefficients_list = [model.intercept_[0], *model.coef_[0]]
+    features = ["intercept", *features]
     coeffs = pd.Series(coefficients_list, index=features)
     coeffs.index.name = None
 

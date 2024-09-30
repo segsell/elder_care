@@ -24,7 +24,7 @@ def prob_part_time_offer(period, lagged_choice, options, params):
     logit = (
         params["part_time_constant"]
         + params["part_time_not_working_last_period"] * is_not_working(lagged_choice)
-        # + params["part_time_high_education"] * high_educ
+        # + params["part_time_high_education"] * high_educ # noqa: ERA001
         + params["part_time_above_retirement_age"] * (age >= options["retirement_age"])
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))
@@ -48,7 +48,7 @@ def prob_full_time_offer(period, lagged_choice, options, params):
     logit = (
         params["full_time_constant"]
         + params["full_time_not_working_last_period"] * is_not_working(lagged_choice)
-        # + params["full_time_high_education"] * high_educ
+        # + params["full_time_high_education"] * high_educ # noqa: ERA001
         + params["full_time_above_retirement_age"] * (age >= options["retirement_age"])
     )
     prob_logit = 1 / (1 + jnp.exp(-logit))

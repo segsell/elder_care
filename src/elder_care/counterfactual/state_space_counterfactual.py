@@ -156,7 +156,5 @@ def get_choice_set_only_informal_care(
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
-    # else:
-    #     feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
 
     return np.array(feasible_choice_set)

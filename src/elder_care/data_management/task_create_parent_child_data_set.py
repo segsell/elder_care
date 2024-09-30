@@ -175,7 +175,7 @@ def create_couple_data(data):
     return dat_female.merge(dat_partner_male, on=["mergeid", "int_year"], how="inner")
 
 
-def multiply_rows_with_weight(dat, weight):
+def multiply_rows_with_weight(dat, weight):  # noqa: PLR0915
     # Create a DataFrame of weights with the same shape as dat
     weights = dat[weight].to_numpy().reshape(-1, 1)
 

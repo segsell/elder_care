@@ -99,7 +99,7 @@ def budget_constraint(
     wage_from_previous_period = get_exog_stochastic_wage(
         lagged_choice=lagged_choice,
         experience=experience,
-        # high_educ=high_educ,
+        # high_educ=high_educ, # noqa: ERA001
         wage_shock=income_shock_previous_period,
         params=params,
     )
@@ -214,7 +214,7 @@ def get_exog_stochastic_wage(
         params["wage_constant"]
         + params["wage_experience"] * (experience / 2)
         + params["wage_experience_squared"] * (experience / 2) ** 2
-        # + params["wage_high_education"] * high_educ
+        # + params["wage_high_education"] * high_educ # noqa: ERA001
         + params["wage_part_time"] * is_part_time(lagged_choice)
     )
 
@@ -229,7 +229,7 @@ def get_exog_spousal_income(period, options):
         options["spousal_income_constant"]
         + options["spousal_income_age"] * age
         + options["spousal_income_age_squared"] * age**2
-        # + options["spousal_income_high_education"] * high_educ
+        # + options["spousal_income_high_education"] * high_educ # noqa: ERA001
         + options["spousal_income_above_retirement_age"]
         * (age >= options["retirement_age"])
     )

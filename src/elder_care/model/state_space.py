@@ -92,8 +92,6 @@ def get_state_specific_feasible_choice_set(
         feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
     else:
         feasible_choice_set = [i for i in feasible_choice_set if i in OUT_OF_LABOR]
-    # else:
-    #     feasible_choice_set = [i for i in feasible_choice_set if i in WORK_AND_NO_WORK]
 
     return np.array(feasible_choice_set)
 
@@ -123,7 +121,7 @@ def update_endog_state(
 
     next_state["period"] = period + 1
     next_state["lagged_choice"] = choice
-    # next_state["high_educ"] = high_educ
+    # next_state["high_educ"] = high_educ # noqa: ERA001
 
     below_exp_cap_part = experience + 1 < options["experience_cap"]
     below_exp_cap_full = experience + 2 < options["experience_cap"]

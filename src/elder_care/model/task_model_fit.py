@@ -503,7 +503,7 @@ SIM_MOMENTS = np.array(
 )
 
 
-# @pytask.mark.skip()
+@pytask.mark.skip()
 def task_model_fit(
     path_to_empirical_moments=BLD
     / "moments"
@@ -634,88 +634,15 @@ def plot_labor_shares(df, working_status):
     plt.tight_layout()
 
 
-# def plot_labor_shares_informal_care(df, working_status):
-#     """Plots the labor shares of empirical and simulated moments.
-
-#     Args:
-#         df (pandas.DataFrame): DataFrame with the index as "working_status_age_x
-#             and two columns 'empirical' and 'simulated'.
-#         working_status (str): Working status to filter the DataFrame on.
-
-#     # ages = filtered_df.index.str.replace(pattern, "").astype(
-#     #     int
-#     # )
-
-#     """
-#     # Prepare the data: filter rows for the specified working status and extract age
-#     pattern = f"{working_status}_age_"
-#     filtered_df = df[df.index.str.startswith(pattern)]
-#     ages = np.array(
-#         [
-#             40,
-#             41,
-#             42,
-#             43,
-#             44,
-#             45,
-#             46,
-#             47,
-#             48,
-#             49,
-#             50,
-#             51,
-#             52,
-#             53,
-#             54,
-#             55,
-#             56,
-#             57,
-#             58,
-#             59,
-#             60,
-#             61,
-#             62,
-#             63,
-#             64,
-#             65,
-#             66,
-#             67,
-#             68,
-#             69,
-#         ],
-#     )
-
-#     # Plotting
-#     plt.figure(figsize=(12, 6))
-#     plt.plot(ages, filtered_df["empirical"][:30], label="Empirical Moments", marker="o")
-#     plt.plot(
-#         ages,
-#         filtered_df["simulated"][:30],
-#         label="Simulated Moments",
-#         linestyle="--",
-#         marker="x",
-#     )
-
-#     plt.title(f"Labor Shares - {working_status.capitalize()}")
-#     plt.xlabel("Age")
-#     plt.ylabel("Labor Shares")
-#     plt.xticks(
-#         ages,
-#         rotation=45,
-#     )  # Set x-ticks to be the ages, rotate for better visibility
-#     plt.legend()
-#     plt.grid()
-#     plt.tight_layout()
-#     plt.show()
-
-
 def plot_labor_shares_informal_care(df, working_status, path_to_save):
     """Plots the labor shares of empirical and simulated moments.
 
     Args:
-        df (pandas.DataFrame): DataFrame with the index as "working_status_age_lower_upper"
-            and two columns 'empirical' and 'simulated'.
+        df (pandas.DataFrame): DataFrame with the index as
+            "working_status_age_lower_upper" and two columns 'empirical' and
+            'simulated'.
         working_status (str): Working status to filter the DataFrame on.
+        path_to_save (str): Path to save the plot.
 
     """
     # Define the age intervals
@@ -742,10 +669,6 @@ def plot_labor_shares_informal_care(df, working_status, path_to_save):
     plt.plot(ages, empirical_values, label="Empirical", marker="o")
     plt.plot(ages, simulated_values, label="Simulated", linestyle="--", marker="x")
 
-    # plt.title(f"Labor Shares - {working_status.capitalize()}")
-    # plt.xlabel("Age Interval")
-    # plt.ylabel("Labor Shares")
-    # plt.title("")
     plt.ylim(0, 1)  # Adjust the limits as needed
     plt.xlabel("Age Bin", fontsize=16)
     plt.ylabel("Share", fontsize=16)

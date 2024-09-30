@@ -8,12 +8,12 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pytask
+from pytask import Product
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods
 from dcegm.solve import get_solve_func_for_model
-from pytask import Product
-
 from elder_care.config import BLD
 from elder_care.counterfactual.state_space_counterfactual import (
     create_state_space_functions_no_informal_care,
@@ -64,6 +64,9 @@ from elder_care.utils import load_dict_from_pickle, save_dict_to_pickle
 
 jax.config.update("jax_enable_x64", True)  # noqa: FBT003
 
+FOUR_YEARS = 4
+PERIOD_40 = 40
+
 # Still good!
 
 PROGRESS = {
@@ -102,7 +105,7 @@ def task_simulate_benchmark(
     path_to_save_result: Annotated[Path, Product] = BLD
     / "counterfactual"
     / "benchmark_result.pkl",
-    path_to_save_sim_dict: Annotated[Path, Product] = BLD
+    path_to_save_sim_dict: Annotated[Path, Product] = BLD  # noqa: ARG001
     / "counterfactual"
     / "benchmark_dict.pkl",
 ):
@@ -180,25 +183,25 @@ def task_simulate_benchmark(
         options=options,
         params=PROGRESS,
     )
-    out = simulate_moments(arr, idx)  # 159
+    # out = simulate_moments(arr, idx)  # 159
 
     # summary statistics
     # Filter the DataFrame based on the given conditions
     filtered_data = data[
         (data["informal_care_ever"] == True)
-        & (data["informal_care_years"] >= 4)
-        & (data.index.get_level_values("period") == 40)
+        & (data["informal_care_years"] >= FOUR_YEARS)
+        & (data.index.get_level_values("period") == PERIOD_40)
     ]
-    mean_cumsum_total_NPV_income = filtered_data["cumsum_total_NPV_income"].mean()
+    mean_cumsum_total_npv_income = filtered_data["cumsum_total_NPV_income"].mean()
 
     filtered_data_raw = data[
         (data["informal_care_ever"] == True)
-        & (data["informal_care_years"] >= 4)
-        & (data.index.get_level_values("period") == 40)
+        & (data["informal_care_years"] >= FOUR_YEARS)
+        & (data.index.get_level_values("period") == PERIOD_40)
     ]
     mean_cumsum_total_income = filtered_data_raw["cumsum_total_income"].mean()
 
-    breakpoint()
+    return mean_cumsum_total_income, mean_cumsum_total_npv_income
 
 
 @pytask.mark.skip()
@@ -206,7 +209,7 @@ def task_simulate_counterfactual_no_informal_care(
     path_to_save_result: Annotated[Path, Product] = BLD
     / "counterfactual"
     / "no_informal_care_result.pkl",
-    path_to_save_sim_dict: Annotated[Path, Product] = BLD
+    path_to_save_sim_dict: Annotated[Path, Product] = BLD  # noqa: ARG001
     / "counterfactual"
     / "no_informal_care_dict.pkl",
 ):
@@ -284,28 +287,28 @@ def task_simulate_counterfactual_no_informal_care(
         options=options,
         params=PROGRESS,
     )
-    out = simulate_moments(arr, idx)  # 159
+    # out = simulate_moments(arr, idx)  # 159
 
     # summary statistics
     # Filter the DataFrame based on the given conditions
     filtered_data = data[
         (data["informal_care_ever"] == True)
-        & (data["informal_care_years"] >= 4)
-        & (data.index.get_level_values("period") == 40)
+        & (data["informal_care_years"] >= FOUR_YEARS)
+        & (data.index.get_level_values("period") == PERIOD_40)
     ]
-    mean_cumsum_total_NPV_income = filtered_data["cumsum_total_NPV_income"].mean()
+    mean_cumsum_total_npv_income = filtered_data["cumsum_total_NPV_income"].mean()
 
     filtered_data_raw = data[
         (data["informal_care_ever"] == True)
-        & (data["informal_care_years"] >= 4)
-        & (data.index.get_level_values("period") == 40)
+        & (data["informal_care_years"] >= FOUR_YEARS)
+        & (data.index.get_level_values("period") == PERIOD_40)
     ]
     mean_cumsum_total_income = filtered_data_raw["cumsum_total_income"].mean()
 
-    breakpoint()
+    return mean_cumsum_total_income, mean_cumsum_total_npv_income
 
 
-def prepare_data_for_counterfactual_analysis(data, options, params):
+def prepare_data_for_counterfactual_analysis(data, options, params):  # noqa: PLR0915
     """Create simulation array from dict."""
     data = data.copy()  # Make a copy to avoid modifying a slice
 

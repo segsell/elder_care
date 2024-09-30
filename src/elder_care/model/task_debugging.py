@@ -7,12 +7,12 @@ import jax
 import jax.numpy as jnp
 import pandas as pd
 import pytask
+from pytask import Product
+
 from dcegm.pre_processing.setup_model import load_and_setup_model
 from dcegm.simulation.sim_utils import create_simulation_df
 from dcegm.simulation.simulate import simulate_all_periods
 from dcegm.solve import get_solve_func_for_model
-from pytask import Product
-
 from elder_care.config import BLD
 from elder_care.model.budget import budget_constraint, create_savings_grid
 from elder_care.model.shared import (
@@ -211,12 +211,11 @@ def task_debugging(
         value_solved=results[0],
         policy_solved=results[1],
         endog_grid_solved=results[2],
-        # choice_range=jnp.arange(options["model_params"]["n_choices"], dtype=jnp.int16),
         model=model_loaded,
     )
     save_dict_to_pickle(sim_dict, path_to_save_sim_dict)
 
-    df_raw = create_simulation_df(sim_dict)
+    # df_raw = create_simulation_df(sim_dict)
     # data = df_raw.notna()
 
     data = create_simulation_df_from_dict(sim_dict)
@@ -271,7 +270,7 @@ def task_debugging(
         choice=OUT_OF_LABOR,
     )  # 15
 
-    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_informal_care_by_age_bin = get_share_by_type_by_age_bin(  # noqa: F841
         arr,
         ind=idx,
         choice=INFORMAL_CARE,
@@ -279,7 +278,7 @@ def task_debugging(
         age_bins=AGE_BINS_SIM,
     )
 
-    share_formal_care_by_age_bin = get_share_by_type_by_age_bin(
+    share_formal_care_by_age_bin = get_share_by_type_by_age_bin(  # noqa: F841
         arr,
         ind=idx,
         choice=FORMAL_CARE,
@@ -287,29 +286,32 @@ def task_debugging(
         age_bins=AGE_BINS_SIM,
     )
 
-    share_not_working_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=NO_WORK,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
+    share_not_working_informal_care_by_age_bin = (  # noqa: F841
+        get_share_by_type_by_age_bin(
+            ind=idx,
+            choice=NO_WORK,
+            care_type=INFORMAL_CARE,
+            age_bins=AGE_BINS_SIM,
+        )
     )
-    share_part_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=PART_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
+    share_part_time_informal_care_by_age_bin = (  # noqa: F841
+        get_share_by_type_by_age_bin(
+            arr,
+            ind=idx,
+            choice=PART_TIME,
+            care_type=INFORMAL_CARE,
+            age_bins=AGE_BINS_SIM,
+        )
     )
-    share_full_time_informal_care_by_age_bin = get_share_by_type_by_age_bin(
-        arr,
-        ind=idx,
-        choice=FULL_TIME,
-        care_type=INFORMAL_CARE,
-        age_bins=AGE_BINS_SIM,
+    share_full_time_informal_care_by_age_bin = (  # noqa: F841
+        get_share_by_type_by_age_bin(
+            arr,
+            ind=idx,
+            choice=FULL_TIME,
+            care_type=INFORMAL_CARE,
+            age_bins=AGE_BINS_SIM,
+        )
     )
-
-    breakpoint()
 
     return (
         share_not_working_by_age,

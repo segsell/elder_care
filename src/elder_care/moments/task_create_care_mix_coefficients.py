@@ -19,16 +19,19 @@ def table(df_col):
 
 @pytask.mark.skip()
 def task_create_care_mix_moments(
-    path_to_hh_weight: Path = BLD / "data" / "estimation_data_hh_weight.csv",
+    path_to_hh_weight: Path = BLD  # noqa: ARG001
+    / "data"
+    / "estimation_data_hh_weight.csv",
     path_to_parent_child_hh_weight: Path = BLD
     / "data"
     / "parent_child_data_hh_weight.csv",
-    # path_to_cpi: Path = BLD / "moments" / "cpi_germany.csv",
-    path_to_save: Annotated[Path, Product] = BLD
+    path_to_save: Annotated[Path, Product] = BLD  # noqa: ARG001
     / "moments"
     / "care_mix_regressions.csv",
 ) -> None:
-    """(Pdb++) coeff_no_care
+    """Create care mix moments for parent data.
+
+    (Pdb++) coeff_no_care
         Feature  Coefficient
     0  Intercept     1.105644
     1      70-74    -0.493338
@@ -53,7 +56,7 @@ def task_create_care_mix_moments(
     """
     parent_hh_weight = pd.read_csv(path_to_parent_child_hh_weight)
     weight = "hh_weight"
-    intensive_care_var = "intensive_care_no_other"
+    # intensive_care_var = "intensive_care_no_other"
 
     parent = parent_hh_weight.copy()
 
@@ -74,7 +77,7 @@ def task_create_care_mix_moments(
     # dat["intensive_care_no_other_weighted"] = (
     #     dat["intensive_care_no_other"] * dat[weight]
     # )
-    intensive_care_var_weighted = "intensive_care_no_other_weighted"
+    # intensive_care_var_weighted = "intensive_care_no_other_weighted"
 
     parent["no_home_care_weighted"] = parent["no_home_care"] * parent[weight]
     parent["no_informal_care_child_weighted"] = (
@@ -115,19 +118,19 @@ def task_create_care_mix_moments(
     age_dummies = pd.get_dummies(mother["age_bin"], drop_first=True)
     mother = pd.concat([mother, age_dummies], axis=1)
 
-    coeff_no_care = weighted_logistic_regression(
+    coeff_no_care = weighted_logistic_regression(  # noqa: F841
         mother,
         age_dummies,
         outcome="no_care",
         weight=weight,
     )
-    coeff_pure_informal_care = weighted_logistic_regression(
+    coeff_pure_informal_care = weighted_logistic_regression(  # noqa: F841
         mother,
         age_dummies,
         outcome="informal_care_child_no_comb",
         weight=weight,
     )
-    coeff_combination_care = weighted_logistic_regression(
+    coeff_combination_care = weighted_logistic_regression(  # noqa: F841
         mother,
         age_dummies,
         outcome="combination_care",
@@ -173,7 +176,8 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
     # # Keep people aged 65 and older
     # mother_filtered = mother_filtered[mother_filtered["age"] >= 65]
 
-    # # Create 5-year age bins from [65, 70), [70, 75) etc. up to [80, 85). The final age bin is 80+
+    # # Create 5-year age bins from [65, 70), [70, 75) etc. up to [80, 85).
+    # # The final age bin is 80+
     # age_bins = [65, 70, 75, 80, np.inf]
     # age_labels = ["65-69", "70-74", "75-79", "80+"]
     # mother_filtered["age_bin"] = pd.cut(
@@ -192,7 +196,7 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
 
     # Define the features (age dummies) and the target (y_variable)
     features = age_dummies.columns.tolist()
-    X = mother[features]
+    X = mother[features]  # noqa: N806
     y = mother[outcome]
 
     # Combine X, y, and weights into a single DataFrame to drop rows with NaNs
@@ -202,7 +206,7 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
     data = data.dropna()
 
     # Separate the cleaned data back into X, y, and weights
-    X = data[features]
+    X = data[features]  # noqa: N806
     y = data[outcome]
     weights = data[weight]
 
@@ -214,7 +218,7 @@ def weighted_logistic_regression(mother, age_dummies, outcome, weight):
 
     return pd.DataFrame(
         {
-            "Feature": ["Intercept"] + features,
-            "Coefficient": [model.intercept_[0]] + list(model.coef_[0]),
+            "Feature": ["Intercept", *features],
+            "Coefficient": [model.intercept_[0], *model.coef_[0]],
         },
     )
