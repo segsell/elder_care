@@ -599,13 +599,6 @@ def fit_logit(x, y):
     # # return jnp.array([model.intercept_[0]] + list(model.coef_[0]))
     # out = [model.intercept_[0]] + list(model.coef_[0])
 
-    # model = LogisticRegression()
-    # try:
-    #     model.fit(x, y)
-    #     out = [model.intercept_[0]] + list(model.coef_[0])
-    # except ValueError:
-    #     out = [np.nan] * (x.shape[1] + 1)
-
     model = LogisticRegression()
     try:
         model.fit(x, y)
