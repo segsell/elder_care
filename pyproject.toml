@@ -72,6 +72,9 @@ extend-ignore = [
     # missing docstring in public package
     "D104",
 
+    # ignore isort
+    "I",
+
     # exception must not use a string literal
     "EM101",
 
