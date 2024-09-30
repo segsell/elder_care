@@ -574,8 +574,6 @@ def prob_exog_care_demand(
     return jnp.array([1 - prob_care_demand, prob_care_demand])
 
 
-
-
 def _exog_care_demand_mother(period, mother_health, options):
     """Compute scalar care demand probability.
 

@@ -362,12 +362,10 @@ def task_create_moments(  # noqa: PLR0915
         [
             employment_by_age_soep,
             ols_coeffs_savings_rate,
-            #
             logit_coeffs_no_care,
             logit_coeffs_pure_informal_care,
             logit_coeffs_combination_care,
             logit_coeffs_nursing_home,
-            #
             employment_by_age_bin_caregivers_soep,
             # #
             # share_informal_care_age_bin,

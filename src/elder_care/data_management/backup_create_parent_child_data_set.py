@@ -508,7 +508,6 @@ def create_care_combinations(dat, informal_care_var):
     dat["formal_care_no_comb"] = np.select(_cond, _val, default=0)
     dat["only_formal"] = dat["formal_care_no_comb"].copy()
 
-
     _cond = [
         (dat["home_care"] == 1) & (dat[informal_care_var] == 0),
         (dat["home_care"].isna()) & (dat[informal_care_var].isna()),

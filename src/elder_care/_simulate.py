@@ -500,21 +500,17 @@ def simulate_moments(sim):
         share_not_working_by_age
         + share_working_part_time_by_age
         + share_working_full_time_by_age
-        +
-        share_informal_care_by_age_bin
-        +
-        income_part_time_by_age_bin
+        + share_informal_care_by_age_bin
+        + income_part_time_by_age_bin
         + income_full_time_by_age_bin
         + wealth_by_age_bin
-        +
-        [share_not_working_no_informal_care]
+        + [share_not_working_no_informal_care]
         + [share_part_time_no_informal_care]
         + [share_full_time_no_informal_care]
         + [share_not_working_informal_care]
         + [share_part_time_informal_care]
         + [share_full_time_informal_care]
-        +
-        no_work_to_no_work
+        + no_work_to_no_work
         + no_work_to_part_time
         + no_work_to_full_time
         + part_time_to_no_work
@@ -533,8 +529,7 @@ def simulate_moments(sim):
         + no_informal_care_to_formal_care
         + informal_care_to_no_formal_care
         + informal_care_to_formal_care
-        +
-        no_formal_care_to_no_informal_care
+        + no_formal_care_to_no_informal_care
         + no_formal_care_to_informal_care
         + formal_care_to_no_informal_care
         + formal_care_to_informal_care

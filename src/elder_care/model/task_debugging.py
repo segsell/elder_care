@@ -51,21 +51,18 @@ PARAMS = {
     "sigma": 0.5364562201,
     "lambda": 1.0024565188638312,
     "interest_rate": 0.04,
-    #
     "disutility_part_time_constant": -1.1325945318518755,
     "disutility_part_time_age": 2.959047551749629,
     "disutility_part_time_age_squared": 0.08466169989356942,
     "disutility_full_time_constant": 2.0114514159888124,
     "disutility_full_time_age": 0.3052996873888407,
     "disutility_full_time_age_squared": 0.5032327025372947,
-    #
     "disutility_part_time_informal_care_constant": -1.1325945318518755,
     "disutility_part_time_informal_care_age": 2.959047551749629,
     "disutility_part_time_informal_care_age_squared": 0.08466169989356942,
     "disutility_full_time_informal_care_constant": 1.0114514159888124,
     "disutility_full_time_informal_care_age": 0.3052996873888407,
     "disutility_full_time_informal_care_age_squared": 0.5032327025372947,
-    #
     "part_time_constant": -2.108705825398208,
     "part_time_not_working_last_period": -1.9513432887146251,
     # "part_time_high_education": 3.0168909139283073,
@@ -81,7 +78,6 @@ PARAMS = {
     "wage_high_education": 0.31239997233992,
     "wage_part_time": -0.6683338057565962,
     "wage_std_regression_residual": 0.41264342652997477,
-    #
     "utility_no_care_parent_bad_health": -1,
     "utility_informal_care_parent_bad_health": 0.5,
     "utility_formal_care_parent_bad_health": 0.2,
@@ -94,14 +90,12 @@ START_PARAMS = {
     "sigma": 0.5364562201,  # 0.5584583071,
     "lambda": 1,
     "interest_rate": 0.04,  # Adda et al (2017)
-    #
     "disutility_part_time_constant": 2,
     "disutility_part_time_age": 0.1,
     "disutility_part_time_age_squared": -0.06,
     "disutility_full_time_constant": 1,
     "disutility_full_time_age": 0.152,
     "disutility_full_time_age_squared": -0.012,
-    #
     "disutility_part_time_informal_care_constant": -1,
     "disutility_full_time_informal_care_constant": -1.5,
     # "disutility_part_time_informal_care_age": 0.1,
