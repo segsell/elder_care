@@ -174,7 +174,6 @@ def create_share_by_age_bin(dat, intensive_care_var, weight, age_bins):
 
 
 def turn_share_into_pandas_series(share, age_bins):
-
     return pd.Series(
         {
             f"share_informal_care_{age_bin[0]}_{age_bin[1]}": share[i]
@@ -184,7 +183,6 @@ def turn_share_into_pandas_series(share, age_bins):
 
 
 def turn_share_of_shares_into_pandas_series(subgroup, all_group, age_bins):
-
     return pd.Series(
         {
             f"share_informal_care_{age_bin[0]}_{age_bin[1]}": subgroup[i] / all_group[i]

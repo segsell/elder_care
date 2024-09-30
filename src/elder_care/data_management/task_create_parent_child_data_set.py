@@ -519,7 +519,6 @@ def create_care_variables(dat):
 
 
 def create_care_combinations(dat, informal_care_var):
-
     # 25.03.2024
     _cond = [
         (dat["formal_care"] == 0) & (dat[informal_care_var] == 1),

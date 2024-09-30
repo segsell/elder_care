@@ -540,7 +540,6 @@ def calculate_weighted_variance(dat, transition_info, current_choice, weight):
 
 
 def get_var_employment_by_age_soep():
-
     return pd.Series(
         {
             # not working
@@ -644,7 +643,6 @@ def get_var_employment_by_age_soep():
 
 
 def get_var_coefficients_savings_rate_regression_soep():
-
     return pd.Series(
         {
             "savings_rate_constant": 0.000548694929,
@@ -660,7 +658,6 @@ def get_var_coefficients_savings_rate_regression_soep():
 
 # var
 def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
-
     return pd.Series(
         {
             "not_working_age_40_45": 0.24125176,
@@ -686,7 +683,6 @@ def get_var_employment_by_age_bin_informal_parental_caregivers_soep():
 
 
 def get_var_employment_by_age_bin_non_informal_caregivers_soep():
-
     return pd.Series(
         {
             "not_working_age_40_45": 0.21760557,
@@ -712,7 +708,6 @@ def get_var_employment_by_age_bin_non_informal_caregivers_soep():
 
 
 def get_var_share_informal_maternal_care_by_age_bin_soep():
-
     return pd.Series(
         {
             "share_informal_care_40_45": 0.03505911,

@@ -2365,7 +2365,6 @@ def get_employment_by_age_bin_non_informal_caregivers_soep():
 
 
 def get_share_informal_maternal_care_by_age_bin_soep():
-
     return pd.Series(
         {
             "share_informal_care_40_45": 0.02980982,

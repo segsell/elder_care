@@ -52,7 +52,6 @@ FIXED_PARAMS = ["rho", "beta", "lambda", "sigma", "interest_rate"]
 
 @pytask.mark.skip(reason="Do estimation on Colab GPU")
 def task_estimate_msm():
-
     path_to_save_params = BLD / "estimation" / "result_params.pkl"
     path_to_save_criterion_value = BLD / "estimation" / "result_criterion.pkl"
     path_to_save_convergence_report = BLD / "estimation" / "result_convergence.pkl"

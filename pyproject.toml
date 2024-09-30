@@ -21,8 +21,33 @@ line-length = 88
 [tool.ruff]
 target-version = "py311"
 fix = true
-lint.select = ["ALL"]
-lint.extend-ignore = [
+
+[tool.ruff.lint]
+select = [
+  # isort
+  "I",
+  # pyflakes
+  "F",
+  # pycodestyle
+  "E",
+  "W",
+  # flake8-2020
+  "YTT",
+  # flake8-bugbear
+  "B",
+  # flake8-quotes
+  "Q",
+  # pylint
+  "PLE", "PLR", "PLW",
+  # misc lints
+  "PIE",
+  # tidy imports
+  "TID",
+  # implicit string concatenation
+  "ISC",
+]
+
+extend-ignore = [
     # missing type annotation
     "ANN001",
 
@@ -53,9 +78,6 @@ lint.extend-ignore = [
     # exception must not use an f-string literal
     "EM102",
 
-    # ignore isort
-    "I",
-
     # Too many arguments to function call
     "PLR0913",
 
@@ -72,7 +94,13 @@ lint.extend-ignore = [
     "E712",
 
     # Checks for unused imports
-    "F401"
+    "F401",
+
+    # Consider `elif` instead of `else` then `if` to remove indentation level
+    "PLR5501",
+
+    # Incompatible with formatting
+    "ISC001",
 ]
 
 [tool.ruff.lint.per-file-ignores]
